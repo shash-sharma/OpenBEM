@@ -84,15 +84,19 @@ can prototype their ideas and plug them into the rest of OpenBEM's
 functionality, to quickly assemble full electromagnetic solvers that
 incorporate their ideas.
 
-For example, - researchers focusing on high-level integral equation
-formulations need not worry about having to implement integration
-techniques over triangles for singular kernels; - researchers
-developing new integration techniques for singular kernels need not
-implement the surrounding code infrastructure needed to test their
-ideas in the context of a full solver; - researchers developing new
-acceleration algorithms that approximate far-zone electromagnetic
-interactions can wrap OpenBEM's functionality to compute the near-zone
-interactions.
+For example,
+
+- researchers focusing on high-level integral equation formulations
+need not worry about having to implement integration techniques over
+triangles for singular kernels;
+
+- researchers developing new integration techniques for singular
+kernels need not implement the surrounding code infrastructure needed
+to test their ideas in the context of a full solver;
+
+- researchers developing new acceleration algorithms that approximate
+far-zone electromagnetic interactions can wrap OpenBEM's functionality
+to compute the near-zone interactions.
 
 This modularity is achieved with the following design pattern based on
 the well-known concept of runtime polymorphism.
