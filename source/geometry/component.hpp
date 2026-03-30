@@ -1,0 +1,142 @@
+// OpenBEM - Copyright (C) 2026 Shashwat Sharma
+
+// This file is part of OpenBEM.
+
+// OpenBEM is free software: you can redistribute it and/or modify it under the terms of the
+// GNU General Public License as published by the Free Software Foundation, either version 3
+// of the License, or (at your option) any later version.
+
+// You should have received a copy of the GNU General Public License along with OpenBEM.
+// If not, see <https://www.gnu.org/licenses/>.
+
+
+/**
+* @file
+* Component management class.
+*/
+
+#ifndef BEM_COMPONENT_H
+#define BEM_COMPONENT_H
+
+#include <string>
+#include <memory>
+
+
+namespace bem
+{
+
+// Forward declarations
+template <typename MeshType> class MeshView;
+class Material;
+
+/**
+* \ingroup geom
+* @{
+*/
+
+/**
+* @brief Class that defines a component in a structure.
+* @tparam MeshType - Type of the mesh for representing the component.
+*/
+template <typename MeshType>
+class Component
+{
+public:
+
+    /**
+    * @brief Constructs a `Component` with a mesh view and associated material.
+    * @param[in] mesh_view - The mesh view associated with the component.
+    * @param[in] material - Material associated with the component.
+    * @param[in] name - Name of the component (optional).
+    */
+    template <typename MaterialType>
+    Component(
+        const MeshView<MeshType>& mesh_view,
+        const MaterialType& material,
+        const std::string name = "component"
+        ):
+            mesh_view_(mesh_view),
+            material_(std::make_shared<MaterialType> (material)),
+            name_(name) {};
+
+
+    /**
+    * @brief Constructs a `Component` with a mesh view.
+    * @param[in] mesh_view - The mesh view associated with the component.
+    * @param[in] name - Name of the component (optional).
+    */
+    template <typename MaterialType>
+    Component(
+        const MeshView<MeshType>& mesh_view,
+        const std::string name = "component"
+        ):
+            mesh_view_(mesh_view),
+            material_(std::make_shared<PerfectDielectricMaterial> (PerfectDielectricMaterial(1, 1))),
+            name_(name) {};
+
+
+    /**
+    * @brief Returns the mesh view associated with the component.
+    * @return Mesh view associated with the component.
+    */
+    const MeshView<MeshType>& mesh_view() const
+    { return mesh_view_; };
+
+
+    /**
+    * @brief Returns the material associated with the component.
+    * @return Material associated with the component.
+    */
+    const Material& material() const
+    { return *material_; };
+
+
+    /**
+    * @brief Returns the mesh associated with the component.
+    * @return Mesh associated with the component.
+    */
+    MeshType mesh() const
+    { return mesh_view_.mesh(); };
+
+
+    /**
+    * @brief Returns the name of the component.
+    * @return Name of the component.
+    */
+    const std::string& name() const { return name_; };
+
+
+    /**
+    * @brief Sets the material of the component.
+    * @param[in] material - Material to set for the component.
+    */
+    template <typename MaterialType>
+    void set_material(const MaterialType& material)
+    { material_ = std::make_shared<MaterialType> (material); return; };
+
+
+    /**
+    * @brief Sets the name of the component.
+    * @param[in] name - Name to set for the component.
+    */
+    void set_name(const std::string& name)
+    { name_ = name; return; };
+
+
+private:
+
+    const MeshView<MeshType> mesh_view_;
+    std::shared_ptr<Material> material_ = std::make_shared<PerfectDielectricMaterial> (
+        PerfectDielectricMaterial(1, 1)
+        );
+    std::string name_ = "component";
+
+};
+
+/**
+* @}
+*/
+
+}
+
+#endif

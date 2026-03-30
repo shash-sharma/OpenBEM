@@ -1,0 +1,129 @@
+/**
+* @file
+* Namespace and other global documentation.
+*/
+
+/**
+* @namespace bem
+* @brief Primary namespace for the OpenBEM library.
+*/
+
+/**
+* \defgroup geom Geometry
+* @brief Geometry and mesh management classes and functions.
+*/
+
+/**
+* \defgroup mesh Mesh
+* \ingroup geom
+* @brief Classes to store and operate on mesh data.
+*/
+
+/**
+* \defgroup prim Geometry Primitives
+* \ingroup geom
+* @brief Classes to manage and operate on geometry primitives that compose a mesh.
+*/
+
+/**
+* \defgroup kern Kernels
+* @brief Classes for the computation of integral operator kernels (Green's functions) and their derivatives.
+*/
+
+/**
+* \defgroup matr Matrix Types
+* @brief Classes that wrap and provide an interface to third-party matrix algebra libraries.
+*/
+
+/**
+* \defgroup quad Quadrature
+* @brief Classes for computing numerical integration via quadrature over geometry primitives.
+*/
+
+/**
+* \defgroup linequad Line Quadrature
+* \ingroup quad
+* @brief Classes for computing numerical integration via quadrature over line segments.
+*/
+
+/**
+* \defgroup triquad Triangle Quadrature
+* \ingroup quad
+* @brief Classes for computing numerical integration via quadrature over triangles.
+*/
+
+
+/**
+* @namespace bem::rwg
+* @brief Namespace for RWG-based BEM functionality.
+*/
+
+/**
+* \defgroup rwg RWG
+* @brief Classes for surface integral equation concepts associated with RWG-based meshes.
+*/
+
+/**
+* \defgroup rwgopint Operator Integration
+* \ingroup rwg
+* @brief Classes for computing RWG-based kernel-aware integration over source and observation triangles.
+*/
+
+/**
+* \defgroup rwgopintobs Observation Triangle
+* \ingroup rwgopint
+* @brief Classes for computing RWG-based kernel-aware integration over observation triangles.
+*/
+
+/**
+* \defgroup rwgopintsrc Source Triangle
+* \ingroup rwgopint
+* @brief Classes for computing RWG-based kernel-aware integration over source triangles.
+*/
+
+/**
+* \defgroup rwgops Operators
+* \ingroup rwg
+* @brief Classes defining element-wise computation of integral equation operators.
+*/
+
+/**
+* \defgroup rwgproj Projectors
+* \ingroup rwg
+* @brief Classes defining element-wise computation of integral equation projectors.
+*/
+
+/**
+* \defgroup rwgexc Excitations
+* \ingroup rwg
+* @brief Classes defining element-wise computation of integral equation excitations.
+*/
+
+/**
+* \defgroup assm Matrix Assemblers
+* \ingroup rwg
+* @brief Classes for matrix assembly of integral equation operators, projectors, and excitations.
+*/
+
+/**
+* \defgroup rwgie Integral Equations
+* \ingroup rwg
+* @brief Classes for assembling together all components of commonly used integral equations.
+*/
+
+
+/**
+* @example ../examples/ex01_start_here.cpp
+* Example 1: TEFIE and NMFIE solvers for closed PEC objects.
+* Demonstrates the computation of bistatic RCS for a PEC sphere with
+* two different integral equation formulations.
+*/
+
+/**
+* @example ../examples/ex02_assemblers.cpp
+* Example 2: Defining operators and assembling them into matrices for
+* more customized integral equations.  Repeats the computations in
+* Example 1, but with user-defined setup of the integral operators and
+* their assembly into matrices, for more customization. Assumes
+* knowledge from Example 1.
+*/
