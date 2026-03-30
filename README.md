@@ -76,7 +76,7 @@ target_compile_features(main PRIVATE cxx_std_17)
 In either case, OpenBEM's headers can then be included
 directly into your project, for example,
 
-```C++
+```C
 #include "openbem.hpp"
 ```
 
@@ -123,7 +123,7 @@ to link your project to the OpenBEM dynamic library
 Then you can include OpenBEM's headers in your project as usual, for
 example,
 
-```C++
+```C
 #include "openbem.hpp"
 ```
 
