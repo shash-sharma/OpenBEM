@@ -19,6 +19,8 @@ through the available functionality.
 
 Citing OpenBEM: [![DOI](https://zenodo.org/badge/1060257425.svg)](https://doi.org/10.5281/zenodo.19337991)
 
+Full documentation of OpenBEM is available at [https://shash-sharma.github.io/OpenBEM/](https://shash-sharma.github.io/OpenBEM/).
+
 
 # Requirements <a name="req"></a>
 
