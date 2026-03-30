@@ -19,7 +19,7 @@ the provided examples in the
 [documentation](https://shash-sharma.github.io/OpenBEM/). To
 gain familiarity with the code and its organization, the Topics page
 in the
-[documentation(https://shash-sharma.github.io/OpenBEM/)
+[documentation](https://shash-sharma.github.io/OpenBEM/)
 is the recommended way to navigate through the available
 functionality.
 
