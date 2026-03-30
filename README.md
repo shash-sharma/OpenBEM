@@ -17,6 +17,8 @@ familiarity with the code and its organization, the <a
 href="topics.html">Topics</a> page is the recommended way to navigate
 through the available functionality.
 
+Citing OpenBEM: [![DOI](https://zenodo.org/badge/1060257425.svg)](https://doi.org/10.5281/zenodo.19337991)
+
 
 # Requirements <a name="req"></a>
 
