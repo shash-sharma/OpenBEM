@@ -22,7 +22,7 @@ Citing OpenBEM: [![DOI](https://zenodo.org/badge/1060257425.svg)](https://doi.or
 Full documentation of OpenBEM is available at [https://shash-sharma.github.io/OpenBEM/](https://shash-sharma.github.io/OpenBEM/).
 
 
-# Requirements <a name="req"></a>
+# Requirements
 
 OpenBEM requires at least C++17.
 
@@ -41,12 +41,12 @@ To compile your project with OpenBEM, the following should be noted:
   experienced this issue with GCC 8.5.
 
 
-# Usage <a name="use"></a>
+# Usage
 
 There are two ways to incorporate OpenBEM in your project.
 
 
-## Option 1: Header-only mode <a name="head"></a>
+## Option 1: Header-only mode
 
 The simplest and quickest way to use OpenBEM is to import it into your
 project it in header-only mode, which involves no installation,
@@ -83,7 +83,7 @@ directly into your project, for example,
 and that's it.
 
 
-## Option 2: Dynamically linked mode <a name="link"></a>
+## Option 2: Dynamically linked mode
 
 The compile time of your project can be somewhat improved by using
 OpenBEM in linked mode, which involves building and dynamically
