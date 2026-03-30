@@ -16,10 +16,10 @@ OpenBEM is written in C++, and its full documentation is available at
 
 As a starting point, it is highly recommended that users go through
 the provided examples in the
-[documentation](https://shash-sharma.github.io/OpenBEM/](https://shash-sharma.github.io/OpenBEM/). To
+[documentation](https://shash-sharma.github.io/OpenBEM/). To
 gain familiarity with the code and its organization, the Topics page
 in the
-[documentation](https://shash-sharma.github.io/OpenBEM/](https://shash-sharma.github.io/OpenBEM/)
+[documentation(https://shash-sharma.github.io/OpenBEM/)
 is the recommended way to navigate through the available
 functionality.
 
