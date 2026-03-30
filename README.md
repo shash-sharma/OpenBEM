@@ -42,7 +42,7 @@ OpenBEM is written in C++, and its full documentation is available at [https://s
 - Input and output of [Gmsh](https://gmsh.info) meshes and fields for post processing.
 
 - Sparse and dense matrix wrappers for the [Eigen
-  library](https://libeigen.gitlab.io/eigen/docs-5.0.1/GettingStarted.html) library for operator assembly.
+  library](https://libeigen.gitlab.io/eigen/docs-5.0.1/GettingStarted.html) for operator assembly.
 
 - The ability to partition meshes and specify subsets of triangle pairs for which to compute integrals, to enable compatibility with mesh distribution and acceleration algorithms.
 
@@ -236,6 +236,6 @@ example,
 ```
 
 
-# Citing OpenBEM
+# Citing
 
 If OpenBEM benefits your research, please cite this GitHub repository via the following [![DOI](https://zenodo.org/badge/1060257425.svg)](https://doi.org/10.5281/zenodo.19337991) in your publications and presentations.
