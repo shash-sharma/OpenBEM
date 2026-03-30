@@ -123,3 +123,6 @@ example,
 #include "openbem.hpp"
 ```
 
+# Citing
+
+If OpenBEM benefits your research, please cite this GitHub repository via the following [![DOI](https://zenodo.org/badge/1060257425.svg)](https://doi.org/10.5281/zenodo.19337991) in your publications and presentations.
