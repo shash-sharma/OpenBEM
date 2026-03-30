@@ -33,7 +33,7 @@ OpenBEM is written in C++, and its full documentation is available at [https://s
 
 - Singularity extraction for single and double layer kernels [[Ergül, Gürel, 2014]](https://onlinelibrary.wiley.com/doi/book/10.1002/9781118844977).
 
-- Line integration for the case of highly oscillatory kernels, such as those associated with lossy conductors [Qian, Chew, Suaya, 2007](https://ieeexplore.ieee.org/abstract/document/4359102) and [[Xia _et. al_, 2017]](https://ieeexplore.ieee.org/document/7955080).
+- Line integration for the case of highly oscillatory kernels, such as those associated with lossy conductors [[Qian, Chew, Suaya, 2007]](https://ieeexplore.ieee.org/abstract/document/4359102) and [[Xia _et. al_, 2017]](https://ieeexplore.ieee.org/document/7955080).
 
 - Plane wave, infinitesimal gap, and lumped circuit port excitations [[Gibson 2021]](https://www.taylorfrancis.com/books/mono/10.1201/9780429355509/method-moments-electromagnetics-walton-gibson).
 
