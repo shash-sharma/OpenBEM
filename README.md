@@ -31,34 +31,25 @@ Citing OpenBEM: [![DOI](https://zenodo.org/badge/1060257425.svg)](https://doi.or
 ### Features currently available
 
 - All RWG-based operators associated with the TEFIE, NEFIE, TMFIE, and
-  NMFIE [[Ylä-Oijala, Taskinen, Järvenpää,
-  2005]](https://ieeexplore.ieee.org/document/7770136).
+  NMFIE [[Ylä-Oijala, Taskinen, Järvenpää, 2005]](https://ieeexplore.ieee.org/document/7770136).
 
 - Numerical quadrature over source and observation triangles for
-  RWG-based meshes and single and double layer kernels [[Ergül, Gürel,
-  2014]](https://onlinelibrary.wiley.com/doi/book/10.1002/9781118844977).
+  RWG-based meshes and single and double layer kernels [[Ergül, Gürel, 2014]](https://onlinelibrary.wiley.com/doi/book/10.1002/9781118844977).
 
-- Singularity extraction for single and double layer kernels [[Ergül,
-  Gürel,
-  2014]](https://onlinelibrary.wiley.com/doi/book/10.1002/9781118844977).
+- Singularity extraction for single and double layer kernels [[Ergül, Gürel, 2014]](https://onlinelibrary.wiley.com/doi/book/10.1002/9781118844977).
 
 - Line integration for the case of highly oscillatory kernels, such as
-  those associated with lossy conductors [[Qian, Chew, Suaya,
-  2007]](https://ieeexplore.ieee.org/abstract/document/4359102) and
-  [[Xia _et. al_,
-  2017]](https://ieeexplore.ieee.org/document/7955080).
+  those associated with lossy conductors [[Qian, Chew, Suaya, 2007]](https://ieeexplore.ieee.org/abstract/document/4359102) and [[Xia _et. al_, 2017]](https://ieeexplore.ieee.org/document/7955080).
 
 - Plane wave, infinitesimal gap, and lumped circuit port excitations
-  [[Gibson
-  2021]](https://www.taylorfrancis.com/books/mono/10.1201/9780429355509/method-moments-electromagnetics-walton-gibson).
+  [[Gibson 2021]](https://www.taylorfrancis.com/books/mono/10.1201/9780429355509/method-moments-electromagnetics-walton-gibson).
 
 - Near- and far-field projection for post-processing.
 
 - Input and output of [Gmsh](https://gmsh.info) meshes and fields for
   post processing.
 
-- Sparse and dense matrix wrappers for the [Eigen
-  library](https://libeigen.gitlab.io/eigen/docs-5.0.1/GettingStarted.html)
+- Sparse and dense matrix wrappers for the [Eigen library](https://libeigen.gitlab.io/eigen/docs-5.0.1/GettingStarted.html)
   for operator assembly.
 
 - The ability to partition meshes and specify subsets of triangle
