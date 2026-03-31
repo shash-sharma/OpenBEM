@@ -52,9 +52,6 @@ using namespace bem::rwg;
 using json = nlohmann::json;
 
 
-const Float LAMBDA = 1;
-
-
 void test_efie_pec()
 {
 
@@ -282,8 +279,6 @@ int main(int argc, char** argv)
     std::cout << "\n====================================================" << std::endl;
     std::cout << "test_ops_sphere_rcs.cpp" << std::endl;
     std::cout << "====================================================\n" << std::endl;
-
-    Float tol = 1e-3;
 
     test_efie_pec();
     test_nmfie_pec();

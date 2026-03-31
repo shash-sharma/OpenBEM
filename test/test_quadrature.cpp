@@ -34,9 +34,6 @@
 using namespace bem;
 
 
-const Float LAMBDA = 1;
-
-
 void test_line_integration()
 {
 
@@ -128,8 +125,6 @@ int main(int argc, char** argv)
     std::cout << "\n====================================================" << std::endl;
     std::cout << "test_quadrature.cpp" << std::endl;
     std::cout << "====================================================\n" << std::endl;
-
-    Float tol = 1e-3;
 
     test_line_integration();
 

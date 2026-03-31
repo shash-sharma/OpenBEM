@@ -51,9 +51,6 @@ using namespace bem::rwg;
 using json = nlohmann::json;
 
 
-const Float LAMBDA = 1;
-
-
 void test_cfie_pec()
 {
 

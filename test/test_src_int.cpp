@@ -450,7 +450,7 @@ int test_corner_cases(Complex k, bool print_anyway = false)
 
     bool all_pass = true;
 
-    std::clock_t t_start = clock();
+    // std::clock_t t_start = clock();
     for (auto src_tri : src_tris)
     {
         EigMatMN<Float, 3, 3> local_uvw = src_tri.local_coordinate_basis();
@@ -513,8 +513,8 @@ int test_corner_cases(Complex k, bool print_anyway = false)
         // all_pass = compare_src_result(
         //     result_ref, result_iter_trapz_line_quad, 1e-3, print_anyway, "test_corner_cases, Iterative trapz line integration") && all_pass;
     }
-    std::clock_t t_stop = clock();
-    double dt = (t_stop - t_start)/(double)CLOCKS_PER_SEC;
+    // std::clock_t t_stop = clock();
+    // double dt = (t_stop - t_start)/(double)CLOCKS_PER_SEC;
     // std::cout << "[CPU TIME] (Standard reference, release mode: ): " << std::fixed << std::scientific << dt << " s." << std::endl;
 
     return !all_pass;
@@ -536,8 +536,6 @@ int test_src_reg(Complex k, Float tol = 1e-3, bool print_anyway = false)
     offset.col(2) = EigColVecN<Float, 3> ({ LAMBDA * (Float)1.1, LAMBDA * (Float)2.2, LAMBDA * (Float)4.8 });
     obs_tri.set_v(obs_tri.v() + offset);
 
-    int src_quad_order = 4;
-    int obs_quad_order = 4;
     int src_line_order = 10;
 
     EigMatMN<Float, 3, 3> local_uvw = src_tri.local_coordinate_basis();
@@ -591,8 +589,6 @@ int test_src_far(Complex k, Float tol = 1e-3, bool print_anyway = false)
     offset.col(2) = EigColVecN<Float, 3> ({ LAMBDA * (Float)109.9, LAMBDA * (Float)24.1, LAMBDA * (Float)58.3 });
     obs_tri.set_v(obs_tri.v() + offset);
 
-    int src_quad_order = 4;
-    int obs_quad_order = 4;
     int src_line_order = 10;
 
     EigMatMN<Float, 3, 3> local_uvw = src_tri.local_coordinate_basis();

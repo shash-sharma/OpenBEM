@@ -57,9 +57,6 @@ void SrcSingularity<TriangleQuadratureType, ScalarKernelType>::compute_integral_
     )
 {
 
-    const Float four_pi = four * pi;
-    const Float tol = TRIANGLE_DEFAULT_TOL * src_tri.shortest_edge_length();
-
     // Projection of the observation point on the source triangle's local plane
     EigMatNX<Float, 2> rho_obs = r_obs.topRows(2);
     z_ = r_obs.row(2);

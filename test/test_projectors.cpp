@@ -138,7 +138,6 @@ int main(int argc, char** argv)
     std::cout << "test_projectors.cpp" << std::endl;
     std::cout << "====================================================\n" << std::endl;
 
-    Float tol = 1e-3;
     Float f = c0 / LAMBDA;
     Complex k = two * pi * f * std::sqrt(eps0 * (one - (Float)0.1 * J) * mu0);
 

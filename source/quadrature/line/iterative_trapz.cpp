@@ -99,10 +99,6 @@ void IterativeTrapzLineQuadrature<dim>::compute_points_weights(
         vals_temp = eval(points_temp);
         val = weights_temp.dot(vals_temp);
 
-#ifdef EXTRA_DEBUG
-        result.print_points_weights_vals(true, true);
-#endif
-
         converged_ = compare_with_tol(val, val_ref, tol_, 1);
         if (converged_)
         {

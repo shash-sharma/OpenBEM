@@ -20,48 +20,11 @@ project(OpenBEM)
 set(PRECISION "double" CACHE STRING "Floating point precision. Should be one of 'single', 'double' (default), or 'extended'.")
 set_property(CACHE PRECISION PROPERTY STRINGS single double extended)
 
-string(TOLOWER "${PRECISION}" PRECISION)
-if (PRECISION STREQUAL "single")
-    add_compile_definitions(USE_SINGLE_PRECISION)
-elseif(PRECISION STREQUAL "double")
-    add_compile_definitions(USE_DOUBLE_PRECISION)
-elseif(PRECISION STREQUAL "extended")
-    add_compile_definitions(USE_EXTENDED_PRECISION)
-else()
-    message(FATAL_ERROR "'PRECISION' must be one of 'single', 'double', or 'extended'. Exiting.")
-endif()
-
 set(HEADER_ONLY "no" CACHE STRING "Header-only mode. Should be one of 'yes' or no' (default).")
 set_property(CACHE HEADER_ONLY PROPERTY STRINGS "yes" "no")
 
-string(TOLOWER "${HEADER_ONLY}" HEADER_ONLY)
-if (HEADER_ONLY STREQUAL "no")
-   add_compile_definitions(BEM_LINKED)
-endif ()
-
-set(DEBUG_LEVEL "release" CACHE STRING "Debugging level. Should be one of 'release' (default), 'debug', 'extra_debug', or 'profile'.")
-set_property(CACHE DEBUG_LEVEL PROPERTY STRINGS release debug extra_debug profile)
-
-string(TOLOWER "${DEBUG_LEVEL}" DEBUG_LEVEL)
-if (DEBUG_LEVEL STREQUAL "debug")
-    message("Debug level: 'debug'")
-    set(CMAKE_BUILD_TYPE Debug)
-    add_compile_definitions(DEBUG)
-elseif (DEBUG_LEVEL STREQUAL "extra_debug")
-    message("Debug level: 'extra_debug'")
-    set(CMAKE_BUILD_TYPE Debug)
-    add_compile_definitions(EXTRA_DEBUG)
-elseif (DEBUG_LEVEL STREQUAL "release")
-    message("Debug level: 'release'")
-    set(CMAKE_BUILD_TYPE Release)
-elseif (DEBUG_LEVEL STREQUAL "profile")
-    message("Debug level: 'profile'")
-    set(CMAKE_BUILD_TYPE Debug)
-    add_compile_definitions(DEBUG)
-    add_compile_definitions(PROFILE)
-else ()
-    message(FATAL_ERROR "'DEBUG_LEVEL' must be one of 'release' (default), 'debug', 'extra_debug', or 'profile'. Exiting.")
-endif ()
+set(DEBUG_LEVEL "release" CACHE STRING "Debugging level. Should be one of 'release' (default), 'debug', or 'extra_debug'.")
+set_property(CACHE DEBUG_LEVEL PROPERTY STRINGS release debug extra_debug)
 
 set(BUILD_TESTS "no" CACHE STRING "Build all tests. Should be 'yes' or 'no' (default).")
 set_property(CACHE BUILD_TESTS PROPERTY STRINGS "yes" "no")
@@ -77,38 +40,13 @@ endif ()
 message(CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}")
 
 
-# ====== Compiler settings ======
+# ====== Compile settings ======
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 ENABLE_LANGUAGE(C)
 ENABLE_LANGUAGE(CXX)
-
 set(CMAKE_CXX_STANDARD 17)
-
-if (NOT CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
-    add_compile_options(
-        -msse -msse2 -mavx -mavx2
-    )
-endif()
-
-add_compile_options(
-    # -Wall -Werror -Wno-error=maybe-uninitialized
-    -march=native
-    # -ffast-math
-    "$<$<CONFIG:RELEASE>:-O3>"
-    "$<$<CONFIG:DEBUG>:-O0>"
-)
-
-if (DEBUG_LEVEL STREQUAL "profile")
-    add_compile_options(-pg -g)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg -g")
-endif ()
-
-add_compile_definitions(
-    $<$<CONFIG:RELEASE>:NDEBUG>
-)
-string(REPLACE "-O2" "-O3" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.3.1")
@@ -117,19 +55,94 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif ()
 
 
+string(TOLOWER "${HEADER_ONLY}" HEADER_ONLY)
+if (HEADER_ONLY STREQUAL "no")
+
+    message("Compile mode: linked")
+    add_compile_definitions(BEM_LINKED)
+
+endif ()
+
+
+string(TOLOWER "${PRECISION}" PRECISION)
+if (PRECISION STREQUAL "single")
+
+    message("Precision: 'single'")
+    add_compile_definitions(USE_SINGLE_PRECISION)
+
+elseif(PRECISION STREQUAL "double")
+
+    message("Precision: 'double'")
+    add_compile_definitions(USE_DOUBLE_PRECISION)
+
+elseif(PRECISION STREQUAL "extended")
+
+    message("Precision: 'extended'")
+    add_compile_definitions(USE_EXTENDED_PRECISION)
+
+else()
+
+    message(FATAL_ERROR "'PRECISION' must be one of 'single', 'double', or 'extended'. Exiting.")
+
+endif()
+
+
+string(TOLOWER "${DEBUG_LEVEL}" DEBUG_LEVEL)
+if (DEBUG_LEVEL STREQUAL "debug")
+
+    message("Debug level: 'debug'")
+    set(CMAKE_BUILD_TYPE Debug)
+    add_compile_definitions(DEBUG)
+    add_compile_definitions(EIGEN_NO_DEBUG)
+    add_compile_options(-O0 -g)
+
+elseif (DEBUG_LEVEL STREQUAL "extra_debug")
+
+    message("Debug level: 'extra_debug'")
+    set(CMAKE_BUILD_TYPE Debug)
+    add_compile_definitions(EXTRA_DEBUG)
+    add_compile_options(-O0 -g)
+
+elseif (DEBUG_LEVEL STREQUAL "release")
+
+    message("Debug level: 'release'")
+    set(CMAKE_BUILD_TYPE Release)
+    add_compile_definitions(NO_DEBUG)
+    add_compile_definitions(EIGEN_NO_DEBUG)
+    add_compile_options(-O3)
+
+else ()
+
+    message(FATAL_ERROR "'DEBUG_LEVEL' must be one of 'release' (default), 'debug', or 'extra_debug'. Exiting.")
+
+endif ()
+
+if (NOT CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+    add_compile_options(
+        -msse -msse2 -mavx -mavx2
+    )
+endif()
+
+add_compile_options(
+    -Wall
+    -march=native
+    # -ffast-math
+)
+
+
 # ====== OpenMP ======
 
 find_package(OpenMP)
 
 if (OPENMP_FOUND)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-  add_compile_definitions(OPENMP)
-  set(OPENMP_LINK OpenMP::OpenMP_CXX)
-  message (STATUS "OpenMP found")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    add_compile_definitions(OPENMP)
+    set(OPENMP_LINK OpenMP::OpenMP_CXX)
+    message (STATUS "OpenMP found")
 else ()
-  message (STATUS "OpenMP not found")
-  set(OPENMP_LINK "")
+    message (STATUS "OpenMP not found")
+    set(OPENMP_LINK "")
 endif ()
 
 
@@ -167,14 +180,14 @@ set(SRC_FILES
 
 if (HEADER_ONLY STREQUAL "no")
 
-add_library(openbem SHARED ${SRC_FILES})
-target_include_directories(openbem PRIVATE ${INC_DIR})
-target_link_libraries(openbem ${OPENMP_LINK})
+    add_library(openbem SHARED ${SRC_FILES})
+    target_include_directories(openbem PRIVATE ${INC_DIR})
+    target_link_libraries(openbem ${OPENMP_LINK})
 
 else ()
 
-add_library(openbem INTERFACE)
-target_include_directories(openbem INTERFACE ${INC_DIR})
+    add_library(openbem INTERFACE)
+    target_include_directories(openbem INTERFACE ${INC_DIR})
 
 endif ()
 

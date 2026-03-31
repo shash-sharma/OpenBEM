@@ -92,15 +92,6 @@ SrcResult SrcQuadrature<TriangleQuadratureType, ScalarKernelType>::integrate(
     }
 
 
-#ifdef EXTRA_DEBUG
-    std::string text = "Integral eval points:\n";
-    for (std::size_t ii = 0; ii < points_3d.cols(); ii++)
-        text += std::to_string(points_3d(0, ii)) + " " +
-                std::to_string(points_3d(1, ii)) + " " +
-                std::to_string(0.0) + "\n";
-    Log::make_debug_section(text);
-#endif
-
     return result;
 
 };

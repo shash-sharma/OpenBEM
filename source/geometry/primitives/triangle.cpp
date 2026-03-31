@@ -56,7 +56,6 @@ Triangle<2> Triangle<dim>::to_2d() const
     if (v_2d.col(1)[0] == 0.0)
         throw std::domain_error("Triangle::get_triangle_in_2d(): divide by zero.");
 
-    uint8_t nverts = 1;
     EigMatNX<Float, dim> vn0 = v_.rightCols(1) - v_.col(0);
 
     EigRowVec<Float> x = (v10.transpose() * vn0) / v_2d.col(1)[0];
