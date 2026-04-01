@@ -19,17 +19,6 @@
 
 #include <external/Eigen/Dense>
 
-// #define EIGEN_DONT_VECTORIZE
-// #undef EIGEN_UNALIGNED_VECTORIZE
-// #define EIGEN_UNALIGNED_VECTORIZE 0
-// #undef EIGEN_FAST_MATH
-// #define EIGEN_FAST_MATH 0
-// #undef EIGEN_MAX_ALIGN_BYTES
-// #define EIGEN_MAX_ALIGN_BYTES 0
-// #undef EIGEN_MAX_STATIC_ALIGN_BYTES
-// #define EIGEN_MAX_STATIC_ALIGN_BYTES 0
-// #define EIGEN_INITIALIZE_MATRICES_BY_ZERO
-
 #include "test_rwg_operators.hpp"
 
 #include "types.hpp"

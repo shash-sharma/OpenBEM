@@ -95,6 +95,12 @@ public:
         return;
     };
 
+
+    /**
+    * @brief Virtual destructor.
+    */
+    virtual ~ProjectorBase() = default;
+
 };
 
 /**

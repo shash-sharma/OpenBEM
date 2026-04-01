@@ -73,6 +73,12 @@ public:
         const Complex k
         ) const = 0;
 
+
+    /**
+    * @brief Virtual destructor.
+    */
+    virtual ~ScalarKernelBase() = default;
+
 };
 
 /**

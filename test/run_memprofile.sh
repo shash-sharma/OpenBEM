@@ -9,5 +9,5 @@ time make -j 4 -C ${BUILD_DIR}
 
 export OMP_NUM_THREADS=1
 
-valgrind --tool=massif --log-file=${BUILD_DIR}/ex01_memcheck.txt ${BUILD_DIR}/ex01 &
+valgrind --tool=massif --log-file=${BUILD_DIR}/ex01_memprofile.txt ${BUILD_DIR}/ex01 &
 

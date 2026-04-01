@@ -120,6 +120,12 @@ public:
             flip_normals_(flip_normals) {};
 
 
+    /**
+    * @brief Virtual destructor.
+    */
+    virtual ~IntegralEquationBase() = default;
+
+
 protected:
 
     const TriangleMesh<3>& obs_mesh_;

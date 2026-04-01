@@ -96,6 +96,12 @@ public:
         return;
     };
 
+
+    /**
+    * @brief Virtual destructor.
+    */
+    virtual ~OperatorBase() = default;
+
 };
 
 /**

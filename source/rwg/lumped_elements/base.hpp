@@ -330,6 +330,12 @@ public:
     const std::vector<std::vector<Index>>& terminal_components() const { return terminal_components_; };
 
 
+    /**
+    * @brief Virtual destructor.
+    */
+    virtual ~LumpedElementBase() = default;
+
+
 protected:
 
     /**

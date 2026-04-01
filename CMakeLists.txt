@@ -32,12 +32,8 @@ set_property(CACHE BUILD_TESTS PROPERTY STRINGS "yes" "no")
 set(BUILD_EXAMPLES "no" CACHE STRING "Build all examples. Should be 'yes' or 'no' (default).")
 set_property(CACHE BUILD_EXAMPLES PROPERTY STRINGS "yes" "no")
 
-if (NOT CMAKE_BUILD_TYPE)
-    message("build type not set")
-    set(CMAKE_BUILD_TYPE Release)
-endif ()
-
-message(CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}")
+set(OPTIMIZE_NATIVE_ARCH "yes" CACHE STRING "Optimize builds for native architecture. Should be one of 'yes' (default) or 'no'.")
+set_property(CACHE OPTIMIZE_NATIVE_ARCH PROPERTY STRINGS "yes" "no")
 
 
 # ====== Compile settings ======
@@ -117,17 +113,27 @@ else ()
 
 endif ()
 
-if (NOT CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
-    add_compile_options(
-        -msse -msse2 -mavx -mavx2
-    )
-endif()
+string(TOLOWER "${OPTIMIZE_NATIVE_ARCH}" OPTIMIZE_NATIVE_ARCH)
+if (OPTIMIZE_NATIVE_ARCH STREQUAL "yes")
+
+    message("Optimized for native architecture")
+    add_compile_options(-march=native)
+
+endif ()
+
 
 add_compile_options(
     -Wall
-    -march=native
+    -Wno-sign-compare # not ideal to disable this; done because Eigen reports sizes as signed ints
     # -ffast-math
 )
+
+if (NOT CMAKE_BUILD_TYPE)
+    message("build type not set")
+    set(CMAKE_BUILD_TYPE Release)
+endif ()
+
+message(CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}")
 
 
 # ====== OpenMP ======

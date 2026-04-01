@@ -106,6 +106,12 @@ public:
     };
 
 
+    /**
+    * @brief Virtual destructor.
+    */
+    virtual ~ObsIntegratorBase() = default;
+
+
 protected:
 
     bool compute_g_term_ = true;

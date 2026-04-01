@@ -236,8 +236,7 @@ void test_nmfie_pec()
     Escatmag.raw_matrix() = Escat.raw_matrix().reshaped(3, 100).colwise().norm();
 
     EigenDenseMatrix<Float> rcs;
-    rcs.raw_matrix() = Escat.raw_matrix().reshaped(3, 100).colwise().squaredNorm().transpose();
-    rcs.raw_matrix().array() *= four_pi * std::pow(dist, 2);
+    rcs.raw_matrix() = Eigen::pow(Escatmag.raw_matrix().array(), 2) * four_pi * std::pow(dist, 2);
 
 
     std::ifstream in_stream_ref (path + "/ref/sphere_pec_ref.json");

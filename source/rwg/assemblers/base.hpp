@@ -218,6 +218,12 @@ public:
     };
 
 
+    /**
+    * @brief Virtual destructor.
+    */
+    virtual ~OperatorAssemblerBase() = default;
+
+
 protected:
 
     const TriangleMesh<3>& obs_mesh_;
@@ -270,6 +276,12 @@ public:
         ExcitationBase<obs_num_dof>& exc,
         const Complex k
         ) = 0;
+
+
+    /**
+    * @brief Virtual destructor.
+    */
+    virtual ~ExcitationAssemblerBase() = default;
 
 
 protected:
@@ -336,6 +348,12 @@ public:
         ProjectorBase<src_num_dof>& op,
         const Complex k
         ) = 0;
+
+
+    /**
+    * @brief Virtual destructor.
+    */
+    virtual ~ProjectorAssemblerBase() = default;
 
 
 protected:

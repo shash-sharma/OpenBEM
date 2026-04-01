@@ -118,6 +118,12 @@ public:
         ) { SrcResult result; result.resize(r_obs.cols()); return result; };
 
 
+    /**
+    * @brief Virtual destructor.
+    */
+    virtual ~SrcIntegratorBase() = default;
+
+
 protected:
 
     bool compute_g_terms_ = true;

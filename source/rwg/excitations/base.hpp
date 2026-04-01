@@ -63,11 +63,18 @@ public:
         const Triangle<3>& obs_tri
         ) = 0;
 
+
     /**
     * @brief Returns the number of excitations (right-hand sides) to be generated.
     * @return Number of excitations (right-hand sides).
     */
     virtual Index num_excitations() const = 0;
+
+
+    /**
+    * @brief Virtual destructor.
+    */
+    virtual ~ExcitationBase() = default;
 
 };
 
