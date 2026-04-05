@@ -41,7 +41,7 @@ public:
     /**
     * @brief Computes the kernel for given observation and source points.
     * @param[in] r_obs - Observer position vector.
-    * @param[in] r_src - Source position vector.
+    * @param[in] r_src - Set of source position vectors.
     * @param[in] k - Complex wavenumber.
     * @return Kernel value.
     * @details
@@ -52,9 +52,9 @@ public:
     * where \f$ \vec{r} \f$ is the observer position vector, \f$ \vec{r}\,' \f$ is the source position vector,
     * and \f$ k \f$ is the complex wavenumber.
     */
-    Complex kernel(
+    EigRowVec<Complex> compute(
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
-        ConstEigRef<EigColVecN<Float, 3>> r_src,
+        ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
         ) const;
 
@@ -62,7 +62,7 @@ public:
     /**
     * @brief Computes the gradient of the kernel for given observation and source points.
     * @param[in] r_obs - Observer position vector.
-    * @param[in] r_src - Source position vector.
+    * @param[in] r_src - Set of source position vectors.
     * @param[in] k - Complex wavenumber.
     * @return Components of the gradient of the kernel.
     * @details
@@ -75,9 +75,9 @@ public:
     * where \f$ \vec{r} \f$ is the observer position vector, \f$ \vec{r}\,' \f$ is the source position vector,
     * and \f$ k \f$ is the complex wavenumber.
     */
-    EigColVecN<Complex, 3> grad_kernel(
+    EigMatNX<Complex, 3> compute_grad(
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
-        ConstEigRef<EigColVecN<Float, 3>> r_src,
+        ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
         ) const;
 
@@ -95,7 +95,7 @@ public:
     /**
     * @brief Computes the kernel for given observation and source points.
     * @param[in] r_obs - Observer position vector.
-    * @param[in] r_src - Source position vector.
+    * @param[in] r_src - Set of source position vectors.
     * @param[in] k - Complex wavenumber.
     * @return Kernel value.
     * @details
@@ -106,9 +106,9 @@ public:
     * where \f$ \vec{r} \f$ is the observer position vector, \f$ \vec{r}\,' \f$ is the source position vector,
     * and \f$ k \f$ is the complex wavenumber.
     */
-    Complex kernel(
+    EigRowVec<Complex> compute(
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
-        ConstEigRef<EigColVecN<Float, 3>> r_src,
+        ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
         ) const;
 
@@ -116,7 +116,7 @@ public:
     /**
     * @brief Computes the gradient of the kernel for given observation and source points.
     * @param[in] r_obs - Observer position vector.
-    * @param[in] r_src - Source position vector.
+    * @param[in] r_src - Set of source position vectors.
     * @param[in] k - Complex wavenumber.
     * @return Components of the gradient of the kernel.
     * @details
@@ -132,9 +132,9 @@ public:
     * where \f$ \vec{r} \f$ is the observer position vector, \f$ \vec{r}\,' \f$ is the source position vector,
     * and \f$ k \f$ is the complex wavenumber.
     */
-    EigColVecN<Complex, 3> grad_kernel(
+    EigMatNX<Complex, 3> compute_grad(
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
-        ConstEigRef<EigColVecN<Float, 3>> r_src,
+        ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
         ) const;
 
@@ -152,7 +152,7 @@ public:
     /**
     * @brief Computes the kernel for given observation and source points.
     * @param[in] r_obs - Observer position vector.
-    * @param[in] r_src - Source position vector.
+    * @param[in] r_src - Set of source position vectors.
     * @param[in] k - Complex wavenumber.
     * @return Kernel value.
     * @details
@@ -169,9 +169,9 @@ public:
     * \f]
     * truncated when the next term is smaller than the tolerance `KERNEL_DEFAULT_TOL` relative to the sum so far.
     */
-    Complex kernel(
+    EigRowVec<Complex> compute(
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
-        ConstEigRef<EigColVecN<Float, 3>> r_src,
+        ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
         ) const;
 
@@ -179,7 +179,7 @@ public:
     /**
     * @brief Computes the gradient of the kernel for given observation and source points.
     * @param[in] r_obs - Observer position vector.
-    * @param[in] r_src - Source position vector.
+    * @param[in] r_src - Set of source position vectors.
     * @param[in] k - Complex wavenumber.
     * @return Components of the gradient of the kernel.
     * @details
@@ -203,9 +203,9 @@ public:
     * \f]
     * truncated when the next term is smaller than the tolerance `KERNEL_DEFAULT_TOL` relative to the sum so far.
     */
-    EigColVecN<Complex, 3> grad_kernel(
+    EigMatNX<Complex, 3> compute_grad(
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
-        ConstEigRef<EigColVecN<Float, 3>> r_src,
+        ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
         ) const;
 

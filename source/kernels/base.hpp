@@ -49,13 +49,13 @@ public:
     /**
     * @brief Computes the scalar kernel for given observation and source points.
     * @param[in] r_obs - Observer position vector.
-    * @param[in] r_src - Source position vector.
+    * @param[in] r_src - Set of source position vectors.
     * @param[in] k - Complex wavenumber.
     * @return Scalar kernel value.
     */
-    virtual Complex kernel(
+    virtual EigRowVec<Complex> compute(
         ConstEigRef<EigColVecN<Float, dim>> r_obs,
-        ConstEigRef<EigColVecN<Float, dim>> r_src,
+        ConstEigRef<EigMatNX<Float, dim>> r_src,
         const Complex k
         ) const = 0;
 
@@ -63,13 +63,13 @@ public:
     /**
     * @brief Computes the gradient of the scalar kernel for given observation and source points.
     * @param[in] r_obs - Observer position vector.
-    * @param[in] r_src - Source position vector.
+    * @param[in] r_src - Set of source position vectors.
     * @param[in] k - Complex wavenumber.
     * @return Components of the gradient of the scalar kernel.
     */
-    virtual EigColVecN<Complex, dim> grad_kernel(
+    virtual EigMatNX<Complex, dim> compute_grad(
         ConstEigRef<EigColVecN<Float, dim>> r_obs,
-        ConstEigRef<EigColVecN<Float, dim>> r_src,
+        ConstEigRef<EigMatNX<Float, dim>> r_src,
         const Complex k
         ) const = 0;
 

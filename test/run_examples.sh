@@ -9,7 +9,8 @@ cmake -DDEBUG_LEVEL=release -DPRECISION=double -DHEADER_ONLY=no -DBUILD_TESTS=no
 
 time make -j 4 -C ${BUILD_DIR}
 
-export OMP_NUM_THREADS=1
+export OMP_NUM_THREADS=4
 
-valgrind --tool=callgrind --log-file=${BUILD_DIR}/ex01_profile.txt ${BUILD_DIR}/ex01 &
+time ${BUILD_DIR}/ex01
+time ${BUILD_DIR}/ex02
 
