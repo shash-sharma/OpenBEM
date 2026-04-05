@@ -39,7 +39,6 @@ ObsResult ObsStrategic<ObsTriangleQuadratureType, SrcTriangleQuadratureType, Lin
     Float dist_wvl = dist * std::real(k) / two_pi;
     Float longest_edge_wvl = src_tri.longest_edge_length() * std::real(k) / two_pi;
 
-    Float threshold_skin_depth = -one;
     Float skin_depth = -one / std::imag(k);
     if (std::isfinite(skin_depth) && settings_.threshold_skin_depths > float_eps)
         if (dist > std::max(settings_.threshold_skin_depths * skin_depth, 2 * src_tri.longest_edge_length()))

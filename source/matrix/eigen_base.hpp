@@ -446,6 +446,12 @@ public:
     };
 
 
+    /**
+    * @brief Virtual destructor.
+    */
+    virtual ~EigenMatrixBase() = default;
+
+
 protected:
 
     std::shared_ptr<MatrixType> matrix_ = nullptr;

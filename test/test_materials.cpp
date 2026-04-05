@@ -26,8 +26,6 @@ using namespace bem;
 TriangleMesh<3> test_two_unit_cubes()
 {
 
-    Float tol = std::sqrt(float_eps);
-
     EigMatMN<Float, 3, 16> vertices;
     vertices.col(0) = EigColVecN<Float, 3> ({ 0, 0, 0 });
     vertices.col(1) = EigColVecN<Float, 3> ({ 1, 0, 0 });

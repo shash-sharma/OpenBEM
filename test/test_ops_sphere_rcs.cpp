@@ -52,9 +52,6 @@ using namespace bem::rwg;
 using json = nlohmann::json;
 
 
-const Float LAMBDA = 1;
-
-
 void test_efie_pec()
 {
 
@@ -239,8 +236,7 @@ void test_nmfie_pec()
     Escatmag.raw_matrix() = Escat.raw_matrix().reshaped(3, 100).colwise().norm();
 
     EigenDenseMatrix<Float> rcs;
-    rcs.raw_matrix() = Escat.raw_matrix().reshaped(3, 100).colwise().squaredNorm().transpose();
-    rcs.raw_matrix().array() *= four_pi * std::pow(dist, 2);
+    rcs.raw_matrix() = Eigen::pow(Escatmag.raw_matrix().array(), 2) * four_pi * std::pow(dist, 2);
 
 
     std::ifstream in_stream_ref (path + "/ref/sphere_pec_ref.json");
@@ -282,8 +278,6 @@ int main(int argc, char** argv)
     std::cout << "\n====================================================" << std::endl;
     std::cout << "test_ops_sphere_rcs.cpp" << std::endl;
     std::cout << "====================================================\n" << std::endl;
-
-    Float tol = 1e-3;
 
     test_efie_pec();
     test_nmfie_pec();

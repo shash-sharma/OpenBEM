@@ -64,9 +64,7 @@ void MeshTransfer::read_gmsh_v2(
     // First pass: count vertices, elements, surfaces, and physical names
     std::size_t num_vertices = 0;
     std::size_t num_faces = 0;
-    std::size_t num_physical_names = 0;
 
-    bool in_nodes = false;
     bool in_elements = false;
     bool in_physical_names = false;
 
@@ -80,14 +78,12 @@ void MeshTransfer::read_gmsh_v2(
     {
         if (line == "$Nodes")
         {
-            in_nodes = true;
             std::getline(file, line); // Read number of vertices
             num_vertices = std::stoull(line);
             continue;
         }
         if (line == "$EndNodes")
         {
-            in_nodes = false;
             continue;
         }
         if (line == "$Elements")
@@ -105,7 +101,6 @@ void MeshTransfer::read_gmsh_v2(
         {
             in_physical_names = true;
             std::getline(file, line); // Read number of physical names
-            num_physical_names = std::stoull(line);
             continue;
         }
         if (line == "$EndPhysicalNames")

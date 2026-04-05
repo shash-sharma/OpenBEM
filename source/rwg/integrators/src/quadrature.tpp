@@ -38,10 +38,7 @@ SrcResult SrcQuadrature<TriangleQuadratureType, ScalarKernelType>::integrate(
     {
         EigMatNX<Float, 3> r_src_3d = EigMatNX<Float, 3>::Zero(3, r_src.cols());
         r_src_3d.topRows(2) = r_src;
-        EigRowVec<Complex> vals = EigRowVec<Complex>::Zero(1, r_src.cols());
-        for (std::size_t rs = 0; rs < r_src.cols(); ++rs)
-            vals[rs] = kernel_.kernel(r_obs.rowwise().mean(), r_src_3d.col(rs), k);
-        return vals;
+        return kernel_.compute(r_obs.rowwise().mean(), r_src_3d, k);
     };
 
     // Get the quadrature points and weights
@@ -58,18 +55,13 @@ SrcResult SrcQuadrature<TriangleQuadratureType, ScalarKernelType>::integrate(
         result.g.setZero(1, r_obs.cols());
         result.rs_g.setZero(2, r_obs.cols());
 
-        for (std::size_t rs = 0; rs < points_3d.cols(); ++rs)
+        for (std::size_t ro = 0; ro < r_obs.cols(); ++ro)
         {
-            for (std::size_t ro = 0; ro < r_obs.cols(); ++ro)
-            {
-                Complex g = kernel_.kernel(
-                    r_obs.col(ro), points_3d.col(rs), k
-                    ) * tri_quad_.weights()[rs];
-
-                result.g[ro] += g;
-                for (uint8_t ii = 0; ii < 2; ii++)
-                    result.rs_g(ii, ro) += g * points_3d(ii, rs);
-            }
+            EigRowVec<Complex> gw = kernel_.compute(
+                r_obs.col(ro), points_3d, k
+                ).array() * tri_quad_.weights().array();
+            result.g[ro] = gw.array().sum();
+            result.rs_g.col(ro) = tri_quad_.points() * gw.transpose();
         }
     }
 
@@ -77,29 +69,13 @@ SrcResult SrcQuadrature<TriangleQuadratureType, ScalarKernelType>::integrate(
     {
         result.grad_g.setZero(3, r_obs.cols());
 
-        for (std::size_t rs = 0; rs < points_3d.cols(); ++rs)
+        for (std::size_t ro = 0; ro < r_obs.cols(); ++ro)
         {
-            for (std::size_t ro = 0; ro < r_obs.cols(); ++ro)
-            {
-                EigColVecN<Complex, 3> grad_g = kernel_.grad_kernel(
-                    r_obs.col(ro), points_3d.col(rs), k
-                    ) * tri_quad_.weights()[rs];
-
-                for (uint8_t ii = 0; ii < 3; ii++)
-                    result.grad_g(ii, ro) += grad_g[ii];
-            }
+            result.grad_g.col(ro) = kernel_.compute_grad(
+                r_obs.col(ro), points_3d, k
+                ) * tri_quad_.weights().transpose();
         }
     }
-
-
-#ifdef EXTRA_DEBUG
-    std::string text = "Integral eval points:\n";
-    for (std::size_t ii = 0; ii < points_3d.cols(); ii++)
-        text += std::to_string(points_3d(0, ii)) + " " +
-                std::to_string(points_3d(1, ii)) + " " +
-                std::to_string(0.0) + "\n";
-    Log::make_debug_section(text);
-#endif
 
     return result;
 

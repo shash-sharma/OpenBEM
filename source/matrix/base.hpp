@@ -244,6 +244,12 @@ public:
         return;
     };
 
+
+    /**
+    * @brief Virtual destructor.
+    */
+    virtual ~MatrixBase() = default;
+
 };
 
 /**

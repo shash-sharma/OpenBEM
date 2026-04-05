@@ -167,6 +167,12 @@ public:
     };
 
 
+    /**
+    * @brief Virtual destructor.
+    */
+    virtual ~MeshBase() = default;
+
+
 protected:
 
     EigMatNX<Float, dim> verts_;

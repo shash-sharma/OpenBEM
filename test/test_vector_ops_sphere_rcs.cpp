@@ -51,9 +51,6 @@ using namespace bem::rwg;
 using json = nlohmann::json;
 
 
-const Float LAMBDA = 1;
-
-
 void test_cfie_pec()
 {
 
@@ -193,7 +190,7 @@ int main(int argc, char** argv)
 {
 
     std::cout << "\n====================================================" << std::endl;
-    std::cout << "test_vector_set_sphere_rcs.cpp" << std::endl;
+    std::cout << "test_vector_ops_sphere_rcs.cpp" << std::endl;
     std::cout << "====================================================\n" << std::endl;
 
     test_cfie_pec();

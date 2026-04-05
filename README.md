@@ -70,10 +70,10 @@ Citing OpenBEM: [![DOI](https://zenodo.org/badge/1060257425.svg)](https://doi.or
 OpenBEM is designed to be modular and extensible, so that researchers
 can focus on aspects of the boundary element method pertinent to their
 research, without needing to implement other aspects that are not of
-interest to them, but still must be implemented. Instead, researchers
-can prototype their ideas and plug them into the rest of OpenBEM's
-functionality, to quickly assemble full electromagnetic solvers that
-incorporate their ideas.
+interest to them, but still must be implemented. The goal is to enable
+researchers to prototype their ideas and plug them into the rest of
+OpenBEM's functionality, and quickly assemble full electromagnetic
+solvers to test their ideas.
 
 For example,
 
@@ -205,7 +205,7 @@ For example, if you want to include OpenBEM in a C++ file called
 g++ -I/path/to/OpenBEM/source -std=c++17 main.cpp -o main
 ```
 
-where the `-I` specifier adds the OpenBEM source directory to the
+where the `-I` specifier adds the `source` directory in OpenBEM to the
 compiler's include search path.
 
 If you're using [CMake](https://cmake.org) to build your project

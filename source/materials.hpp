@@ -182,6 +182,12 @@ public:
     { return loss_tan(f) > CONDUCTOR_LOSS_TAN_THRESHOLD; };
 
 
+    /**
+    * @brief Virtual destructor.
+    */
+    virtual ~Material() = default;
+
+
 protected:
 
     const Complex epsr_ = one;
@@ -196,6 +202,10 @@ protected:
 */
 class PerfectDielectricMaterial: public Material
 {
+
+    using Material::eta;
+    using Material::c;
+
 public:
 
     /**
@@ -223,7 +233,6 @@ public:
     */
     Float c() const
     { return one / std::real(std::sqrt(mu() * eps())); };
-
 
 };
 

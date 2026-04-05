@@ -41,7 +41,6 @@ bool compare_with_tol(
     )
 {
 
-    bool equal = val == val_ref;
     if (val == val_ref)
         return true;
 

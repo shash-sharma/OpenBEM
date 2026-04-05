@@ -26,9 +26,6 @@
 using namespace bem;
 
 
-const Float LAMBDA = 1;
-
-
 void test_set_points()
 {
 

@@ -100,6 +100,12 @@ public:
     };
 
 
+    /**
+    * @brief Virtual destructor.
+    */
+    virtual ~TriangleQuadratureBase() = default;
+
+
 protected:
 
     EigMatNX<Float, dim> points_;

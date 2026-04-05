@@ -57,14 +57,11 @@ void SrcSingularity<TriangleQuadratureType, ScalarKernelType>::compute_integral_
     )
 {
 
-    const Float four_pi = four * pi;
-    const Float tol = TRIANGLE_DEFAULT_TOL * src_tri.shortest_edge_length();
-
     // Projection of the observation point on the source triangle's local plane
     EigMatNX<Float, 2> rho_obs = r_obs.topRows(2);
     z_ = r_obs.row(2);
     z_abs_ = z_.cwiseAbs();
-    EigRowVec<Float> z_sq = Eigen::pow(z_.array(), 2);
+    EigRowVec<Float> z_sq = z_.array() * z_.array();
 
     beta_ = EigRowVec<Float>::Zero(1, r_obs.cols());
     t0_f2_ = EigRowVec<Float>::Zero(1, r_obs.cols());
@@ -87,14 +84,14 @@ void SrcSingularity<TriangleQuadratureType, ScalarKernelType>::compute_integral_
         EigRowVec<Float> s_plus = edge.unit_vec().transpose() * plus_to_rho;
         EigRowVec<Float> s_minus = s_plus.array() - edge.length();
         EigRowVec<Float> t0 = -(u_hat.transpose() * plus_to_rho);
-        EigRowVec<Float> R0 = Eigen::sqrt(Eigen::pow(t0.array(), 2) + z_sq.array());
+        EigRowVec<Float> R0 = Eigen::sqrt((t0.array() * t0.array()) + z_sq.array());
 
         // Distance from the observation points to each end point of the edge
         EigRowVec<Float> R_plus = Eigen::sqrt(plus_to_rho.colwise().squaredNorm().array() + z_sq.array());
         EigRowVec<Float> R_minus = Eigen::sqrt(minus_to_rho.colwise().squaredNorm().array() + z_sq.array());
 
         // Compute the terms which compose the final integrals
-        EigRowVec<Float> R0_sq = Eigen::pow(R0.array(), 2);
+        EigRowVec<Float> R0_sq = R0.array() * R0.array();
         EigRowVec<Float> atan_plus (t0.size()), atan_minus (t0.size());
         for (std::size_t ii = 0; ii < t0.size(); ++ii)
         {

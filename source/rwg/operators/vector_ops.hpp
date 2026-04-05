@@ -86,9 +86,8 @@ public:
 
 protected:
 
-    const bool helmholtz_kernel_ = false;
-
     ObsIntegratorType obs_integrator_;
+    const bool helmholtz_kernel_ = false;
 
     VectorSingleLayerOp<ObsIntegratorType> vector_single_layer_;
     RotVectorSingleLayerOp<ObsIntegratorType> rot_vector_single_layer_;

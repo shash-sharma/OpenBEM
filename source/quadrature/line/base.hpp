@@ -102,6 +102,12 @@ public:
     };
 
 
+    /**
+    * @brief Virtual destructor.
+    */
+    virtual ~LineQuadratureBase() = default;
+
+
 protected:
 
     EigMatNX<Float, dim> points_;
