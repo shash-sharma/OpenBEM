@@ -66,52 +66,52 @@ public:
     EigenMatrixBase(): EigenMatrixBase(0, 0) {};
 
 
-    /**
-    * @brief Sets a block of values in this matrix to the values of a given matrix, starting at a given position.
-    * @param[in] x - Matrix to insert.
-    * @param[in] row_start - Starting row index for the block.
-    * @param[in] col_start - Starting column index for the block.
-    * @param[in] a - Scalar to multiply the values of `x` before inserting (optional).
-    */
-    virtual void set_block(
-        const EigenMatrixBase<T, MatrixType>& x,
-        Index row_start,
-        Index col_start,
-        const T& a = T(1)
-        ) = 0;
+    // /**
+    // * @brief Sets a block of values in this matrix to the values of a given matrix, starting at a given position.
+    // * @param[in] x - Matrix to insert.
+    // * @param[in] row_start - Starting row index for the block.
+    // * @param[in] col_start - Starting column index for the block.
+    // * @param[in] a - Scalar to multiply the values of `x` before inserting (optional).
+    // */
+    // virtual void set_block(
+    //     const EigenMatrixBase<T, MatrixType>& x,
+    //     Index row_start,
+    //     Index col_start,
+    //     const T& a = T(1)
+    //     ) = 0;
 
 
-    /**
-    * @brief Adds a block of values to this matrix from the values of a given matrix,
-    * starting at a given position.
-    * @param[in] x - Matrix whose values should be added to a block of this matrix.
-    * @param[in] row_start - Starting row index for the block.
-    * @param[in] col_start - Starting column index for the block.
-    * @param[in] a - Scalar to multiply the values of `x` before adding (optional).
-    */
-    virtual void add_block(
-        const EigenMatrixBase<T, MatrixType>& x,
-        Index row_start,
-        Index col_start,
-        const T& a = T(1)
-        ) = 0;
+    // /**
+    // * @brief Adds a block of values to this matrix from the values of a given matrix,
+    // * starting at a given position.
+    // * @param[in] x - Matrix whose values should be added to a block of this matrix.
+    // * @param[in] row_start - Starting row index for the block.
+    // * @param[in] col_start - Starting column index for the block.
+    // * @param[in] a - Scalar to multiply the values of `x` before adding (optional).
+    // */
+    // virtual void add_block(
+    //     const EigenMatrixBase<T, MatrixType>& x,
+    //     Index row_start,
+    //     Index col_start,
+    //     const T& a = T(1)
+    //     ) = 0;
 
 
-    /**
-    * @brief Retrieves a block of values from this matrix.
-    * @param[out] x - Matrix to store the retrieved block of values.
-    * @param[in] row_start - Starting row index for the block.
-    * @param[in] col_start - Starting column index for the block.
-    * @param[in] b_rows - Number of rows in the block to retrieve.
-    * @param[in] b_cols - Number of columns in the block to retrieve.
-    */
-    virtual void get_block(
-        EigenMatrixBase<T, MatrixType>& x,
-        Index row_start,
-        Index col_start,
-        Index b_rows,
-        Index b_cols
-        ) const = 0;
+    // /**
+    // * @brief Retrieves a block of values from this matrix.
+    // * @param[out] x - Matrix to store the retrieved block of values.
+    // * @param[in] row_start - Starting row index for the block.
+    // * @param[in] col_start - Starting column index for the block.
+    // * @param[in] b_rows - Number of rows in the block to retrieve.
+    // * @param[in] b_cols - Number of columns in the block to retrieve.
+    // */
+    // virtual void get_block(
+    //     EigenMatrixBase<T, MatrixType>& x,
+    //     Index row_start,
+    //     Index col_start,
+    //     Index b_rows,
+    //     Index b_cols
+    //     ) const = 0;
 
 
     /**

@@ -260,11 +260,11 @@ public:
     * @param[in] a - Scalar to multiply the values of `x` before inserting (optional).
     */
     void set_block(
-        const EigenMatrixBase<T, MatrixType>& x,
+        const EigenSparseMatrix<T>& x,
         Index row_start,
         Index col_start,
         const T& a = T(1)
-        ) override
+        )
     {
         std::vector<Eigen::Triplet<T>> x_triplets;
         x_triplets.reserve(x.raw_matrix().nonZeros());
@@ -292,11 +292,11 @@ public:
     * @param[in] a - Scalar to multiply the values of `x` before adding (optional).
     */
     void add_block(
-        const EigenMatrixBase<T, MatrixType>& x,
+        const EigenSparseMatrix<T>& x,
         Index row_start,
         Index col_start,
         const T& a = T(1)
-        ) override
+        )
     {
         std::vector<Eigen::Triplet<T>> x_triplets;
         x_triplets.reserve(x.raw_matrix().nonZeros());
@@ -320,12 +320,12 @@ public:
     * @param[in] b_cols - Number of columns in the block to retrieve.
     */
     void get_block(
-        EigenMatrixBase<T, MatrixType>& x,
+        EigenSparseMatrix<T>& x,
         Index row_start,
         Index col_start,
         Index b_rows,
         Index b_cols
-        ) const override
+        ) const
     {
         x.resize(b_rows, b_cols);
         x.raw_matrix() = matrix_->block(row_start, col_start, b_rows, b_cols);
