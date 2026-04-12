@@ -112,7 +112,9 @@ public:
         const Material& material
         )
     {
-        MatrixType Dt = div_matrix(f, material);
+        MatrixType Dt;
+        Dt.set_transpose(div_matrix(f, material));
+
         MatrixType Lp = phi_matrix(f, material);
         MatrixType DtLp;
         DtLp.set_mat_mul(Dt, Lp);
@@ -188,10 +190,9 @@ public:
         )
     {
         DivRwgOp op_D;
-        MatrixType D, Dt;
+        MatrixType D;
         assm_div_.assemble(D, op_D, 0);
-        Dt.set_transpose(D);
-        return Dt;
+        return D;
     };
 
 

@@ -74,7 +74,7 @@ public:
     * @param[in] a - Scalar to multiply the values of `x` before inserting (optional).
     */
     virtual void set_block(
-        const MatrixBase<T>& x,
+        const EigenMatrixBase<T, MatrixType>& x,
         Index row_start,
         Index col_start,
         const T& a = T(1)
@@ -90,7 +90,7 @@ public:
     * @param[in] a - Scalar to multiply the values of `x` before adding (optional).
     */
     virtual void add_block(
-        const MatrixBase<T>& x,
+        const EigenMatrixBase<T, MatrixType>& x,
         Index row_start,
         Index col_start,
         const T& a = T(1)
@@ -106,7 +106,7 @@ public:
     * @param[in] b_cols - Number of columns in the block to retrieve.
     */
     virtual void get_block(
-        MatrixBase<T>& x,
+        EigenMatrixBase<T, MatrixType>& x,
         Index row_start,
         Index col_start,
         Index b_rows,
@@ -237,10 +237,9 @@ public:
     * \f$ \mathbf{X} \f$ is a given matrix, and \f$ \mathbf{X}^T \f$ is its transpose.
     * @param[in] x - Matrix to transpose.
     */
-    void set_transpose(const MatrixBase<T>& x)
+    void set_transpose(const EigenMatrixBase<T, MatrixType>& x)
     {
-        const EigenMatrixBase<T, MatrixType>& xd = dynamic_cast<const EigenMatrixBase<T, MatrixType>&> (x);
-        (*matrix_) = xd.raw_matrix().transpose();
+        (*matrix_) = x.raw_matrix().transpose();
         return;
     };
 
@@ -249,10 +248,9 @@ public:
     * @brief Retrieves matrix values on the diagonal, zeroing out all other entries.
     * @param[out] x - Diagonal matrix.
     */
-    void get_diagonal(MatrixBase<T>& x) const
+    void get_diagonal(EigenMatrixBase<T, MatrixType>& x) const
     {
-        EigenMatrixBase<T, MatrixType>& xd = dynamic_cast<EigenMatrixBase<T, MatrixType>&> (x);
-        xd.raw_matrix() = matrix_->diagonal().asDiagonal();
+        x.raw_matrix() = matrix_->diagonal().asDiagonal();
         return;
     };
 
@@ -265,7 +263,8 @@ public:
     */
     void add_ax(const MatrixBase<T>& x, const T& a = T(1)) override
     {
-        const EigenMatrixBase<T, MatrixType>& xd = dynamic_cast<const EigenMatrixBase<T, MatrixType>&> (x);
+        const EigenMatrixBase<T, MatrixType>& xd =
+            dynamic_cast<const EigenMatrixBase<T, MatrixType>&> (x);
         raw_matrix() += a * xd.raw_matrix();
         return;
     };
@@ -279,11 +278,14 @@ public:
     * @param[in] a - Scalar which which to scale `x`.
     * @param[in] b - Scalar which which to scale `y`.
     */
-    void set_axpby(const MatrixBase<T>& x, const MatrixBase<T>& y, const T& a = T(1), const T& b = T(1))
+    void set_axpby(
+        const EigenMatrixBase<T, MatrixType>& x,
+        const EigenMatrixBase<T, MatrixType>& y,
+        const T& a = T(1),
+        const T& b = T(1)
+        )
     {
-        const EigenMatrixBase<T, MatrixType>& xd = dynamic_cast<const EigenMatrixBase<T, MatrixType>&> (x);
-        const EigenMatrixBase<T, MatrixType>& yd = dynamic_cast<const EigenMatrixBase<T, MatrixType>&> (y);
-        raw_matrix() = a * xd.raw_matrix() + b * yd.raw_matrix();
+        raw_matrix() = a * x.raw_matrix() + b * y.raw_matrix();
         return;
     };
 
@@ -295,11 +297,13 @@ public:
     * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
     * @param[in] a - Scalar which which to scale the product of `x` and `y`.
     */
-    void set_mat_mul(const MatrixBase<T>& x, const MatrixBase<T>& y, const T& a = T(1))
+    void set_mat_mul(
+        const EigenMatrixBase<T, MatrixType>& x,
+        const EigenMatrixBase<T, MatrixType>& y,
+        const T& a = T(1)
+        )
     {
-        const EigenMatrixBase<T, MatrixType>& xd = dynamic_cast<const EigenMatrixBase<T, MatrixType>&> (x);
-        const EigenMatrixBase<T, MatrixType>& yd = dynamic_cast<const EigenMatrixBase<T, MatrixType>&> (y);
-        raw_matrix() = xd.raw_matrix() * yd.raw_matrix() * a;
+        raw_matrix() = x.raw_matrix() * y.raw_matrix() * a;
         return;
     };
 
@@ -311,11 +315,13 @@ public:
     * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
     * @param[in] a - Scalar which which to scale the product of `x` and `y`.
     */
-    void add_mat_mul(const MatrixBase<T>& x, const MatrixBase<T>& y, const T& a = T(1))
+    void add_mat_mul(
+        const EigenMatrixBase<T, MatrixType>& x,
+        const EigenMatrixBase<T, MatrixType>& y,
+        const T& a = T(1)
+        )
     {
-        const EigenMatrixBase<T, MatrixType>& xd = dynamic_cast<const EigenMatrixBase<T, MatrixType>&> (x);
-        const EigenMatrixBase<T, MatrixType>& yd = dynamic_cast<const EigenMatrixBase<T, MatrixType>&> (y);
-        raw_matrix() += xd.raw_matrix() * yd.raw_matrix() * a;
+        raw_matrix() += x.raw_matrix() * y.raw_matrix() * a;
         return;
     };
 
@@ -329,7 +335,11 @@ public:
     * @param[in] b - Right-hand side matrix, must have the same number of rows as this matrix.
     * @param[in] tol - Tolerance for convergence (optional).
     */
-    void mat_solve_iterative(MatrixBase<T>& x, const MatrixBase<T>& b, const Float tol = 1e-3)
+    void mat_solve_iterative(
+        EigenMatrixBase<T, MatrixType>& x,
+        const EigenMatrixBase<T, MatrixType>& b,
+        const Float tol = 1e-4
+        )
     {
         mat_solve_gmres(x, b, tol);
         // mat_solve_bicgstab(x, b, tol);
@@ -347,7 +357,10 @@ public:
     * @param[in] restart - Restart iteration at which the Krylov subspace is discarded (optional).
     */
     void mat_solve_gmres(
-        MatrixBase<T>& x, const MatrixBase<T>& b, const Float tol = 1e-3, const Index restart = 100
+        EigenMatrixBase<T, MatrixType>& x,
+        const EigenMatrixBase<T, MatrixType>& b,
+        const Float tol = 1e-4,
+        const Index restart = 100
         )
     {
         Eigen::GMRES<MatrixType, Eigen::IdentityPreconditioner> solver;
@@ -361,10 +374,7 @@ public:
         if (solver.info() != Eigen::Success)
             throw std::runtime_error("Matrix solver initialization failed.");
 
-        EigenMatrixBase<T, MatrixType>& xd = dynamic_cast<EigenMatrixBase<T, MatrixType>&> (x);
-        const EigenMatrixBase<T, MatrixType>& bd = dynamic_cast<const EigenMatrixBase<T, MatrixType>&> (b);
-
-        xd.raw_matrix() = solver.solve(bd.raw_matrix());
+        x.raw_matrix() = solver.solve(b.raw_matrix());
 
         std::cout << "GMRES iterations: " << solver.iterations() << " | tolerance: " << solver.tolerance() << " | residual: " << solver.error() << std::endl;
 
@@ -387,7 +397,11 @@ public:
     * @param[in] b - Right-hand side matrix, must have the same number of rows as this matrix.
     * @param[in] tol - Tolerance for convergence (optional).
     */
-    void mat_solve_bicgstab(MatrixBase<T>& x, const MatrixBase<T>& b, const Float tol = 1e-3)
+    void mat_solve_bicgstab(
+        EigenMatrixBase<T, MatrixType>& x,
+        const EigenMatrixBase<T, MatrixType>& b,
+        const Float tol = 1e-3
+        )
     {
         Eigen::BiCGSTAB<MatrixType, Eigen::IdentityPreconditioner> solver;
         // Eigen::BiCGSTAB<MatrixType, Eigen::DiagonalPreconditioner<T>> solver;
@@ -399,10 +413,7 @@ public:
         if (solver.info() != Eigen::Success)
             throw std::runtime_error("Matrix solver initialization failed.");
 
-        EigenMatrixBase<T, MatrixType>& xd = dynamic_cast<EigenMatrixBase<T, MatrixType>&> (x);
-        const EigenMatrixBase<T, MatrixType>& bd = dynamic_cast<const EigenMatrixBase<T, MatrixType>&> (b);
-
-        xd.raw_matrix() = solver.solve(bd.raw_matrix());
+        x.raw_matrix() = solver.solve(b.raw_matrix());
 
         std::cout << "BiCGStab iterations: " << solver.iterations() << " | tolerance: " << solver.tolerance() << " | residual: " << solver.error() << std::endl;
 
@@ -423,12 +434,8 @@ public:
     */
     Float cond() const
     {
-        // Eigen::JacobiSVD<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> svd (
-        //     (Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>) raw_matrix()
-        //     );
-        Eigen::BDCSVD<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> svd (
-            (Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>) raw_matrix()
-            );
+        // Eigen::JacobiSVD<EigMat<T>> svd ((EigMat<T>) raw_matrix());
+        Eigen::BDCSVD<EigMat<T>> svd ((EigMat<T>) raw_matrix());
         EigColVec<Float> s = svd.singularValues();
         return s(0) / s(s.size() - 1);
     };
