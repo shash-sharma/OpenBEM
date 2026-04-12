@@ -25,7 +25,7 @@
 
 #include "rwg/integrators/src/quadrature.hpp"
 
-#include "matrix/eigen_dense.hpp"
+#include "matrix/eigen_matrix.hpp"
 #include "rwg/assemblers/projector_matrix.hpp"
 
 #include "rwg/projectors/base.hpp"
@@ -101,7 +101,7 @@ void test_unit_cube_rwg_g(Complex k)
     cloud.set_polar_data(start, stop, center, num_pts);
 
 
-    EigenDenseMatrix<Complex> mat;
+    EigenMatrix<Complex> mat;
 
     EdgeProjectorAssembler<3> proj_1_mat (cloud, mesh);
     proj_1_mat.assemble(mat, proj_1, k);
@@ -119,7 +119,7 @@ void test_unit_cube_rwg_g(Complex k)
     proj_5_mat.assemble(mat, proj_5, k);
 
 
-    // EigenDenseMatrix<Complex> rhs;
+    // EigenMatrix<Complex> rhs;
 
     // EdgeExcitationAssembler<3> pw_mat;
     // pw_mat.build(rhs, pw, k, mesh);

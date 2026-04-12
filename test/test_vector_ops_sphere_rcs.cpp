@@ -17,7 +17,7 @@
 #include "types.hpp"
 #include "constants.hpp"
 
-#include "matrix/eigen_dense.hpp"
+#include "matrix/eigen_matrix.hpp"
 
 #include "geometry/point_cloud.hpp"
 #include "geometry/structure.hpp"
@@ -75,25 +75,25 @@ void test_cfie_pec()
     VectorRwgOps ops;
     VectorOperatorsAssembler assembler (mesh, mesh);
 
-    EigenDenseMatrix<Complex> mats;
+    EigenMatrix<Complex> mats;
     assembler.assemble(mats, ops, k);
 
     RwgRwgOp op_I;
     EdgeOperatorAssembler I_assembler (mesh, mesh);
 
 
-    EigenDenseMatrix<Complex> T;
+    EigenMatrix<Complex> T;
     mats.get_block(T, 0, 0, mesh.num_edges(), mesh.num_edges());
     T.scale(-J * omega * mu);
 
-    EigenDenseMatrix<Complex> K;
+    EigenMatrix<Complex> K;
     mats.get_block(K, mesh.num_edges() * 3, 0, mesh.num_edges(), mesh.num_edges());
 
-    EigenDenseMatrix<Complex> I;
+    EigenMatrix<Complex> I;
     I_assembler.assemble(I, op_I, k);
     I.scale(half);
 
-    EigenDenseMatrix<Complex> A;
+    EigenMatrix<Complex> A;
     A.set_axpby(T, K);
     A.add_ax(I);
 
@@ -110,17 +110,17 @@ void test_cfie_pec()
     NxRwgPlaneWave pwh (dir, pol_h, pos, amp / std::sqrt(mu / eps));
     EdgeExcitationAssembler pw_assembler (mesh);
 
-    EigenDenseMatrix<Complex> Einc;
+    EigenMatrix<Complex> Einc;
     pw_assembler.assemble(Einc, pwe, k);
 
-    EigenDenseMatrix<Complex> Hinc;
+    EigenMatrix<Complex> Hinc;
     pw_assembler.assemble(Hinc, pwh, k);
 
-    EigenDenseMatrix<Complex> b;
+    EigenMatrix<Complex> b;
     b.set_axpby(Einc, Hinc);
 
 
-    EigenDenseMatrix<Complex> x;
+    EigenMatrix<Complex> x;
     A.mat_solve(x, b);
 
 
@@ -139,18 +139,18 @@ void test_cfie_pec()
     VectorHypersingularProj op_T_proj;
     EdgeProjectorAssembler<3> T_proj_assembler (cloud, mesh);
 
-    EigenDenseMatrix<Complex> T_proj;
+    EigenMatrix<Complex> T_proj;
     T_proj_assembler.assemble(T_proj, op_T_proj, k);
     T_proj.scale(-J * omega * mu);
 
 
-    EigenDenseMatrix<Complex> Escat;
+    EigenMatrix<Complex> Escat;
     Escat.set_mat_mul(T_proj, x);
 
-    EigenDenseMatrix<Float> Escatmag;
+    EigenMatrix<Float> Escatmag;
     Escatmag.raw_matrix() = Escat.raw_matrix().reshaped(3, 100).colwise().norm();
 
-    EigenDenseMatrix<Float> rcs;
+    EigenMatrix<Float> rcs;
     rcs.raw_matrix() = Eigen::pow(Escatmag.raw_matrix().array(), 2) * four_pi * std::pow(dist, 2);
 
     std::ifstream in_stream (path + "/ref/sphere_pec_ref.json");

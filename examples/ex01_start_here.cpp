@@ -24,7 +24,7 @@
 #include "types.hpp"
 #include "constants.hpp"
 
-#include "matrix/eigen_dense.hpp"
+#include "matrix/eigen_matrix.hpp"
 
 #include "geometry/structure.hpp"
 #include "geometry/mesh/mesh_transfer.hpp"
@@ -125,11 +125,11 @@ int main(int argc, char** argv)
     // extra work; just use these wrappers.
 
     // In this example, we'll use dense complex-valued Eigen matrices. The following matrix wrapper
-    // class requires the `matrix/eigen_dense.hpp` header.
+    // class requires the `matrix/eigen_matrix.hpp` header.
 
-    using MatrixType = bem::EigenDenseMatrix<bem::Complex>;
+    using MatrixType = bem::EigenMatrix<bem::Complex>;
 
-    // `EigenDenseMatrix` is the aforementioned wrapper class that wraps dense Eigen
+    // `EigenMatrix` is the aforementioned wrapper class that wraps dense Eigen
     // matrices. `MatrixType` is just an alias that allows slightly cleaner code.
 
     // The classical tangentially-tested EFIE, or TEFIE as it is often called in the literature, is

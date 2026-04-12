@@ -26,7 +26,7 @@
 #include "types.hpp"
 #include "constants.hpp"
 
-#include "matrix/eigen_dense.hpp"
+#include "matrix/eigen_matrix.hpp"
 
 #include "geometry/structure.hpp"
 #include "geometry/mesh/mesh_transfer.hpp"
@@ -51,7 +51,7 @@
 
 // Define the matrix data type, as in Example 1.
 
-using MatrixType = bem::EigenDenseMatrix<bem::Complex>;
+using MatrixType = bem::EigenMatrix<bem::Complex>;
 
 
 int main(int argc, char** argv)

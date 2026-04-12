@@ -31,7 +31,7 @@
 #include "geometry/mesh/triangle_mesh.hpp"
 
 #include "matrix/base.hpp"
-#include "matrix/eigen_dense.hpp"
+#include "matrix/eigen_matrix.hpp"
 
 
 namespace bem::rwg
@@ -46,7 +46,7 @@ namespace bem::rwg
 * @brief Base class for generating excitation coefficients and coupling matrices for lumped ports.
 * @tparam MatrixType - Matrix type, must derive from `MatrixBase<Complex>`.
 */
-template <typename MatrixType = EigenDenseMatrix<Complex>>
+template <typename MatrixType = EigenMatrix<Complex>>
 class LumpedElementBase
 {
 public:

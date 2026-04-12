@@ -26,8 +26,7 @@
 #include "rwg/integrators/obs/quadrature.hpp"
 #include "rwg/operators/generic.hpp"
 
-#include "matrix/eigen_dense.hpp"
-#include "matrix/eigen_sparse.hpp"
+#include "matrix/eigen_matrix.hpp"
 
 #include "geometry/mesh/triangle_mesh.hpp"
 
@@ -103,8 +102,8 @@ void test_unit_cube(OperatorName op_name, Complex k)
     SrcStrategic src_int (SrcIntegrationSettings(), src_tri_quad, line_quad);
     ObsQuadrature obs_int (obs_tri_quad, src_int);
 
-    EigenDenseMatrix<Complex> mat_dense;
-    EigenSparseMatrix<Complex> mat_sparse;
+    EigenMatrix<Complex, EigenMatrixType::EIGEN_DENSE> mat_dense;
+    EigenMatrix<Complex, EigenMatrixType::EIGEN_SPARSE> mat_sparse;
 
     if (op_name == OperatorName::SCALAR_SINGLE_LAYER ||
         op_name == OperatorName::PULSE_PULSE)
@@ -138,7 +137,7 @@ void test_unit_cube(OperatorName op_name, Complex k)
     // std::cout << cond_sparse << std::endl;
 
 
-    EigenDenseMatrix<Complex> mat_error;
+    EigenMatrix<Complex> mat_error;
     mat_error.raw_matrix() = mat_dense.raw_matrix() - EigMat<Complex>(mat_sparse.raw_matrix());
     // mat_error.print();
 
