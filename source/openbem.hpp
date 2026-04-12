@@ -35,9 +35,7 @@
 #include "geometry/mesh/mesh_transfer.hpp"
 
 #include "matrix/base.hpp"
-#include "matrix/eigen_base.hpp"
-#include "matrix/eigen_dense.hpp"
-#include "matrix/eigen_sparse.hpp"
+#include "matrix/eigen_matrix.hpp"
 
 #include "kernels/base.hpp"
 #include "kernels/hgf.hpp"

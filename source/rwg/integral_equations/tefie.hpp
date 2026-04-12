@@ -25,7 +25,7 @@
 #include "geometry/point_cloud.hpp"
 
 #include "matrix/base.hpp"
-#include "matrix/eigen_dense.hpp"
+#include "matrix/eigen_matrix.hpp"
 
 #include "rwg/integral_equations/base.hpp"
 
@@ -55,7 +55,7 @@ namespace bem::rwg
 * @brief Class defining the RWG-based TEFIE.
 * @tparam MatrixType - Matrix type used for all operators, must derive from `MatrixBase<Complex>`.
 */
-template <typename MatrixType = EigenDenseMatrix<Complex>>
+template <typename MatrixType = EigenMatrix<Complex>>
 class Tefie: public IntegralEquationBase<MatrixType>
 {
 

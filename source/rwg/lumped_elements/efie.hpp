@@ -25,7 +25,7 @@
 
 #include "geometry/mesh/base.hpp"
 #include "matrix/base.hpp"
-#include "matrix/eigen_dense.hpp"
+#include "matrix/eigen_matrix.hpp"
 
 #include "rwg/operators/single_layer.hpp"
 #include "rwg/operators/incidence.hpp"
@@ -45,7 +45,7 @@ namespace bem::rwg
 * @brief Class providing lumped element functionality for the TEFIE.
 * @tparam MatrixType - Matrix type, must derive from `MatrixBase<Complex>`.
 */
-template <typename MatrixType = EigenDenseMatrix<Complex>>
+template <typename MatrixType = EigenMatrix<Complex>>
 class TefieLumpedElement: public LumpedElementBase<MatrixType>
 {
 
@@ -178,7 +178,7 @@ protected:
 * @brief Class providing lumped element functionality for the NEFIE.
 * @tparam MatrixType - Matrix type, must derive from `MatrixBase<Complex>`.
 */
-template <typename MatrixType = EigenDenseMatrix<Complex>>
+template <typename MatrixType = EigenMatrix<Complex>>
 class NefieLumpedElement: public LumpedElementBase<MatrixType>
 {
 
