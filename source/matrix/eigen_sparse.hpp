@@ -260,19 +260,17 @@ public:
     * @param[in] a - Scalar to multiply the values of `x` before inserting (optional).
     */
     void set_block(
-        const MatrixBase<T>& x,
+        const EigenMatrixBase<T, MatrixType>& x,
         Index row_start,
         Index col_start,
         const T& a = T(1)
         ) override
     {
-        const EigenSparseMatrix<T>& xd = dynamic_cast<const EigenSparseMatrix<T>&> (x);
-
         std::vector<Eigen::Triplet<T>> x_triplets;
-        x_triplets.reserve(xd.raw_matrix().nonZeros());
+        x_triplets.reserve(x.raw_matrix().nonZeros());
 
-        for (Index kk = 0; kk < xd.raw_matrix().outerSize(); ++kk)
-            for (typename MatrixType::InnerIterator it (xd.raw_matrix(), kk); it; ++it)
+        for (Index kk = 0; kk < x.raw_matrix().outerSize(); ++kk)
+            for (typename MatrixType::InnerIterator it (x.raw_matrix(), kk); it; ++it)
                 x_triplets.push_back(Eigen::Triplet<T> (row_start + it.row(), col_start + it.col(), it.value() * a));
 
         matrix_->insertFromTriplets(
@@ -294,19 +292,17 @@ public:
     * @param[in] a - Scalar to multiply the values of `x` before adding (optional).
     */
     void add_block(
-        const MatrixBase<T>& x,
+        const EigenMatrixBase<T, MatrixType>& x,
         Index row_start,
         Index col_start,
         const T& a = T(1)
         ) override
     {
-        const EigenSparseMatrix<T>& xd = dynamic_cast<const EigenSparseMatrix<T>&> (x);
-
         std::vector<Eigen::Triplet<T>> x_triplets;
-        x_triplets.reserve(xd.raw_matrix().nonZeros());
+        x_triplets.reserve(x.raw_matrix().nonZeros());
 
-        for (Index kk = 0; kk < xd.raw_matrix().outerSize(); ++kk)
-            for (typename MatrixType::InnerIterator it (xd.raw_matrix(), kk); it; ++it)
+        for (Index kk = 0; kk < x.raw_matrix().outerSize(); ++kk)
+            for (typename MatrixType::InnerIterator it (x.raw_matrix(), kk); it; ++it)
                 x_triplets.push_back(Eigen::Triplet<T> (row_start + it.row(), col_start + it.col(), it.value() * a));
 
         matrix_->insertFromTriplets(x_triplets.begin(), x_triplets.end());
@@ -324,16 +320,15 @@ public:
     * @param[in] b_cols - Number of columns in the block to retrieve.
     */
     void get_block(
-        MatrixBase<T>& x,
+        EigenMatrixBase<T, MatrixType>& x,
         Index row_start,
         Index col_start,
         Index b_rows,
         Index b_cols
         ) const override
     {
-        EigenSparseMatrix<T>& xd = dynamic_cast<EigenSparseMatrix<T>&> (x);
-        xd.resize(b_rows, b_cols);
-        xd.raw_matrix() = matrix_->block(row_start, col_start, b_rows, b_cols);
+        x.resize(b_rows, b_cols);
+        x.raw_matrix() = matrix_->block(row_start, col_start, b_rows, b_cols);
         return;
     };
 

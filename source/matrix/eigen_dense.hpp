@@ -140,14 +140,13 @@ public:
     * @param[in] a - Scalar to multiply the values of `x` before inserting (optional).
     */
     void set_block(
-        const MatrixBase<T>& x,
+        const EigenMatrixBase<T, MatrixType>& x,
         Index row_start,
         Index col_start,
         const T& a = T(1)
         ) override
     {
-        const EigenDenseMatrix<T>& xd = dynamic_cast<const EigenDenseMatrix<T>&> (x);
-        matrix_->block(row_start, col_start, xd.num_rows(), xd.num_cols()) = xd.raw_matrix() * a;
+        matrix_->block(row_start, col_start, x.num_rows(), x.num_cols()) = x.raw_matrix() * a;
         return;
     };
 
@@ -161,14 +160,13 @@ public:
     * @param[in] a - Scalar to multiply the values of `x` before adding (optional).
     */
     void add_block(
-        const MatrixBase<T>& x,
+        const EigenMatrixBase<T, MatrixType>& x,
         Index row_start,
         Index col_start,
         const T& a = T(1)
         ) override
     {
-        const EigenDenseMatrix<T>& xd = dynamic_cast<const EigenDenseMatrix<T>&> (x);
-        matrix_->block(row_start, col_start, xd.num_rows(), xd.num_cols()) += a * xd.raw_matrix();
+        matrix_->block(row_start, col_start, x.num_rows(), x.num_cols()) += a * x.raw_matrix();
         return;
     };
 
@@ -182,16 +180,15 @@ public:
     * @param[in] b_cols - Number of columns in the block to retrieve.
     */
     void get_block(
-        MatrixBase<T>& x,
+        EigenMatrixBase<T, MatrixType>& x,
         Index row_start,
         Index col_start,
         Index b_rows,
         Index b_cols
         ) const override
     {
-        EigenDenseMatrix<T>& xd = dynamic_cast<EigenDenseMatrix<T>&> (x);
-        xd.resize(b_rows, b_cols);
-        xd.raw_matrix() = matrix_->block(row_start, col_start, b_rows, b_cols);
+        x.resize(b_rows, b_cols);
+        x.raw_matrix() = matrix_->block(row_start, col_start, b_rows, b_cols);
         return;
     };
 
