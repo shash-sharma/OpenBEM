@@ -31,7 +31,7 @@ Citing OpenBEM: [![DOI](https://zenodo.org/badge/1060257425.svg)](https://doi.or
 ### Features currently available
 
 - All RWG-based operators associated with the TEFIE, NEFIE, TMFIE, and
-  NMFIE [[Ylä-Oijala, Taskinen, Järvenpää, 2005](https://ieeexplore.ieee.org/document/7770136)].
+  NMFIE [[Ylä-Oijala, Taskinen, Järvenpää, 2005]](https://ieeexplore.ieee.org/document/7770136).
 
 - Numerical quadrature over source and observation triangles for
   RWG-based meshes and single and double layer kernels [[Ergül, Gürel, 2014]](https://onlinelibrary.wiley.com/doi/book/10.1002/9781118844977).
