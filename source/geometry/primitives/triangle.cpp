@@ -125,6 +125,23 @@ void Triangle<dim>::get_plane_projection(
 
 
 template <uint8_t dim>
+void Triangle<dim>::get_plane_projection(
+    EigColVecN<Float, dim>& r_proj,
+    Float& d,
+    ConstEigRef<EigColVecN<Float, 3>> r,
+    uint8_t ref_idx
+    ) const
+{
+    EigColVecN<Float, 3> r_diff = r;
+    r_diff.topRows(dim) -= v_.col(ref_idx);
+    d = normal_.transpose() * r_diff;
+    r_proj = (r - (normal_ * d)).topRows(dim);
+
+    return;
+};
+
+
+template <uint8_t dim>
 Triangle<dim> Triangle<dim>::reference_triangle()
 {
     EigMatMN<Float, dim, 3> v;

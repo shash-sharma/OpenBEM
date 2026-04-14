@@ -246,6 +246,22 @@ public:
 
 
     /**
+    * @brief Returns the projection of given points on to the triangle's plane, along with the normal
+    * distance to the plane. For a 2D `Triangle`, its third (z) dimension is assumed to be 0.
+    * @param[out] r_proj - Projected points.
+    * @param[out] d - Perpendicular distances of the original points to the triangle's plane.
+    * @param[in] r - Points to be projected onto the triangle's plane.
+    * @param[in] ref_idx - Index of the reference vertex to be used for the projection (optional).
+    */
+    void get_plane_projection(
+        EigColVecN<Float, dim>& r_proj,
+        Float& d,
+        ConstEigRef<EigColVecN<Float, 3>> r,
+        uint8_t ref_idx = 0
+        ) const;
+
+
+    /**
     * @brief Returns a reference triangle in the specified dimension.
     * @return Reference edge with vertices (0, 0, ...), (1, 0, ...), (0, 1, ...).
     */

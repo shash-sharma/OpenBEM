@@ -133,13 +133,13 @@ EigRowVec<Float> GeometryOps<dim>::angle_between_vectors(
 
 
 template <uint8_t dim>
-EigRowVec<Float> GeometryOps<dim>::directed_angle_between_vectors(
+EigRowVec<Float> GeometryOps<dim>::directed_angles_between_vectors(
     ConstEigRef<EigMatNX<Float, dim>> v1,
     ConstEigRef<EigMatNX<Float, dim>> v2
     )
 {
     if constexpr (dim != 2 && dim != 3)
-        throw std::invalid_argument("GeometryOps::directed_angle_between_vectors(): `dim` must be 2 or 3.");
+        throw std::invalid_argument("GeometryOps::directed_angles_between_vectors(): `dim` must be 2 or 3.");
 
     if (v1.cols() != v2.cols())
         throw std::invalid_argument(
@@ -152,7 +152,7 @@ EigRowVec<Float> GeometryOps<dim>::directed_angle_between_vectors(
         det.noalias() = v1.row(0) * v2.row(1).asDiagonal() - v2.row(0) * v1.row(1).asDiagonal();
     else if constexpr (dim == 3)
         for (uint32_t ii = 0; ii < v1.cols(); ii++)
-            det[ii] = (v1.col(ii).cross(v1.col(ii))).norm();
+            det[ii] = (v1.col(ii).cross(v2.col(ii))).norm();
 
     EigRowVec<Float> angles = EigRowVec<Float>::Zero(1, v1.cols());
     for (uint32_t rr = 0; rr < v1.cols(); ++rr)
@@ -161,11 +161,37 @@ EigRowVec<Float> GeometryOps<dim>::directed_angle_between_vectors(
     Float tol = std::max(
         v1.colwise().norm().maxCoeff(), v2.colwise().norm().maxCoeff()
         ) * GEOMETRY_DEFAULT_TOL;
-    angles = (Eigen::abs(dot.array()) == 0.0 || Eigen::abs(dot.array()) < tol).select(
+    angles = (Eigen::abs(dot.array()) < tol).select(
         EigRowVec<Float>::Zero(1, v1.cols()), angles
         );
 
     return angles;
+}
+
+
+template <uint8_t dim>
+Float GeometryOps<dim>::directed_angle_between_vectors(
+    ConstEigRef<EigColVecN<Float, dim>> v1,
+    ConstEigRef<EigColVecN<Float, dim>> v2
+    )
+{
+    if constexpr (dim != 2 && dim != 3)
+        throw std::invalid_argument("GeometryOps::directed_angle_between_vectors(): `dim` must be 2 or 3.");
+
+    Float dot = v1.dot(v2);
+    Float det;
+    if constexpr (dim == 2)
+        det = v1[0] * v2[1] - v2[0] * v1[1];
+    else if constexpr (dim == 3)
+        det = (v1.cross(v2)).norm();
+
+    Float angle = std::atan2(det, dot);
+
+    Float tol = std::max(v1.norm(), v2.norm()) * GEOMETRY_DEFAULT_TOL;
+    if (std::abs(dot) < tol)
+        angle = 0;
+
+    return angle;
 }
 
 
