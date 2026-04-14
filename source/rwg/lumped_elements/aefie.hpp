@@ -46,10 +46,10 @@ namespace bem::rwg
 * @tparam MatrixType - Matrix type, must derive from `MatrixBase<Complex>`.
 */
 template <typename MatrixType = EigenMatrix<Complex>>
-class AefieLumpedElement: public LumpedElementBase<MatrixType>
+class AefieLumpedElement: public LumpedElement<MatrixType>
 {
 
-    using base = LumpedElementBase<MatrixType>;
+    using base = LumpedElement<MatrixType>;
     using base::base;
 
 public:
@@ -59,10 +59,10 @@ public:
     * @param[in] f - Frequency in Hz.
     * @return Coupling matrix.
     */
-    MatrixType coupling_matrix(const Float f) const override
+    MatrixType coupling_matrix(const Float f) const
     {
         MatrixType mat;
-        mat.set_mat_mul(base::terminal_mapping_matrix(), base::current_mapping_matrix());
+        mat.set_matmul(base::terminal_mapping_matrix(), base::current_mapping_matrix());
         return mat;
     };
 
@@ -72,14 +72,14 @@ public:
     * @param[in] f - Frequency in Hz.
     * @return Voltage matrix.
     */
-    MatrixType voltage_matrix(const Float f) const override
+    MatrixType voltage_matrix(const Float f) const
     {
         TriangleMesh<3> port_mesh = base::port_mesh_view().mesh();
         MatrixType voltage_map = base::voltage_mapping_matrix();
         MatrixType Lp = phi_matrix(f, port_mesh, base::structure_.mesh());
 
         MatrixType mat;
-        mat.set_mat_mul(voltage_map, Lp, -one);
+        mat.set_matmul(voltage_map, Lp, -one);
 
         return mat;
     };
@@ -90,7 +90,7 @@ public:
     * @param[in] f - Frequency in Hz.
     * @return Current matrix.
     */
-    MatrixType current_matrix(const Float f) const override
+    MatrixType current_matrix(const Float f) const
     {
         MatrixType mat (base::num_ports(), base::num_ports());
         for (Index ii = 0; ii < base::num_ports(); ++ii)

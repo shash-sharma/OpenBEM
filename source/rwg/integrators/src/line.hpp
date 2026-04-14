@@ -62,7 +62,15 @@ public:
     * @param[in] line_quad - Line quadrature object to use for integration (optional).
     */
     SrcLineIntegrator(const LineQuadratureType line_quad = GaussLineQuadrature<1>()):
-        line_quad_(line_quad) {};
+        line_quad_(line_quad),
+        weights_x_(EigRowVec<Float>::Zero(1, line_quad_.ref_points().cols())),
+        weights_r_(EigRowVec<Float>::Zero(1, line_quad_.ref_points().cols())),
+        points_x_(EigRowVec<Float>::Zero(1, line_quad_.ref_points().cols())),
+        points_r_(EigRowVec<Float>::Zero(1, line_quad_.ref_points().cols())),
+        points_rx_(EigRowVec<Float>::Zero(1, line_quad_.ref_points().cols())),
+        exp_jkrt_(EigRowVec<Complex>::Zero(1, line_quad_.ref_points().cols())),
+        exp_jkrx_(EigRowVec<Complex>::Zero(1, line_quad_.ref_points().cols())),
+        x_sq_exp_(EigRowVec<Complex>::Zero(1, line_quad_.ref_points().cols())) {};
 
 
     /**
@@ -98,6 +106,10 @@ public:
 private:
 
     LineQuadratureType line_quad_;
+
+    EigRowVec<Float> weights_x_, weights_r_;
+    EigRowVec<Float> points_x_, points_r_, points_rx_;
+    EigRowVec<Complex> exp_jkrt_, exp_jkrx_, x_sq_exp_;
 
 };
 

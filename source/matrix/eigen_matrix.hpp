@@ -11,7 +11,7 @@
 
 
 /**
- std::variant<DenseMatrixType, SparseMatrixType>* @file
+* @file
 * Class wrapping dense and sparse Eigen matrices.
 */
 
@@ -21,6 +21,8 @@
 #include <vector>
 #include <memory>
 #include <type_traits>
+#include <variant>
+#include <stdexcept>
 
 #include <external/Eigen/Dense>
 #include <external/Eigen/Sparse>
@@ -30,6 +32,7 @@
 #include <external/EigenUnsupported/Eigen/IterativeSolvers>
 
 #include "types.hpp"
+#include "constants.hpp"
 #include "matrix/base.hpp"
 
 
@@ -89,6 +92,13 @@ public:
 
 
     /**
+    * @brief Returns the Eigen type name of the matrix.
+    * @return - Type name.
+    */
+    static EigenMatrixType matrix_type() { return type; };
+
+
+    /**
     * @brief Returns a writable reference to the underlying raw matrix - use with caution.
     */
     MatrixType& raw_matrix()
@@ -132,6 +142,10 @@ public:
         else if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
             return matrix_.valuePtr();
     };
+
+
+    std::unique_ptr<MatrixBase<T>> clone() const override
+    { return std::make_unique<EigenMatrix<T, type, storage_order>> (*this); };
 
 
     /**
@@ -444,9 +458,17 @@ public:
     * @brief Retrieves matrix values on the diagonal, zeroing out all other entries.
     * @param[out] x - Diagonal matrix.
     */
-    void get_diagonal(EigenMatrix<T, type, storage_order>& x) const
+    void get_diagonal(MatrixBase<T>& x) const override
     {
-        x.raw_matrix() = matrix_.diagonal().asDiagonal();
+        auto visitor = [&] (auto* xc)
+        {
+            xc->raw_matrix().resize(num_rows(), num_cols());
+            xc->raw_matrix().setIdentity();
+            xc->raw_matrix().diagonal() = matrix_.diagonal();
+        };
+
+        std::visit(visitor, to_variant(x));
+
         return;
     };
 
@@ -459,9 +481,20 @@ public:
     */
     void add_ax(const MatrixBase<T>& x, const T& a = T(1)) override
     {
-        const EigenMatrix<T, type, storage_order>& xd =
-            dynamic_cast<const EigenMatrix<T, type, storage_order>&> (x);
-        matrix_ += a * xd.raw_matrix();
+        if (x.num_rows() * x.num_cols() == 0)
+            return;
+
+        if (!(std::abs(a) > float_eps))
+            return;
+
+        auto visitor = [this, a] (const auto* xc)
+        { matrix_ += a * xc->raw_matrix(); };
+
+        if constexpr (type == EigenMatrixType::EIGEN_DENSE)
+            std::visit(visitor, to_variant(x));
+        else
+            matrix_ += a * to_same(x)->raw_matrix();
+
         return;
     };
 
@@ -481,7 +514,11 @@ public:
         const T& b = T(1)
         )
     {
-        matrix_ = a * x.raw_matrix() + b * y.raw_matrix();
+        auto visitor = [this, a, b] (const auto* xc, const auto* yc)
+        { matrix_ = a * xc->raw_matrix() + b * yc->raw_matrix(); };
+
+        std::visit(visitor, to_variant(x), to_variant(y));
+
         return;
     };
 
@@ -493,13 +530,23 @@ public:
     * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
     * @param[in] a - Scalar which which to scale the product of `x` and `y`.
     */
-    void set_mat_mul(
-        const EigenMatrix<T, type, storage_order>& x,
-        const EigenMatrix<T, type, storage_order>& y,
+    void set_matmul(
+        const MatrixBase<T>& x,
+        const MatrixBase<T>& y,
         const T& a = T(1)
-        )
+        ) override
     {
-        matrix_ = x.raw_matrix() * y.raw_matrix() * a;
+        if (x.num_rows() * x.num_cols() * y.num_rows() * y.num_cols() == 0)
+            return;
+
+        auto visitor = [this, a] (const auto* xc, const auto* yc)
+        { matrix_ = xc->raw_matrix() * yc->raw_matrix() * a; };
+
+        if constexpr (type == EigenMatrixType::EIGEN_DENSE)
+            std::visit(visitor, to_variant(x), to_variant(y));
+        else
+            matrix_ = to_same(x)->raw_matrix() * to_same(y)->raw_matrix() * a;
+
         return;
     };
 
@@ -511,41 +558,112 @@ public:
     * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
     * @param[in] a - Scalar which which to scale the product of `x` and `y`.
     */
-    void add_mat_mul(
-        const EigenMatrix<T, type, storage_order>& x,
-        const EigenMatrix<T, type, storage_order>& y,
+    void add_matmul(
+        const MatrixBase<T>& x,
+        const MatrixBase<T>& y,
         const T& a = T(1)
-        )
+        ) override
     {
-        matrix_ += x.raw_matrix() * y.raw_matrix() * a;
+        if (x.num_rows() * x.num_cols() * y.num_rows() * y.num_cols() == 0)
+            return;
+
+        if (!(std::abs(a) > float_eps))
+            return;
+
+        auto visitor = [this, a] (const auto* xc, const auto* yc)
+        { matrix_ += xc->raw_matrix() * yc->raw_matrix() * a; };
+
+        if constexpr (type == EigenMatrixType::EIGEN_DENSE)
+            std::visit(visitor, to_variant(x), to_variant(y));
+        else
+            matrix_ += to_same(x)->raw_matrix() * to_same(y)->raw_matrix() * a;
+
         return;
     };
 
 
     /**
-    * @brief Sets a block of values in this matrix to the values of a given matrix, starting at a given position.
+    * @brief Computes \f$ \mathbf{X} = a\mathbf{M}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$ is this matrix,
+    * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
+    * @param[out] x - Multiplication result.
+    * @param[in] y - Matrix with which to multiply, must have the same number of rows as this matrix.
+    * @param[in] a - Scalar which which to scale the product.
+    */
+    void matmul(
+        MatrixBase<T>& x,
+        const MatrixBase<T>& y,
+        const T& a = T(1)
+        ) const override
+    {
+        if (y.num_rows() * y.num_cols() == 0)
+            return;
+
+        auto visitor = [&] (const auto* yc)
+        { to_same(x)->raw_matrix() = matrix_ * yc->raw_matrix() * a; };
+
+        if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
+            to_same(x)->raw_matrix() = matrix_ * to_same(y)->raw_matrix() * a;
+        else
+            std::visit(visitor, to_variant(y));
+
+        return;
+    };
+
+
+    /**
+    * @brief Computes \f$ \mathbf{X} += a\mathbf{M}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$ is this matrix,
+    * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
+    * @param[out] x - Multiplication result.
+    * @param[in] y - Matrix with which to multiply, must have the same number of rows as this matrix.
+    * @param[in] a - Scalar which which to scale the product.
+    */
+    void matmuladd(
+        MatrixBase<T>& x,
+        const MatrixBase<T>& y,
+        const T& a = T(1)
+        ) const override
+    {
+        if (y.num_rows() * y.num_cols() == 0)
+            return;
+
+        auto visitor = [&] (const auto* yc)
+        { to_same(x)->raw_matrix() += matrix_ * yc->raw_matrix() * a; };
+
+        if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
+            to_same(x)->raw_matrix() += matrix_ * to_same(y)->raw_matrix() * a;
+        else
+            std::visit(visitor, to_variant(y));
+
+        return;
+    };
+
+
+    /**
+    * @brief Sets a block of this matrix to the values of a given matrix, starting at a given position.
     * @param[in] x - Matrix to insert.
     * @param[in] row_start - Starting row index for the block.
     * @param[in] col_start - Starting column index for the block.
     * @param[in] a - Scalar to multiply the values of `x` before inserting (optional).
     */
     void set_block(
-        const EigenMatrix<T, type, storage_order>& x,
+        const MatrixBase<T>& x,
         Index row_start,
         Index col_start,
         const T& a = T(1)
-        )
+        ) override
     {
+        const auto& xc = *to_same(x);
+
         if constexpr (type == EigenMatrixType::EIGEN_DENSE)
-            matrix_.block(row_start, col_start, x.num_rows(), x.num_cols()) = x.raw_matrix() * a;
+            matrix_.block(row_start, col_start, xc.num_rows(), xc.num_cols()) = xc.raw_matrix() * a;
 
         if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
         {
             std::vector<Eigen::Triplet<T>> x_triplets;
-            x_triplets.reserve(x.raw_matrix().nonZeros());
+            x_triplets.reserve(xc.raw_matrix().nonZeros());
 
-            for (Index kk = 0; kk < x.raw_matrix().outerSize(); ++kk)
-                for (typename MatrixType::InnerIterator it (x.raw_matrix(), kk); it; ++it)
+            for (Index kk = 0; kk < xc.raw_matrix().outerSize(); ++kk)
+                for (typename MatrixType::InnerIterator it (xc.raw_matrix(), kk); it; ++it)
                     x_triplets.push_back(
                         Eigen::Triplet<T> (row_start + it.row(), col_start + it.col(), it.value() * a)
                         );
@@ -562,30 +680,34 @@ public:
 
 
     /**
-    * @brief Adds a block of values to this matrix from the values of a given matrix,
-    * starting at a given position.
+    * @brief Adds a block to this matrix from the values of a given matrix, starting at a given position.
     * @param[in] x - Matrix whose values should be added to a block of this matrix.
     * @param[in] row_start - Starting row index for the block.
     * @param[in] col_start - Starting column index for the block.
     * @param[in] a - Scalar to multiply the values of `x` before adding (optional).
     */
     void add_block(
-        const EigenMatrix<T, type, storage_order>& x,
+        const MatrixBase<T>& x,
         Index row_start,
         Index col_start,
         const T& a = T(1)
-        )
+        ) override
     {
+        if (!(std::abs(a) > float_eps))
+            return;
+
+        const auto& xc = *to_same(x);
+
         if constexpr (type == EigenMatrixType::EIGEN_DENSE)
-            matrix_.block(row_start, col_start, x.num_rows(), x.num_cols()) += a * x.raw_matrix();
+            matrix_.block(row_start, col_start, xc.num_rows(), xc.num_cols()) += a * xc.raw_matrix();
 
         if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
         {
             std::vector<Eigen::Triplet<T>> x_triplets;
-            x_triplets.reserve(x.raw_matrix().nonZeros());
+            x_triplets.reserve(xc.raw_matrix().nonZeros());
 
-            for (Index kk = 0; kk < x.raw_matrix().outerSize(); ++kk)
-                for (typename MatrixType::InnerIterator it (x.raw_matrix(), kk); it; ++it)
+            for (Index kk = 0; kk < xc.raw_matrix().outerSize(); ++kk)
+                for (typename MatrixType::InnerIterator it (xc.raw_matrix(), kk); it; ++it)
                     x_triplets.push_back(
                         Eigen::Triplet<T> (row_start + it.row(), col_start + it.col(), it.value() * a)
                         );
@@ -606,23 +728,32 @@ public:
     * @param[in] b_cols - Number of columns in the block to retrieve.
     */
     void get_block(
-        EigenMatrix<T, type, storage_order>& x,
+        MatrixBase<T>& x,
         Index row_start,
         Index col_start,
         Index b_rows,
         Index b_cols
-        ) const
+        ) const override
     {
-        x.resize(b_rows, b_cols);
-        x.raw_matrix() = matrix_.block(row_start, col_start, b_rows, b_cols);
+        auto visitor = [&] (auto* xc)
+        { xc->raw_matrix() = matrix_.block(row_start, col_start, b_rows, b_cols); };
+
+        if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
+            std::visit(visitor, to_variant(x));
+        else
+        {
+            auto& xc = *to_same(x);
+            xc.raw_matrix() = matrix_.block(row_start, col_start, b_rows, b_cols);
+        }
+
         return;
     };
 
 
     /**
-    * @brief Computes and stores the LU factors using sparse factorization. The original matrix is not modified.
+    * @brief Computes and stores the LU factors. The original matrix is not modified.
     */
-    void factorize()
+    void factorize() override
     {
         if constexpr (type == EigenMatrixType::EIGEN_DENSE)
         {
@@ -658,11 +789,11 @@ public:
         if (!factorized_)
             factorize();
 
-        const EigenMatrix<T, type, storage_order>& bd =
-            dynamic_cast<const EigenMatrix<T, type, storage_order>&> (b);
+        const auto& bd =
+            dynamic_cast<const EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>&> (b);
 
-        EigenMatrix<T, type, storage_order>& xd =
-            dynamic_cast<EigenMatrix<T, type, storage_order>&> (x);
+        auto& xd =
+            dynamic_cast<EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>&> (x);
 
         if constexpr (type == EigenMatrixType::EIGEN_DENSE)
         {
@@ -846,6 +977,80 @@ public:
 
 protected:
 
+    // Type alias for the matrix variant to support both dense and sparse matrices.
+    using MatrixVariant = std::variant<
+        EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>*,
+        EigenMatrix<T, EigenMatrixType::EIGEN_SPARSE, storage_order>*
+    >;
+
+
+    // Type alias for the matrix variant to support both dense and sparse matrices in read-only mode.
+    using ConstMatrixVariant = std::variant<
+        const EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>*,
+        const EigenMatrix<T, EigenMatrixType::EIGEN_SPARSE, storage_order>*
+    >;
+
+
+    /**
+    * @brief Casts a MatrixBase reference to a matching-type read-only matrix pointer.
+    * @param[in] x - Matrix reference to cast.
+    * @return Read-only cast matrix pointer.
+    */
+    const EigenMatrix<T, type, storage_order>* to_same(const MatrixBase<T>& x) const
+    {
+        if (auto xc = dynamic_cast<const EigenMatrix<T, type, storage_order>*> (&x))
+            return xc;
+        else
+            throw std::invalid_argument("EigenMatrix::to_same(): Incompatible matrix types.");
+    };
+
+
+    /**
+    * @brief Casts a MatrixBase reference to a matching-type writable matrix pointer.
+    * @param[in] x - Matrix reference to cast.
+    * @return Writable cast matrix pointer.
+    */
+    EigenMatrix<T, type, storage_order>* to_same(MatrixBase<T>& x) const
+    {
+        if (auto xc = dynamic_cast<EigenMatrix<T, type, storage_order>*> (&x))
+            return xc;
+        else
+            throw std::invalid_argument("EigenMatrix::to_same(): Incompatible matrix types.");
+    };
+
+
+    /**
+    * @brief Casts a MatrixBase reference to a type-erased writable matrix variant.
+    * @param[in] x - Matrix reference to convert.
+    * @return Variant containing a pointer to the concrete matrix type.
+    */
+    MatrixVariant to_variant(MatrixBase<T>& x) const
+    {
+        if (auto xd = dynamic_cast<EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>*> (&x))
+            return xd;
+        else if (auto xs = dynamic_cast<EigenMatrix<T, EigenMatrixType::EIGEN_SPARSE, storage_order>*> (&x))
+            return xs;
+        else
+            throw std::invalid_argument("EigenMatrix::to_variant(): Input matrix type not supported.");
+    };
+
+
+    /**
+    * @brief Casts a MatrixBase reference to a type-erased read-only matrix variant.
+    * @param[in] x - Matrix reference to convert.
+    * @return Variant containing a pointer to the concrete matrix type.
+    */
+    ConstMatrixVariant to_variant(const MatrixBase<T>& x) const
+    {
+        if (auto xd = dynamic_cast<const EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>*> (&x))
+            return xd;
+        else if (auto xs = dynamic_cast<const EigenMatrix<T, EigenMatrixType::EIGEN_SPARSE, storage_order>*> (&x))
+            return xs;
+        else
+            throw std::invalid_argument("EigenMatrix::to_variant(): Input matrix type not supported.");
+    };
+
+
     MatrixType matrix_;
 
     std::vector<Eigen::Triplet<T>> triplets_;
@@ -874,29 +1079,4 @@ protected:
 }
 
 #endif
-
-    // /**
-    // * @brief Sets the underlying raw matrix by copying over data from a given matrix.
-    // * @param[in] matrix - The raw matrix to set.
-    // */
-    // void set_raw_matrix(const MatrixType& matrix)
-    // {
-    //     matrix_ = std::make_shared<MatrixType> (matrix);
-    //     return;
-    // };
-
-
-    // /**
-    // * @brief Binds the underlying raw matrix to the data pointed at by a given matrix pointer.
-    // * @param[in] matrix - Pointer to the raw matrix to be bound.
-    // * @details
-    // * The purpose of this method is to allow creating an external Eigen matrix of type `MatrixType`,
-    // * and then transferring ownership of that matrix to this object, but without copying over the
-    // * underlying data, unlike `set_raw_matrix()`.
-    // */
-    // void bind_raw_matrix(std::shared_ptr<MatrixType> matrix)
-    // {
-    //     matrix_ = std::move(matrix);
-    //     return;
-    // };
 

@@ -108,24 +108,13 @@ public:
 private:
 
     /**
-    * @brief Computes and stores intermediate geometry-related terms.
-    * @param[in] src_tri - Source triangle in 2D space.
-    * @param[in] r_obs - Observation points in the local coordinate system of `src_tri`.
-    */
-    void compute_integral_terms(
-        const Triangle<2>& src_tri,
-        ConstEigRef<EigMatNX<Float, 3>> r_obs
-        );
-
-
-    /**
-    * @brief Assembles the final integration result from intermediate terms.
+    * @brief Computes the singular integrals.
     * @param[in] k - Complex wavenumber.
     * @param[in] src_tri - Source triangle in 2D space.
     * @param[in] r_obs - Observation points in the local coordinate system of `src_tri`.
     * @return Integration result.
     */
-    SrcResult assemble_integrals(
+    SrcResult integrate_singular(
         const Complex k,
         const Triangle<2>& src_tri,
         ConstEigRef<EigMatNX<Float, 3>> r_obs
@@ -133,9 +122,6 @@ private:
 
 
     SrcQuadrature<TriangleQuadratureType, ScalarKernelType> src_quad_;
-    EigRowVec<Float> z_, z_abs_;
-    EigRowVec<Float> beta_, t0_f2_;
-    EigMatNX<Float, 2> u_f2_, u_f3_;
 
 };
 

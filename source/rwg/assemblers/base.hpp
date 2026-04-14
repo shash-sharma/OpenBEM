@@ -166,6 +166,16 @@ public:
 
 
     /**
+    * @brief Generates all possible pairs of triangle indices for a given triangle mesh.
+    * @param[in] mesh - Triangle mesh.
+    * @return All possible triangle index pairs, with observation indices in the first row,
+    * and source indices in the second row.
+    */
+    static EigMatNX<Index, 2> make_pairs(const TriangleMesh<3>& mesh)
+    { return make_pairs(mesh, mesh); };
+
+
+    /**
     * @brief Generates all possible pairs of triangle indices for given observation and source triangle meshes.
     * @param[in] obs_mesh - Observation triangle mesh.
     * @param[in] src_mesh - Source triangle mesh.
