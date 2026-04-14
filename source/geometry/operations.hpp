@@ -100,19 +100,6 @@ public:
 
 
     /**
-    * @brief Returns the directional angles between pairs of vectors in a right-hand system where
-    * counter-clockwise angles are positive.
-    * @param[in] v1 - First set of vectors.
-    * @param[in] v2 - Second set of vectors.
-    * @return Directed angles between each pair of vectors in radians.
-    */
-    static EigRowVec<Float> directed_angles_between_vectors(
-        ConstEigRef<EigMatNX<Float, dim>> v1,
-        ConstEigRef<EigMatNX<Float, dim>> v2
-        );
-
-
-    /**
     * @brief Returns the directional angle between two vectors in a right-hand system where
     * counter-clockwise angles are positive.
     * @param[in] v1 - First vector.

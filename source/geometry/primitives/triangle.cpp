@@ -108,24 +108,6 @@ EigMatMN<Float, dim, dim> Triangle<dim>::local_coordinate_basis() const
 
 template <uint8_t dim>
 void Triangle<dim>::get_plane_projection(
-    EigMatNX<Float, dim>& r_proj,
-    EigRowVec<Float>& d,
-    ConstEigRef<EigMatNX<Float, 3>> r,
-    uint8_t ref_idx
-    ) const
-{
-    EigMatNX<Float, 3> r_diff = r;
-    r_diff.topRows(dim).colwise() -= v_.col(ref_idx);
-    d = normal_.transpose() * r_diff;
-    r_proj = (r - (normal_ * d)).topRows(dim);
-    // r_proj = (r_diff.topRows(dim) - (normal_ * d).topRows(dim)).colwise() + v_.col(ref_idx);
-
-    return;
-};
-
-
-template <uint8_t dim>
-void Triangle<dim>::get_plane_projection(
     EigColVecN<Float, dim>& r_proj,
     Float& d,
     ConstEigRef<EigColVecN<Float, 3>> r,
