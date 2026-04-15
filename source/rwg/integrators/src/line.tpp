@@ -57,11 +57,10 @@ SrcResult SrcLineIntegrator<LineQuadratureType>::integrate(
     for (Index ii = 0; ii < r_obs.cols(); ++ii)
     {
 
-        // Get the projection of the obs point on the triangle's plane, along
-        // with information about where the projection point falls
-        EigColVecN<Float, 2> proj_r;
-        Float proj_d;
-        src_tri.get_plane_projection(proj_r, proj_d, r_obs.col(ii));
+        // projection of the observation point on the source triangle's local plane, assuming the
+        // observation points are in the source's local coordinate system
+        EigColVecN<Float, 2> proj_r = r_obs.col(ii).topRows(2);
+        Float proj_d = r_obs(2, ii);
 
         Float proj_d_sign = (0 < proj_d) - (proj_d < 0);
         proj_d = std::abs(proj_d);
@@ -76,7 +75,7 @@ SrcResult SrcLineIntegrator<LineQuadratureType>::integrate(
         for (uint8_t idx_edge = 0; idx_edge < 3; ++idx_edge)
         {
 
-            // Indices of the edge's vertices
+            // indices of the edge's vertices
             uint8_t idx_minus = idx_edge;
             uint8_t idx_plus = (idx_edge + 1) % 3;
 
@@ -97,7 +96,7 @@ SrcResult SrcLineIntegrator<LineQuadratureType>::integrate(
             Float x_minus = -edge.unit_vec().dot(rproj_to_vminus);
             Float x_plus = -edge.unit_vec().dot(rproj_to_vplus);
 
-            // Get linear quadrature points and weights
+            // linear quadrature points and weights
             line_quad_.compute_points_weights(
                 EigColVecN<Float, 1> { x_minus }, EigColVecN<Float, 1> { x_plus }
                 );
@@ -108,17 +107,17 @@ SrcResult SrcLineIntegrator<LineQuadratureType>::integrate(
             EigRowVec<Float> rhosq = (proj_h * proj_h) + (points_x_.array() * points_x_.array());
             EigRowVec<Float> rho = Eigen::sqrt(rhosq.array());
 
-            // Use angular quadrature points and weights for the (near-)singular case
+            // use angular quadrature points and weights for the (near-)singular case
             Float near_threshold = edge.length() * 1e-2;
             Float edge_len_lambda = edge.length() * std::real(k) / two_pi;
             bool use_angular = (rho.array() <= near_threshold).any() ||
                 edge_len_lambda >= half;
 
-            // Do not use angular points when an observation point lies along an edge
+            // do not use angular points when an observation point lies along an edge
             if ((std::abs(proj_h) < float_eps) && (proj_d < float_eps))
                 use_angular = false;
 
-            // Use simplified line integrals for non-singular cases - currently disabled
+            // use simplified line integrals for non-singular cases - currently disabled
             bool use_simplified = (rho.array() > edge.length()).all();
             use_simplified = false; // TODO - test this
 
