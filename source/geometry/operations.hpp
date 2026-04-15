@@ -93,9 +93,21 @@ public:
     * @param[in] v2 - Second set of vectors.
     * @return Angles between each pair of vectors in radians.
     */
-    static EigRowVec<Float> angle_between_vectors(
+    static EigRowVec<Float> angles_between_vectors(
         ConstEigRef<EigMatNX<Float, dim>> v1,
         ConstEigRef<EigMatNX<Float, dim>> v2
+        );
+
+
+    /**
+    * @brief Returns the angle between two vectors in radians.
+    * @param[in] v1 - First vector.
+    * @param[in] v2 - Second vector.
+    * @return Angle between the vectors in radians.
+    */
+    static Float angle_between_vectors(
+        ConstEigRef<EigColVecN<Float, dim>> v1,
+        ConstEigRef<EigColVecN<Float, dim>> v2
         );
 
 

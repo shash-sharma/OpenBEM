@@ -31,14 +31,14 @@ namespace bem::rwg
 {
 
 template <typename LineQuadratureType>
-SrcResult SrcLineIntegrator<LineQuadratureType>::integrate(
+SrcResult SrcLineIntegrator<LineQuadratureType>::integrate_TEMP(
     const Complex k,
     const Triangle<2>& src_tri,
     ConstEigRef<EigMatNX<Float, 3>> r_obs
     )
 {
     bool dc = true;
-    if (std::abs(k) > 0)
+    if (std::abs(k) > float_eps)
         dc = false;
 
     const Complex jk = J * k;
@@ -68,6 +68,7 @@ SrcResult SrcLineIntegrator<LineQuadratureType>::integrate(
     EigRowVec<Complex> exp_jkr_minus = EigRowVec<Complex>::Zero(1, r_obs.cols());
     EigRowVec<Complex> exp_jkr_plus = EigRowVec<Complex>::Zero(1, r_obs.cols());
 
+    EigMat<Float> rho = EigMat<Float>::Zero(line_quad_.ref_points().cols(), r_obs.cols());
     EigMat<Float> rhosq = EigMat<Float>::Zero(line_quad_.ref_points().cols(), r_obs.cols());
     EigMat<Float> points_rx = EigMat<Float>::Zero(line_quad_.ref_points().cols(), r_obs.cols());
     EigMat<Complex> exp_jkrt = EigMat<Complex>::Zero(line_quad_.ref_points().cols(), r_obs.cols());
@@ -141,20 +142,21 @@ SrcResult SrcLineIntegrator<LineQuadratureType>::integrate(
 
         rhosq = (proj_h.array() * proj_h.array()).replicate(points_x.rows(), 1) +
             (points_x.array() * points_x.array());
+        rho = Eigen::sqrt(rhosq.array());
 
         // Use angular quadrature points and weights for the (near-)singular case
         Float near_threshold = edge.length() * 1e-2;
         Float edge_len_lambda = edge.length() * std::real(k) / two_pi;
-        bool use_angular = (
-            rhosq.array() <= near_threshold * near_threshold
-            ).any() || edge_len_lambda >= half;
+        bool use_angular = (rho.array() <= near_threshold).any() ||
+            edge_len_lambda >= half;
 
         // Do not use angular points when an observation point lies along an edge
-        if ((proj_h.array().abs() < float_eps).any() && (proj_d.array().abs() < float_eps).any())
+        if ((proj_h.array().abs() < float_eps).any() &&
+            (proj_d.array().abs() < float_eps).any())
             use_angular = false;
 
         // Use simplified line integrals for non-singular cases - currently disabled
-        bool use_simplified = (rhosq.array() > edge.length() * edge.length()).all();
+        bool use_simplified = (rho.array() > edge.length()).all();
         use_simplified = false; // TODO - test this
 
         if (!use_angular)
@@ -293,37 +295,28 @@ SrcResult SrcLineIntegrator<LineQuadratureType>::integrate(
 
 
 template <typename LineQuadratureType>
-SrcResult SrcLineIntegrator<LineQuadratureType>::integrate_TEMP(
+SrcResult SrcLineIntegrator<LineQuadratureType>::integrate(
     const Complex k,
     const Triangle<2>& src_tri,
     ConstEigRef<EigMatNX<Float, 3>> r_obs
     )
 {
     bool dc = true;
-    if (std::abs(k) > 0)
+    if (std::abs(k) > float_eps)
         dc = false;
 
     const Complex jk = J * k;
 
-    // preallocate dynamic memory here to save time inside the edge-wise loop
-    EigRowVec<Float> weights_r = EigRowVec<Float>::Zero(1, line_quad_.ref_points().cols());
-    EigRowVec<Float> points_r = EigRowVec<Float>::Zero(1, line_quad_.ref_points().cols());
-    EigRowVec<Float> points_rx = EigRowVec<Float>::Zero(1, line_quad_.ref_points().cols());
-
-    EigRowVec<Complex> exp_jkrt = EigRowVec<Complex>::Zero(1, line_quad_.ref_points().cols());
-    EigRowVec<Complex> exp_jkrx = EigRowVec<Complex>::Zero(1, line_quad_.ref_points().cols());
-    EigRowVec<Complex> x_sq_exp = EigRowVec<Complex>::Zero(1, line_quad_.ref_points().cols());
-
     SrcResult result;
-
     if (base::compute_g_terms_)
     {
         result.g.resize(1, r_obs.cols());
         result.rs_g.resize(2, r_obs.cols());
     }
-
     if (base::compute_grad_g_terms_)
+    {
         result.grad_g.resize(3, r_obs.cols());
+    }
 
     for (Index ii = 0; ii < r_obs.cols(); ++ii)
     {
@@ -373,16 +366,17 @@ SrcResult SrcLineIntegrator<LineQuadratureType>::integrate_TEMP(
                 EigColVecN<Float, 1> { x_minus }, EigColVecN<Float, 1> { x_plus }
                 );
 
-            const EigRowVec<Float>& points_x = line_quad_.points();
-            const EigRowVec<Float>& ref_weights_x = line_quad_.ref_weights();
+            points_x_ = line_quad_.points();
+            weights_x_ = line_quad_.ref_weights() * edge.length();
 
-            EigRowVec<Float> rhosq = (proj_h * proj_h) + (points_x.array() * points_x.array());
+            EigRowVec<Float> rhosq = (proj_h * proj_h) + (points_x_.array() * points_x_.array());
             EigRowVec<Float> rho = Eigen::sqrt(rhosq.array());
 
             // Use angular quadrature points and weights for the (near-)singular case
             Float near_threshold = edge.length() * 1e-2;
             Float edge_len_lambda = edge.length() * std::real(k) / two_pi;
-            bool use_angular = (rho.array() <= near_threshold).any() || edge_len_lambda >= half;
+            bool use_angular = (rho.array() <= near_threshold).any() ||
+                edge_len_lambda >= half;
 
             // Do not use angular points when an observation point lies along an edge
             if ((std::abs(proj_h) < float_eps) && (proj_d < float_eps))
@@ -394,9 +388,9 @@ SrcResult SrcLineIntegrator<LineQuadratureType>::integrate_TEMP(
 
             if (!use_angular)
             {
-                weights_r = (ref_weights_x.array() * edge.length() * std::abs(proj_h)) / rhosq.array();
-                points_r = Eigen::sqrt(proj_dsq + rhosq.array());
-                points_rx = points_r;
+                weights_r_ = (weights_x_.array() * std::abs(proj_h)) / rhosq.array();
+                points_r_ = Eigen::sqrt(proj_dsq + rhosq.array());
+                points_rx_ = points_r_;
             }
             else
             {
@@ -412,22 +406,21 @@ SrcResult SrcLineIntegrator<LineQuadratureType>::integrate_TEMP(
                     EigColVecN<Float, 1> { theta_minus }, EigColVecN<Float, 1> { theta_plus }
                     );
 
-                weights_r = line_quad_.weights();
-                points_r = Eigen::sqrt(
+                weights_r_ = line_quad_.weights();
+                points_r_ = Eigen::sqrt(
                     proj_dsq + Eigen::pow(proj_h / Eigen::cos(line_quad_.points().array()), 2)
                     );
 
-                points_rx = Eigen::sqrt(proj_dsq + rhosq.array());
+                points_rx_ = Eigen::sqrt(proj_dsq + rhosq.array());
             }
 
-            exp_jkrt = Eigen::exp(-jk * points_r.array());
+            exp_jkrt_ = Eigen::exp(-jk * points_r_.array());
             if (!use_angular)
-                exp_jkrx = exp_jkrt;
+                exp_jkrx_ = exp_jkrt_;
             else
-                exp_jkrx = Eigen::exp(-jk * points_rx.array());
+                exp_jkrx_ = Eigen::exp(-jk * points_rx_.array());
 
-            x_sq_exp = ref_weights_x.array() * edge.length() *
-                points_x.array() * points_x.array() * exp_jkrx.array();
+            x_sq_exp_ = weights_x_.array() * points_x_.array() * points_x_.array() * exp_jkrx_.array();
 
             Float r_minus = std::sqrt(proj_dsq + rproj_to_vminus.squaredNorm());
             Float r_plus = std::sqrt(proj_dsq + rproj_to_vplus.squaredNorm());
@@ -441,27 +434,25 @@ SrcResult SrcLineIntegrator<LineQuadratureType>::integrate_TEMP(
             {
                 if (dc)
                 {
-                    I_alpha += -(weights_r.array() * (points_r.array() - proj_d)).sum() * sign;
+                    I_alpha += -(weights_r_.array() * (points_r_.array() - proj_d)).sum() * sign;
 
                     if (use_simplified && !use_angular)
-                        I_beta.array() -= u_hat.array() *
-                            (ref_weights_x.array() * edge.length() * points_rx.array()).sum();
+                        I_beta.array() -= u_hat.array() * (weights_x_.array() * points_rx_.array()).sum();
                     else
                     {
-                        I_beta.array() -= u_hat.array() * (x_sq_exp.array() / points_rx.array()).sum();
+                        I_beta.array() -= u_hat.array() * (x_sq_exp_.array() / points_rx_.array()).sum();
                         I_beta.array() += edge.unit_vec().array() * proj_h * (r_plus - r_minus);
                     }
                 }
                 else
                 {
-                    I_alpha += (weights_r.array() * (exp_jkrt.array() - exp_jkd)).sum() / jk * sign;
+                    I_alpha += (weights_r_.array() * (exp_jkrt_.array() - exp_jkd)).sum() / jk * sign;
 
                     if (use_simplified && !use_angular)
-                        I_beta.array() -= u_hat.array() *
-                            (ref_weights_x.array() * edge.length() * exp_jkrx.array()).sum() / jk;
+                        I_beta.array() -= u_hat.array() * (weights_x_.array() * exp_jkrx_.array()).sum() / jk;
                     else
                     {
-                        I_beta.array() -= u_hat.array() * (x_sq_exp.array() / points_rx.array()).sum();
+                        I_beta.array() -= u_hat.array() * (x_sq_exp_.array() / points_rx_.array()).sum();
                         I_beta.array() += edge.unit_vec().array() * (-proj_h / jk) *
                             (exp_jkr_plus - exp_jkr_minus);
                     }
@@ -471,8 +462,8 @@ SrcResult SrcLineIntegrator<LineQuadratureType>::integrate_TEMP(
             if (base::compute_grad_g_terms_)
             {
                 I_par.array() -= u_hat.array() * (
-                    x_sq_exp.array() / Eigen::pow(points_rx.array(), 3) *
-                    (-one - jk * points_rx.array())
+                    x_sq_exp_.array() / Eigen::pow(points_rx_.array(), 3) *
+                    (-one - jk * points_rx_.array())
                     ).sum();
 
                 I_par.array() += edge.unit_vec().array() * proj_h *
@@ -480,8 +471,8 @@ SrcResult SrcLineIntegrator<LineQuadratureType>::integrate_TEMP(
 
                 I_perp += (
                     (
-                        weights_r.array() * exp_jkrt.array() / points_r.array()
-                        ).sum() * proj_d - (weights_r.array() * exp_jkd).sum()
+                        weights_r_.array() * exp_jkrt_.array() / points_r_.array()
+                        ).sum() * proj_d - (weights_r_.array() * exp_jkd).sum()
                     ) * proj_d_sign * sign;
             }
 

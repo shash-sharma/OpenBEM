@@ -111,13 +111,13 @@ EigMatNX<Float, dim> GeometryOps<dim>::transform_coordinate_system(
 
 
 template <uint8_t dim>
-EigRowVec<Float> GeometryOps<dim>::angle_between_vectors(
+EigRowVec<Float> GeometryOps<dim>::angles_between_vectors(
     ConstEigRef<EigMatNX<Float, dim>> v1,
     ConstEigRef<EigMatNX<Float, dim>> v2
     )
 {
     if constexpr (dim != 2 && dim != 3)
-        throw std::invalid_argument("GeometryOps::angle_between_vectors(): `dim` must be 2 or 3.");
+        throw std::invalid_argument("GeometryOps::angles_between_vectors(): `dim` must be 2 or 3.");
 
     if (v1.cols() != v2.cols())
         throw std::invalid_argument(
@@ -129,6 +129,18 @@ EigRowVec<Float> GeometryOps<dim>::angle_between_vectors(
         v1.colwise().norm().array() /
         v2.colwise().norm().array()
         );
+}
+
+
+template <uint8_t dim>
+Float GeometryOps<dim>::angle_between_vectors(
+    ConstEigRef<EigColVecN<Float, dim>> v1,
+    ConstEigRef<EigColVecN<Float, dim>> v2
+    )
+{
+    if constexpr (dim != 2 && dim != 3)
+        throw std::invalid_argument("GeometryOps::angle_between_vectors(): `dim` must be 2 or 3.");
+    return std::acos(v1.dot(v2) / v1.norm() / v2.norm());
 }
 
 
