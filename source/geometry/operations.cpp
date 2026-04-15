@@ -133,6 +133,43 @@ EigRowVec<Float> GeometryOps<dim>::angle_between_vectors(
 
 
 template <uint8_t dim>
+EigRowVec<Float> GeometryOps<dim>::directed_angles_between_vectors(
+    ConstEigRef<EigMatNX<Float, dim>> v1,
+    ConstEigRef<EigMatNX<Float, dim>> v2
+    )
+{
+    if constexpr (dim != 2 && dim != 3)
+        throw std::invalid_argument("GeometryOps::directed_angles_between_vectors(): `dim` must be 2 or 3.");
+
+    if (v1.cols() != v2.cols())
+        throw std::invalid_argument(
+            "directed_angle_between_vectors(): number of vectors in set v1 does not equal the number of vectors in set v2."
+        );
+
+    EigRowVec<Float> dot = (v1.cwiseProduct(v2)).colwise().sum();
+    EigRowVec<Float> det = EigRowVec<Float>::Zero(1, v1.cols());
+    if constexpr (dim == 2)
+        det.noalias() = v1.row(0) * v2.row(1).asDiagonal() - v2.row(0) * v1.row(1).asDiagonal();
+    else if constexpr (dim == 3)
+        for (uint32_t ii = 0; ii < v1.cols(); ii++)
+            det[ii] = (v1.col(ii).cross(v2.col(ii))).norm();
+
+    EigRowVec<Float> angles = EigRowVec<Float>::Zero(1, v1.cols());
+    for (uint32_t rr = 0; rr < v1.cols(); ++rr)
+        angles[rr] = std::atan2(det[rr], dot[rr]);
+
+    Float tol = std::max(
+        v1.colwise().norm().maxCoeff(), v2.colwise().norm().maxCoeff()
+        ) * GEOMETRY_DEFAULT_TOL;
+    angles = (Eigen::abs(dot.array()) < tol).select(
+        EigRowVec<Float>::Zero(1, v1.cols()), angles
+        );
+
+    return angles;
+}
+
+
+template <uint8_t dim>
 Float GeometryOps<dim>::directed_angle_between_vectors(
     ConstEigRef<EigColVecN<Float, dim>> v1,
     ConstEigRef<EigColVecN<Float, dim>> v2

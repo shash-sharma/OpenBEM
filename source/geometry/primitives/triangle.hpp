@@ -230,11 +230,27 @@ public:
 
 
     /**
-    * @brief Returns the projection of a given point on to the triangle's plane, along with the normal
+    * @brief Returns the projection of given points on to the triangle's plane, along with the normal
     * distance to the plane. For a 2D `Triangle`, its third (z) dimension is assumed to be 0.
-    * @param[out] r_proj - Projected point.
-    * @param[out] d - Perpendicular distance of the original point to the triangle's plane.
-    * @param[in] r - Point to be projected onto the triangle's plane.
+    * @param[out] r_proj - Projected points.
+    * @param[out] d - Perpendicular distances of the original points to the triangle's plane.
+    * @param[in] r - Points to be projected onto the triangle's plane.
+    * @param[in] ref_idx - Index of the reference vertex to be used for the projection (optional).
+    */
+    void get_plane_projection(
+        EigMatNX<Float, dim>& r_proj,
+        EigRowVec<Float>& d,
+        ConstEigRef<EigMatNX<Float, 3>> r,
+        uint8_t ref_idx = 0
+        ) const;
+
+
+    /**
+    * @brief Returns the projection of given points on to the triangle's plane, along with the normal
+    * distance to the plane. For a 2D `Triangle`, its third (z) dimension is assumed to be 0.
+    * @param[out] r_proj - Projected points.
+    * @param[out] d - Perpendicular distances of the original points to the triangle's plane.
+    * @param[in] r - Points to be projected onto the triangle's plane.
     * @param[in] ref_idx - Index of the reference vertex to be used for the projection (optional).
     */
     void get_plane_projection(
