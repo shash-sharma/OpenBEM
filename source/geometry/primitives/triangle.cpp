@@ -116,7 +116,7 @@ void Triangle<dim>::get_plane_projection(
 {
     EigColVecN<Float, 3> r_diff = r;
     r_diff.topRows(dim) -= v_.col(ref_idx);
-    d = normal_.transpose() * r_diff;
+    d = normal_.dot(r_diff);
     r_proj = (r - (normal_ * d)).topRows(dim);
 
     return;
