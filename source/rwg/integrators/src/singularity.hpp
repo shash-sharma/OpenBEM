@@ -88,12 +88,6 @@ public:
         ConstEigRef<EigMatNX<Float, 3>> r_obs
         ) override;
 
-    SrcResult integrate_TEMP(
-        const Complex k,
-        const Triangle<2>& src_tri,
-        ConstEigRef<EigMatNX<Float, 3>> r_obs
-        );
-
 
     /**
     * @brief Provides read-only access to the triangle quadrature object for inspection.
