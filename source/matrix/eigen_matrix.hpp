@@ -11,7 +11,7 @@
 
 
 /**
- std::variant<DenseMatrixType, SparseMatrixType>* @file
+* @file
 * Class wrapping dense and sparse Eigen matrices.
 */
 
@@ -227,7 +227,7 @@ public:
     * @note This preallocates memory directly for the underlying raw matrix values, but `assemble()`
     * must still be called before using the matrix.
     */
-    void preallocate_directly(const std::vector<Index>& nnz)
+    void preallocate(const std::vector<Index>& nnz)
     {
         if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
         {
