@@ -166,6 +166,42 @@ public:
 
 
     /**
+    * @brief Generates all possible pairs of triangle indices for a given triangle mesh.
+    * @param[in] mesh - Triangle mesh.
+    * @param[in] tagwise - Whether to exclude element pairs with different tags (optional).
+    * @return All possible triangle index pairs, with observation indices in the first row,
+    * and source indices in the second row.
+    */
+    static EigMatNX<Index, 2> make_pairs(
+        const TriangleMesh<3>& mesh,
+        const bool tagwise = false
+        )
+    {
+        std::vector<std::pair<Index, Index>> pairs_vec;
+        for (Index ii = 0; ii < mesh.num_elems() * mesh.num_elems(); ++ii)
+        {
+            std::pair<Index, Index> pair = std::make_pair(
+                ii / mesh.num_elems(),
+                ii % mesh.num_elems()
+                );
+            if ((tagwise && (mesh.elem_tags(pair.first) == mesh.elem_tags(pair.second))) ||
+                !tagwise)
+                pairs_vec.push_back(pair);
+        }
+
+        EigMatNX<Index, 2> pairs = EigMatNX<Index, 2>::Zero(2, pairs_vec.size());
+
+        for (Index ii = 0; ii < pairs_vec.size(); ++ii)
+        {
+            pairs(0, ii) = pairs_vec[ii].first;
+            pairs(1, ii) = pairs_vec[ii].second;
+        }
+
+        return pairs;
+    };
+
+
+    /**
     * @brief Generates all possible pairs of triangle indices for given observation and source triangle meshes.
     * @param[in] obs_mesh - Observation triangle mesh.
     * @param[in] src_mesh - Source triangle mesh.

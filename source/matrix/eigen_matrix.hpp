@@ -227,7 +227,7 @@ public:
     * @note This preallocates memory directly for the underlying raw matrix values, but `assemble()`
     * must still be called before using the matrix.
     */
-    void preallocate(const std::vector<Index>& nnz)
+    void preallocate_directly(const std::vector<Index>& nnz)
     {
         if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
         {
@@ -461,7 +461,9 @@ public:
     {
         const EigenMatrix<T, type, storage_order>& xd =
             dynamic_cast<const EigenMatrix<T, type, storage_order>&> (x);
-        matrix_ += a * xd.raw_matrix();
+
+        if (std::abs(a) > float_eps)
+            matrix_ += a * xd.raw_matrix();
         return;
     };
 
@@ -494,12 +496,17 @@ public:
     * @param[in] a - Scalar which which to scale the product of `x` and `y`.
     */
     void set_mat_mul(
-        const EigenMatrix<T, type, storage_order>& x,
-        const EigenMatrix<T, type, storage_order>& y,
+        const MatrixBase<T>& x,
+        const MatrixBase<T>& y,
         const T& a = T(1)
-        )
+        ) override
     {
-        matrix_ = x.raw_matrix() * y.raw_matrix() * a;
+        const EigenMatrix<T, type, storage_order>& xd =
+            dynamic_cast<const EigenMatrix<T, type, storage_order>&> (x);
+        const EigenMatrix<T, type, storage_order>& yd =
+            dynamic_cast<const EigenMatrix<T, type, storage_order>&> (y);
+
+        matrix_ = xd.raw_matrix() * yd.raw_matrix() * a;
         return;
     };
 
@@ -512,40 +519,49 @@ public:
     * @param[in] a - Scalar which which to scale the product of `x` and `y`.
     */
     void add_mat_mul(
-        const EigenMatrix<T, type, storage_order>& x,
-        const EigenMatrix<T, type, storage_order>& y,
+        const MatrixBase<T>& x,
+        const MatrixBase<T>& y,
         const T& a = T(1)
-        )
+        ) override
     {
-        matrix_ += x.raw_matrix() * y.raw_matrix() * a;
+        const EigenMatrix<T, type, storage_order>& xd =
+            dynamic_cast<const EigenMatrix<T, type, storage_order>&> (x);
+        const EigenMatrix<T, type, storage_order>& yd =
+            dynamic_cast<const EigenMatrix<T, type, storage_order>&> (y);
+
+        if (std::abs(a) > float_eps)
+            matrix_ += xd.raw_matrix() * yd.raw_matrix() * a;
         return;
     };
 
 
     /**
-    * @brief Sets a block of values in this matrix to the values of a given matrix, starting at a given position.
+    * @brief Sets a block of this matrix to the values of a given matrix, starting at a given position.
     * @param[in] x - Matrix to insert.
     * @param[in] row_start - Starting row index for the block.
     * @param[in] col_start - Starting column index for the block.
     * @param[in] a - Scalar to multiply the values of `x` before inserting (optional).
     */
     void set_block(
-        const EigenMatrix<T, type, storage_order>& x,
+        const MatrixBase<T>& x,
         Index row_start,
         Index col_start,
         const T& a = T(1)
-        )
+        ) override
     {
+        const EigenMatrix<T, type, storage_order>& xd =
+            dynamic_cast<const EigenMatrix<T, type, storage_order>&> (x);
+
         if constexpr (type == EigenMatrixType::EIGEN_DENSE)
-            matrix_.block(row_start, col_start, x.num_rows(), x.num_cols()) = x.raw_matrix() * a;
+            matrix_.block(row_start, col_start, xd.num_rows(), xd.num_cols()) = xd.raw_matrix() * a;
 
         if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
         {
             std::vector<Eigen::Triplet<T>> x_triplets;
-            x_triplets.reserve(x.raw_matrix().nonZeros());
+            x_triplets.reserve(xd.raw_matrix().nonZeros());
 
-            for (Index kk = 0; kk < x.raw_matrix().outerSize(); ++kk)
-                for (typename MatrixType::InnerIterator it (x.raw_matrix(), kk); it; ++it)
+            for (Index kk = 0; kk < xd.raw_matrix().outerSize(); ++kk)
+                for (typename MatrixType::InnerIterator it (xd.raw_matrix(), kk); it; ++it)
                     x_triplets.push_back(
                         Eigen::Triplet<T> (row_start + it.row(), col_start + it.col(), it.value() * a)
                         );
@@ -562,30 +578,35 @@ public:
 
 
     /**
-    * @brief Adds a block of values to this matrix from the values of a given matrix,
-    * starting at a given position.
+    * @brief Adds a block to this matrix from the values of a given matrix, starting at a given position.
     * @param[in] x - Matrix whose values should be added to a block of this matrix.
     * @param[in] row_start - Starting row index for the block.
     * @param[in] col_start - Starting column index for the block.
     * @param[in] a - Scalar to multiply the values of `x` before adding (optional).
     */
     void add_block(
-        const EigenMatrix<T, type, storage_order>& x,
+        const MatrixBase<T>& x,
         Index row_start,
         Index col_start,
         const T& a = T(1)
-        )
+        ) override
     {
+        if (!(std::abs(a) > float_eps))
+            return;
+
+        const EigenMatrix<T, type, storage_order>& xd =
+            dynamic_cast<const EigenMatrix<T, type, storage_order>&> (x);
+
         if constexpr (type == EigenMatrixType::EIGEN_DENSE)
-            matrix_.block(row_start, col_start, x.num_rows(), x.num_cols()) += a * x.raw_matrix();
+            matrix_.block(row_start, col_start, xd.num_rows(), xd.num_cols()) += a * xd.raw_matrix();
 
         if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
         {
             std::vector<Eigen::Triplet<T>> x_triplets;
-            x_triplets.reserve(x.raw_matrix().nonZeros());
+            x_triplets.reserve(xd.raw_matrix().nonZeros());
 
-            for (Index kk = 0; kk < x.raw_matrix().outerSize(); ++kk)
-                for (typename MatrixType::InnerIterator it (x.raw_matrix(), kk); it; ++it)
+            for (Index kk = 0; kk < xd.raw_matrix().outerSize(); ++kk)
+                for (typename MatrixType::InnerIterator it (xd.raw_matrix(), kk); it; ++it)
                     x_triplets.push_back(
                         Eigen::Triplet<T> (row_start + it.row(), col_start + it.col(), it.value() * a)
                         );
@@ -606,23 +627,25 @@ public:
     * @param[in] b_cols - Number of columns in the block to retrieve.
     */
     void get_block(
-        EigenMatrix<T, type, storage_order>& x,
+        MatrixBase<T>& x,
         Index row_start,
         Index col_start,
         Index b_rows,
         Index b_cols
-        ) const
+        ) const override
     {
-        x.resize(b_rows, b_cols);
-        x.raw_matrix() = matrix_.block(row_start, col_start, b_rows, b_cols);
+        EigenMatrix<T, type, storage_order>& xd =
+            dynamic_cast<EigenMatrix<T, type, storage_order>&> (x);
+        xd.resize(b_rows, b_cols);
+        xd.raw_matrix() = matrix_.block(row_start, col_start, b_rows, b_cols);
         return;
     };
 
 
     /**
-    * @brief Computes and stores the LU factors using sparse factorization. The original matrix is not modified.
+    * @brief Computes and stores the LU factors. The original matrix is not modified.
     */
-    void factorize()
+    void factorize() override
     {
         if constexpr (type == EigenMatrixType::EIGEN_DENSE)
         {

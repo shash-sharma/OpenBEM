@@ -179,6 +179,93 @@ public:
 
 
     /**
+    * @brief Computes \f$ \mathbf{M} = a\mathbf{X}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$ is this matrix,
+    * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
+    * @param[in] x - First matrix to multiply, must have the same number of columns as `y` has rows.
+    * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
+    * @param[in] a - Scalar which which to scale the product of `x` and `y`.
+    */
+    virtual void set_mat_mul(
+        const MatrixBase<T>& x,
+        const MatrixBase<T>& y,
+        const T& a = T(1)
+        )
+    { throw std::runtime_error("MatrixBase::set_mat_mul(): Not implemented."); };
+
+
+    /**
+    * @brief Computes \f$ \mathbf{M} = \mathbf{M} + a\mathbf{X}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$
+    * is this matrix, \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
+    * @param[in] x - First matrix to multiply, must have the same number of columns as `y` has rows.
+    * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
+    * @param[in] a - Scalar which which to scale the product of `x` and `y`.
+    */
+    virtual void add_mat_mul(
+        const MatrixBase<T>& x,
+        const MatrixBase<T>& y,
+        const T& a = T(1)
+        )
+    { throw std::runtime_error("MatrixBase::add_mat_mul(): Not implemented."); };
+
+
+    /**
+    * @brief Sets a block of this matrix to the values of a given matrix, starting at a given position.
+    * @param[in] x - Matrix to insert.
+    * @param[in] row_start - Starting row index for the block.
+    * @param[in] col_start - Starting column index for the block.
+    * @param[in] a - Scalar to multiply the values of `x` before inserting (optional).
+    */
+    virtual void set_block(
+        const MatrixBase<T>& x,
+        Index row_start,
+        Index col_start,
+        const T& a = T(1)
+        )
+    { throw std::runtime_error("MatrixBase::set_block(): Not implemented."); };
+
+
+    /**
+    * @brief Adds a block to this matrix from the values of a given matrix, starting at a given position.
+    * @param[in] x - Matrix whose values should be added to a block of this matrix.
+    * @param[in] row_start - Starting row index for the block.
+    * @param[in] col_start - Starting column index for the block.
+    * @param[in] a - Scalar to multiply the values of `x` before adding (optional).
+    */
+    virtual void add_block(
+        const MatrixBase<T>& x,
+        Index row_start,
+        Index col_start,
+        const T& a = T(1)
+        )
+    { throw std::runtime_error("MatrixBase::add_block(): Not implemented."); };
+
+
+    /**
+    * @brief Retrieves a block of values from this matrix.
+    * @param[out] x - Matrix to store the retrieved block of values.
+    * @param[in] row_start - Starting row index for the block.
+    * @param[in] col_start - Starting column index for the block.
+    * @param[in] b_rows - Number of rows in the block to retrieve.
+    * @param[in] b_cols - Number of columns in the block to retrieve.
+    */
+    virtual void get_block(
+        MatrixBase<T>& x,
+        Index row_start,
+        Index col_start,
+        Index b_rows,
+        Index b_cols
+        ) const
+    { throw std::runtime_error("MatrixBase::get_block(): Not implemented."); };
+
+
+    /**
+    * @brief Computes and stores a factorization of the matrix.
+    */
+    virtual void factorize()
+    { throw std::runtime_error("MatrixBase::factorize(): Not implemented."); };
+
+
+    /**
     * @brief Sets the matrix to identity (ones along the diagonal, zeros elsewhere).
     */
     virtual void set_identity()
