@@ -115,20 +115,6 @@ public:
 
 
     /**
-    * @brief Returns a read-only pointer to the underlying raw data.
-    * @return Read-only pointer to the raw data.
-    */
-    virtual const T* data() const = 0;
-
-
-    /**
-    * @brief Returns a writable pointer to the underlying raw data - use with care.
-    * @return Writable pointer to the raw data.
-    */
-    virtual T* data() = 0;
-
-
-    /**
     * @brief Solves \f$ \mathbf{M}\mathbf{X} = \mathbf{B} \f$ for matrix \f$ \mathbf{X} \f$ with a
     * direct solver, where \f$ \mathbf{M} \f$ is this matrix, and \f$ \mathbf{B} \f$ is a given
     * right-hand side matrix.
@@ -176,6 +162,22 @@ public:
     * @brief Assembles cached data into the matrix.
     */
     virtual void assemble() {};
+
+
+    /**
+    * @brief Returns a read-only pointer to the underlying raw data.
+    * @return Read-only pointer to the raw data.
+    */
+    virtual const T* data() const
+    { throw std::runtime_error("MatrixBase::data(): Not implemented."); };
+
+
+    /**
+    * @brief Returns a writable pointer to the underlying raw data - use with care.
+    * @return Writable pointer to the raw data.
+    */
+    virtual T* data()
+    { throw std::runtime_error("MatrixBase::data(): Not implemented."); };
 
 
     /**

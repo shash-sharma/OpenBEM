@@ -21,6 +21,8 @@
 #include <vector>
 #include <memory>
 #include <type_traits>
+#include <variant>
+#include <stdexcept>
 
 #include <external/Eigen/Dense>
 #include <external/Eigen/Sparse>
@@ -86,6 +88,13 @@ public:
         set_zero();
         return;
     };
+
+
+    /**
+    * @brief Returns the Eigen type name of the matrix.
+    * @return - Type name.
+    */
+    static EigenMatrixType matrix_type() { return type; };
 
 
     /**
@@ -459,11 +468,17 @@ public:
     */
     void add_ax(const MatrixBase<T>& x, const T& a = T(1)) override
     {
-        const EigenMatrix<T, type, storage_order>& xd =
-            dynamic_cast<const EigenMatrix<T, type, storage_order>&> (x);
+        if (!(std::abs(a) > float_eps))
+            return;
 
-        if (std::abs(a) > float_eps)
-            matrix_ += a * xd.raw_matrix();
+        auto visitor = [this, a] (const auto* xc)
+        { matrix_ += a * xc->raw_matrix(); };
+
+        if constexpr (type == EigenMatrixType::EIGEN_DENSE)
+            std::visit(visitor, to_variant(x));
+        else
+            matrix_ += a * to_same(x)->raw_matrix();
+
         return;
     };
 
@@ -483,7 +498,11 @@ public:
         const T& b = T(1)
         )
     {
-        matrix_ = a * x.raw_matrix() + b * y.raw_matrix();
+        auto visitor = [this, a, b] (const auto* xc, const auto* yc)
+        { matrix_ = a * xc->raw_matrix() + b * yc->raw_matrix(); };
+
+        std::visit(visitor, to_variant(x), to_variant(y));
+
         return;
     };
 
@@ -501,12 +520,14 @@ public:
         const T& a = T(1)
         ) override
     {
-        const EigenMatrix<T, type, storage_order>& xd =
-            dynamic_cast<const EigenMatrix<T, type, storage_order>&> (x);
-        const EigenMatrix<T, type, storage_order>& yd =
-            dynamic_cast<const EigenMatrix<T, type, storage_order>&> (y);
+        auto visitor = [this, a] (const auto* xc, const auto* yc)
+        { matrix_ = xc->raw_matrix() * yc->raw_matrix() * a; };
 
-        matrix_ = xd.raw_matrix() * yd.raw_matrix() * a;
+        if constexpr (type == EigenMatrixType::EIGEN_DENSE)
+            std::visit(visitor, to_variant(x), to_variant(y));
+        else
+            matrix_ = to_same(x)->raw_matrix() * to_same(y)->raw_matrix() * a;
+
         return;
     };
 
@@ -524,13 +545,17 @@ public:
         const T& a = T(1)
         ) override
     {
-        const EigenMatrix<T, type, storage_order>& xd =
-            dynamic_cast<const EigenMatrix<T, type, storage_order>&> (x);
-        const EigenMatrix<T, type, storage_order>& yd =
-            dynamic_cast<const EigenMatrix<T, type, storage_order>&> (y);
+        if (!(std::abs(a) > float_eps))
+            return;
 
-        if (std::abs(a) > float_eps)
-            matrix_ += xd.raw_matrix() * yd.raw_matrix() * a;
+        auto visitor = [this, a] (const auto* xc, const auto* yc)
+        { matrix_ += xc->raw_matrix() * yc->raw_matrix() * a; };
+
+        if constexpr (type == EigenMatrixType::EIGEN_DENSE)
+            std::visit(visitor, to_variant(x), to_variant(y));
+        else
+            matrix_ += to_same(x)->raw_matrix() * to_same(y)->raw_matrix() * a;
+
         return;
     };
 
@@ -549,19 +574,18 @@ public:
         const T& a = T(1)
         ) override
     {
-        const EigenMatrix<T, type, storage_order>& xd =
-            dynamic_cast<const EigenMatrix<T, type, storage_order>&> (x);
+        const auto& xc = *to_same(x);
 
         if constexpr (type == EigenMatrixType::EIGEN_DENSE)
-            matrix_.block(row_start, col_start, xd.num_rows(), xd.num_cols()) = xd.raw_matrix() * a;
+            matrix_.block(row_start, col_start, xc.num_rows(), xc.num_cols()) = xc.raw_matrix() * a;
 
         if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
         {
             std::vector<Eigen::Triplet<T>> x_triplets;
-            x_triplets.reserve(xd.raw_matrix().nonZeros());
+            x_triplets.reserve(xc.raw_matrix().nonZeros());
 
-            for (Index kk = 0; kk < xd.raw_matrix().outerSize(); ++kk)
-                for (typename MatrixType::InnerIterator it (xd.raw_matrix(), kk); it; ++it)
+            for (Index kk = 0; kk < xc.raw_matrix().outerSize(); ++kk)
+                for (typename MatrixType::InnerIterator it (xc.raw_matrix(), kk); it; ++it)
                     x_triplets.push_back(
                         Eigen::Triplet<T> (row_start + it.row(), col_start + it.col(), it.value() * a)
                         );
@@ -594,19 +618,18 @@ public:
         if (!(std::abs(a) > float_eps))
             return;
 
-        const EigenMatrix<T, type, storage_order>& xd =
-            dynamic_cast<const EigenMatrix<T, type, storage_order>&> (x);
+        const auto& xc = *to_same(x);
 
         if constexpr (type == EigenMatrixType::EIGEN_DENSE)
-            matrix_.block(row_start, col_start, xd.num_rows(), xd.num_cols()) += a * xd.raw_matrix();
+            matrix_.block(row_start, col_start, xc.num_rows(), xc.num_cols()) += a * xc.raw_matrix();
 
         if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
         {
             std::vector<Eigen::Triplet<T>> x_triplets;
-            x_triplets.reserve(xd.raw_matrix().nonZeros());
+            x_triplets.reserve(xc.raw_matrix().nonZeros());
 
-            for (Index kk = 0; kk < xd.raw_matrix().outerSize(); ++kk)
-                for (typename MatrixType::InnerIterator it (xd.raw_matrix(), kk); it; ++it)
+            for (Index kk = 0; kk < xc.raw_matrix().outerSize(); ++kk)
+                for (typename MatrixType::InnerIterator it (xc.raw_matrix(), kk); it; ++it)
                     x_triplets.push_back(
                         Eigen::Triplet<T> (row_start + it.row(), col_start + it.col(), it.value() * a)
                         );
@@ -634,10 +657,9 @@ public:
         Index b_cols
         ) const override
     {
-        EigenMatrix<T, type, storage_order>& xd =
-            dynamic_cast<EigenMatrix<T, type, storage_order>&> (x);
-        xd.resize(b_rows, b_cols);
-        xd.raw_matrix() = matrix_.block(row_start, col_start, b_rows, b_cols);
+        auto& xc = *to_same(x);
+        xc.resize(b_rows, b_cols);
+        xc.raw_matrix() = matrix_.block(row_start, col_start, b_rows, b_cols);
         return;
     };
 
@@ -681,11 +703,11 @@ public:
         if (!factorized_)
             factorize();
 
-        const EigenMatrix<T, type, storage_order>& bd =
-            dynamic_cast<const EigenMatrix<T, type, storage_order>&> (b);
+        const auto& bd =
+            dynamic_cast<const EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>&> (b);
 
-        EigenMatrix<T, type, storage_order>& xd =
-            dynamic_cast<EigenMatrix<T, type, storage_order>&> (x);
+        auto& xd =
+            dynamic_cast<EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>&> (x);
 
         if constexpr (type == EigenMatrixType::EIGEN_DENSE)
         {
@@ -869,6 +891,50 @@ public:
 
 protected:
 
+    // Type alias for the matrix variant to support both dense and sparse matrices
+    using MatrixVariant = std::variant<
+        const EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>*,
+        const EigenMatrix<T, EigenMatrixType::EIGEN_SPARSE, storage_order>*
+    >;
+
+
+    /**
+    * @brief Casts a MatrixBase reference to a matching-type read-only matrix pointer.
+    * @param[in] x - Matrix reference to cast.
+    * @return Read-only cast matrix pointer.
+    */
+    const EigenMatrix<T, type, storage_order>* to_same(const MatrixBase<T>& x) const
+    {
+        return dynamic_cast<const EigenMatrix<T, type, storage_order>*> (&x);
+    };
+
+
+    /**
+    * @brief Casts a MatrixBase reference to a matching-type writable matrix pointer.
+    * @param[in] x - Matrix reference to cast.
+    * @return Writable cast matrix pointer.
+    */
+    EigenMatrix<T, type, storage_order>* to_same(MatrixBase<T>& x) const
+    {
+        return dynamic_cast<EigenMatrix<T, type, storage_order>*> (&x);
+    };
+
+
+    /**
+    * @brief Casts a MatrixBase reference to a type-erased matrix variant.
+    * @param[in] x - Matrix reference to convert.
+    * @return Variant containing a pointer to the concrete matrix type.
+    */
+    MatrixVariant to_variant(const MatrixBase<T>& x) const
+    {
+        if (auto xd = dynamic_cast<const EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>*> (&x))
+            return xd;
+        else if (auto xs = dynamic_cast<const EigenMatrix<T, EigenMatrixType::EIGEN_SPARSE, storage_order>*> (&x))
+            return xs;
+        throw std::invalid_argument("EigenMatrix::to_variant(): Input matrix type not supported.");
+    };
+
+
     MatrixType matrix_;
 
     std::vector<Eigen::Triplet<T>> triplets_;
@@ -897,29 +963,4 @@ protected:
 }
 
 #endif
-
-    // /**
-    // * @brief Sets the underlying raw matrix by copying over data from a given matrix.
-    // * @param[in] matrix - The raw matrix to set.
-    // */
-    // void set_raw_matrix(const MatrixType& matrix)
-    // {
-    //     matrix_ = std::make_shared<MatrixType> (matrix);
-    //     return;
-    // };
-
-
-    // /**
-    // * @brief Binds the underlying raw matrix to the data pointed at by a given matrix pointer.
-    // * @param[in] matrix - Pointer to the raw matrix to be bound.
-    // * @details
-    // * The purpose of this method is to allow creating an external Eigen matrix of type `MatrixType`,
-    // * and then transferring ownership of that matrix to this object, but without copying over the
-    // * underlying data, unlike `set_raw_matrix()`.
-    // */
-    // void bind_raw_matrix(std::shared_ptr<MatrixType> matrix)
-    // {
-    //     matrix_ = std::move(matrix);
-    //     return;
-    // };
 
