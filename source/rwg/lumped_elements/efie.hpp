@@ -46,10 +46,10 @@ namespace bem::rwg
 * @tparam MatrixType - Matrix type, must derive from `MatrixBase<Complex>`.
 */
 template <typename MatrixType = EigenMatrix<Complex>>
-class TefieLumpedElement: public LumpedElementBase<MatrixType>
+class TefieLumpedElement: public LumpedElement<MatrixType>
 {
 
-    using base = LumpedElementBase<MatrixType>;
+    using base = LumpedElement<MatrixType>;
     using base::base;
 
 public:
@@ -59,7 +59,7 @@ public:
     * @param[in] f - Frequency in Hz.
     * @return Coupling matrix.
     */
-    MatrixType coupling_matrix(const Float f) const override
+    MatrixType coupling_matrix(const Float f) const
     {
         TriangleMesh<3> port_mesh = base::port_mesh_view().mesh();
 
@@ -84,7 +84,7 @@ public:
     * @param[in] f - Frequency in Hz.
     * @return Voltage matrix.
     */
-    MatrixType voltage_matrix(const Float f) const override
+    MatrixType voltage_matrix(const Float f) const
     {
         TriangleMesh<3> port_mesh = base::port_mesh_view().mesh();
 
@@ -120,7 +120,7 @@ public:
     * @param[in] f - Frequency in Hz
     * @return Current matrix.
     */
-    MatrixType current_matrix(const Float f) const override
+    MatrixType current_matrix(const Float f) const
     {
         MatrixType mat (base::num_ports(), base::num_ports());
         for (Index ii = 0; ii < base::num_ports(); ++ii)
@@ -179,10 +179,10 @@ protected:
 * @tparam MatrixType - Matrix type, must derive from `MatrixBase<Complex>`.
 */
 template <typename MatrixType = EigenMatrix<Complex>>
-class NefieLumpedElement: public LumpedElementBase<MatrixType>
+class NefieLumpedElement: public LumpedElement<MatrixType>
 {
 
-    using base = LumpedElementBase<MatrixType>;
+    using base = LumpedElement<MatrixType>;
     using base::base;
 
 public:
@@ -192,7 +192,7 @@ public:
     * @param[in] f - Frequency in Hz.
     * @return Coupling matrix.
     */
-    MatrixType coupling_matrix(const Float f) const override
+    MatrixType coupling_matrix(const Float f) const
     {
         TriangleMesh<3> port_mesh = base::port_mesh_view().mesh();
         MatrixType Lp = nxphi_matrix(f, base::structure_.mesh(), port_mesh);
@@ -208,7 +208,7 @@ public:
     * @param[in] f - Frequency in Hz.
     * @return Voltage matrix.
     */
-    MatrixType voltage_matrix(const Float f) const override
+    MatrixType voltage_matrix(const Float f) const
     {
         TefieLumpedElement<MatrixType> tefie_elem (base::structure_, base::terminal_polygons_, base::ports_, base::impedances_);
         return tefie_elem.voltage_matrix(f);
@@ -220,7 +220,7 @@ public:
     * @param[in] f - Frequency in Hz
     * @return Current matrix.
     */
-    MatrixType current_matrix(const Float f) const override
+    MatrixType current_matrix(const Float f) const
     {
         TefieLumpedElement<MatrixType> tefie_elem (base::structure_, base::terminal_polygons_, base::ports_, base::impedances_);
         return tefie_elem.current_matrix(f);

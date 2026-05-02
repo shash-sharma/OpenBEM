@@ -514,7 +514,7 @@ public:
     * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
     * @param[in] a - Scalar which which to scale the product of `x` and `y`.
     */
-    void set_mat_mul(
+    void set_matmul(
         const MatrixBase<T>& x,
         const MatrixBase<T>& y,
         const T& a = T(1)
@@ -539,7 +539,7 @@ public:
     * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
     * @param[in] a - Scalar which which to scale the product of `x` and `y`.
     */
-    void add_mat_mul(
+    void add_matmul(
         const MatrixBase<T>& x,
         const MatrixBase<T>& y,
         const T& a = T(1)

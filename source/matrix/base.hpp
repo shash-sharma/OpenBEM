@@ -187,12 +187,12 @@ public:
     * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
     * @param[in] a - Scalar which which to scale the product of `x` and `y`.
     */
-    virtual void set_mat_mul(
+    virtual void set_matmul(
         const MatrixBase<T>& x,
         const MatrixBase<T>& y,
         const T& a = T(1)
         )
-    { throw std::runtime_error("MatrixBase::set_mat_mul(): Not implemented."); };
+    { throw std::runtime_error("MatrixBase::set_matmul(): Not implemented."); };
 
 
     /**
@@ -202,12 +202,12 @@ public:
     * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
     * @param[in] a - Scalar which which to scale the product of `x` and `y`.
     */
-    virtual void add_mat_mul(
+    virtual void add_matmul(
         const MatrixBase<T>& x,
         const MatrixBase<T>& y,
         const T& a = T(1)
         )
-    { throw std::runtime_error("MatrixBase::add_mat_mul(): Not implemented."); };
+    { throw std::runtime_error("MatrixBase::add_matmul(): Not implemented."); };
 
 
     /**

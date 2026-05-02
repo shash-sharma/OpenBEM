@@ -117,7 +117,7 @@ public:
 
         MatrixType Lp = phi_matrix(f, material);
         MatrixType DtLp;
-        DtLp.set_mat_mul(Dt, Lp);
+        DtLp.set_matmul(Dt, Lp);
         return DtLp;
     };
 

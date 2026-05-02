@@ -119,7 +119,7 @@ void test_cfie_pec_lineint()
     T_proj.scale(-J * omega * mu);
 
     EigenMatrix<Complex> Escat;
-    Escat.set_mat_mul(T_proj, x);
+    Escat.set_matmul(T_proj, x);
 
     EigenMatrix<Float> Escatmag;
     Escatmag.raw_matrix() = Escat.raw_matrix().reshaped(3, 100).colwise().norm();

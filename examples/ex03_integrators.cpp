@@ -287,8 +287,8 @@ int main(int argc, char** argv)
     // First, let's get the far fields that result from the currents computed by solving the TEFIE.
 
     MatrixType e_tefie, h_tefie;
-    e_tefie.set_mat_mul(e_proj, j_tefie);
-    h_tefie.set_mat_mul(h_proj, j_tefie);
+    e_tefie.set_matmul(e_proj, j_tefie);
+    h_tefie.set_matmul(h_proj, j_tefie);
 
     // Note: do not confuse the projectors for the matrix operators. In the above, we are using the
     // TEFIE to solve for the currents, and then we are using the EFIE to get the E-field generated
@@ -300,8 +300,8 @@ int main(int argc, char** argv)
     // currents computing using the NMFIE.
 
     MatrixType e_nmfie, h_nmfie;
-    e_nmfie.set_mat_mul(e_proj, j_nmfie);
-    h_nmfie.set_mat_mul(h_proj, j_nmfie);
+    e_nmfie.set_matmul(e_proj, j_nmfie);
+    h_nmfie.set_matmul(h_proj, j_nmfie);
 
     // Note that since the projected fields are vectorial, we have three field components at each
     // observation point in our point cloud. The components are stored contiguously along matrix
