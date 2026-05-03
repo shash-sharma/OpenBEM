@@ -211,6 +211,36 @@ public:
 
 
     /**
+    * @brief Computes \f$ \mathbf{X} = a\mathbf{M}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$ is this matrix,
+    * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
+    * @param[out] x - Multiplication result.
+    * @param[in] y - Matrix with which to multiply, must have the same number of rows as this matrix.
+    * @param[in] a - Scalar which which to scale the product.
+    */
+    virtual void matmul(
+        MatrixBase<T>& x,
+        const MatrixBase<T>& y,
+        const T& a = T(1)
+        )
+    { throw std::runtime_error("MatrixBase::matmul(): Not implemented."); };
+
+
+    /**
+    * @brief Computes \f$ \mathbf{X} += a\mathbf{M}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$ is this matrix,
+    * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
+    * @param[out] x - Multiplication result.
+    * @param[in] y - Matrix with which to multiply, must have the same number of rows as this matrix.
+    * @param[in] a - Scalar which which to scale the product.
+    */
+    virtual void matmuladd(
+        MatrixBase<T>& x,
+        const MatrixBase<T>& y,
+        const T& a = T(1)
+        )
+    { throw std::runtime_error("MatrixBase::matmul(): Not implemented."); };
+
+
+    /**
     * @brief Sets a block of this matrix to the values of a given matrix, starting at a given position.
     * @param[in] x - Matrix to insert.
     * @param[in] row_start - Starting row index for the block.
