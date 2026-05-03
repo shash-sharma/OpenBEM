@@ -221,7 +221,7 @@ public:
         MatrixBase<T>& x,
         const MatrixBase<T>& y,
         const T& a = T(1)
-        )
+        ) const
     { throw std::runtime_error("MatrixBase::matmul(): Not implemented."); };
 
 
@@ -236,7 +236,7 @@ public:
         MatrixBase<T>& x,
         const MatrixBase<T>& y,
         const T& a = T(1)
-        )
+        ) const
     { throw std::runtime_error("MatrixBase::matmul(): Not implemented."); };
 
 

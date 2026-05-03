@@ -571,7 +571,7 @@ public:
         MatrixBase<T>& x,
         const MatrixBase<T>& y,
         const T& a = T(1)
-        ) override
+        ) const override
     {
         to_same(x)->raw_matrix() = matrix_ * to_same(y)->raw_matrix() * a;
         return;
@@ -589,7 +589,7 @@ public:
         MatrixBase<T>& x,
         const MatrixBase<T>& y,
         const T& a = T(1)
-        ) override
+        ) const override
     {
         to_same(x)->raw_matrix() += matrix_ * to_same(y)->raw_matrix() * a;
         return;
