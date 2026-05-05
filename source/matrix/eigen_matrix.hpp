@@ -574,7 +574,14 @@ public:
         const T& a = T(1)
         ) const override
     {
-        to_same(x)->raw_matrix() = matrix_ * to_same(y)->raw_matrix() * a;
+        auto visitor = [&] (const auto* yc)
+        { to_same(x)->raw_matrix() = matrix_ * yc->raw_matrix() * a; };
+
+        if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
+            to_same(x)->raw_matrix() = matrix_ * to_same(y)->raw_matrix() * a;
+        else
+            std::visit(visitor, to_variant(y));
+
         return;
     };
 
@@ -592,7 +599,14 @@ public:
         const T& a = T(1)
         ) const override
     {
-        to_same(x)->raw_matrix() += matrix_ * to_same(y)->raw_matrix() * a;
+        auto visitor = [&] (const auto* yc)
+        { to_same(x)->raw_matrix() += matrix_ * yc->raw_matrix() * a; };
+
+        if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
+            to_same(x)->raw_matrix() += matrix_ * to_same(y)->raw_matrix() * a;
+        else
+            std::visit(visitor, to_variant(y));
+
         return;
     };
 
@@ -694,9 +708,17 @@ public:
         Index b_cols
         ) const override
     {
-        auto& xc = *to_same(x);
-        xc.resize(b_rows, b_cols);
-        xc.raw_matrix() = matrix_.block(row_start, col_start, b_rows, b_cols);
+        auto visitor = [&] (auto* xc)
+        { xc->raw_matrix() = matrix_.block(row_start, col_start, b_rows, b_cols); };
+
+        if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
+            std::visit(visitor, to_variant(x));
+        else
+        {
+            auto& xc = *to_same(x);
+            xc.raw_matrix() = matrix_.block(row_start, col_start, b_rows, b_cols);
+        }
+
         return;
     };
 
@@ -928,8 +950,15 @@ public:
 
 protected:
 
-    // Type alias for the matrix variant to support both dense and sparse matrices
+    // Type alias for the matrix variant to support both dense and sparse matrices.
     using MatrixVariant = std::variant<
+        EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>*,
+        EigenMatrix<T, EigenMatrixType::EIGEN_SPARSE, storage_order>*
+    >;
+
+
+    // Type alias for the matrix variant to support both dense and sparse matrices in read-only mode.
+    using ConstMatrixVariant = std::variant<
         const EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>*,
         const EigenMatrix<T, EigenMatrixType::EIGEN_SPARSE, storage_order>*
     >;
@@ -964,11 +993,27 @@ protected:
 
 
     /**
-    * @brief Casts a MatrixBase reference to a type-erased matrix variant.
+    * @brief Casts a MatrixBase reference to a type-erased writable matrix variant.
     * @param[in] x - Matrix reference to convert.
     * @return Variant containing a pointer to the concrete matrix type.
     */
-    MatrixVariant to_variant(const MatrixBase<T>& x) const
+    MatrixVariant to_variant(MatrixBase<T>& x) const
+    {
+        if (auto xd = dynamic_cast<EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>*> (&x))
+            return xd;
+        else if (auto xs = dynamic_cast<EigenMatrix<T, EigenMatrixType::EIGEN_SPARSE, storage_order>*> (&x))
+            return xs;
+        else
+            throw std::invalid_argument("EigenMatrix::to_variant(): Input matrix type not supported.");
+    };
+
+
+    /**
+    * @brief Casts a MatrixBase reference to a type-erased read-only matrix variant.
+    * @param[in] x - Matrix reference to convert.
+    * @return Variant containing a pointer to the concrete matrix type.
+    */
+    ConstMatrixVariant to_variant(const MatrixBase<T>& x) const
     {
         if (auto xd = dynamic_cast<const EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>*> (&x))
             return xd;
@@ -977,6 +1022,8 @@ protected:
         else
             throw std::invalid_argument("EigenMatrix::to_variant(): Input matrix type not supported.");
     };
+
+
 
 
     MatrixType matrix_;
