@@ -469,6 +469,9 @@ public:
     */
     void add_ax(const MatrixBase<T>& x, const T& a = T(1)) override
     {
+        if (x.num_rows() * x.num_cols() == 0)
+            return;
+
         if (!(std::abs(a) > float_eps))
             return;
 
@@ -574,6 +577,9 @@ public:
         const T& a = T(1)
         ) const override
     {
+        if (y.num_rows() * y.num_cols() == 0)
+            return;
+
         auto visitor = [&] (const auto* yc)
         { to_same(x)->raw_matrix() = matrix_ * yc->raw_matrix() * a; };
 
@@ -599,6 +605,9 @@ public:
         const T& a = T(1)
         ) const override
     {
+        if (y.num_rows() * y.num_cols() == 0)
+            return;
+
         auto visitor = [&] (const auto* yc)
         { to_same(x)->raw_matrix() += matrix_ * yc->raw_matrix() * a; };
 
