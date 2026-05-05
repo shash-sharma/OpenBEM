@@ -32,6 +32,7 @@
 #include <external/EigenUnsupported/Eigen/IterativeSolvers>
 
 #include "types.hpp"
+#include "constants.hpp"
 #include "matrix/base.hpp"
 
 
@@ -941,7 +942,10 @@ protected:
     */
     const EigenMatrix<T, type, storage_order>* to_same(const MatrixBase<T>& x) const
     {
-        return dynamic_cast<const EigenMatrix<T, type, storage_order>*> (&x);
+        if (auto xc = dynamic_cast<const EigenMatrix<T, type, storage_order>*> (&x))
+            return xc;
+        else
+            throw std::invalid_argument("EigenMatrix::to_same(): Incompatible matrix types.");
     };
 
 
@@ -952,7 +956,10 @@ protected:
     */
     EigenMatrix<T, type, storage_order>* to_same(MatrixBase<T>& x) const
     {
-        return dynamic_cast<EigenMatrix<T, type, storage_order>*> (&x);
+        if (auto xc = dynamic_cast<EigenMatrix<T, type, storage_order>*> (&x))
+            return xc;
+        else
+            throw std::invalid_argument("EigenMatrix::to_same(): Incompatible matrix types.");
     };
 
 
@@ -967,7 +974,8 @@ protected:
             return xd;
         else if (auto xs = dynamic_cast<const EigenMatrix<T, EigenMatrixType::EIGEN_SPARSE, storage_order>*> (&x))
             return xs;
-        throw std::invalid_argument("EigenMatrix::to_variant(): Input matrix type not supported.");
+        else
+            throw std::invalid_argument("EigenMatrix::to_variant(): Input matrix type not supported.");
     };
 
 

@@ -69,11 +69,11 @@ public:
 
         MatrixType Lp = phi_matrix(f, base::structure_.mesh(), port_mesh);
         MatrixType DtLp;
-        DtLp.set_mat_mul(Dt, Lp);
+        DtLp.set_matmul(Dt, Lp);
 
         MatrixType current_map = base::current_mapping_matrix();
         MatrixType mat;
-        mat.set_mat_mul(DtLp, current_map);
+        mat.set_matmul(DtLp, current_map);
 
         return mat;
     };
@@ -96,16 +96,16 @@ public:
         MatrixType Lp_jvol = phi_matrix(f, port_mesh, port_mesh);
 
         MatrixType Lp_divj_D;
-        Lp_divj_D.set_mat_mul(Lp_divj, D);
+        Lp_divj_D.set_matmul(Lp_divj, D);
 
         MatrixType Lp_current;
-        Lp_current.set_mat_mul(Lp_jvol, current_map);
+        Lp_current.set_matmul(Lp_jvol, current_map);
 
         MatrixType voltage_mat;
-        voltage_mat.set_mat_mul(voltage_map, Lp_divj_D);
+        voltage_mat.set_matmul(voltage_map, Lp_divj_D);
 
         MatrixType current_mat;
-        current_mat.set_mat_mul(voltage_map, Lp_current);
+        current_mat.set_matmul(voltage_map, Lp_current);
 
         MatrixType mat (base::num_ports(), base::structure_.mesh().num_edges() + base::num_ports());
         mat.add_block(voltage_mat, 0, 0, -one);
@@ -198,7 +198,7 @@ public:
         MatrixType Lp = nxphi_matrix(f, base::structure_.mesh(), port_mesh);
         MatrixType current_map = base::current_mapping_matrix();
         MatrixType mat;
-        mat.set_mat_mul(Lp, current_map);
+        mat.set_matmul(Lp, current_map);
         return mat;
     };
 

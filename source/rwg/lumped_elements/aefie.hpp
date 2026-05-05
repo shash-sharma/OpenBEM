@@ -62,7 +62,7 @@ public:
     MatrixType coupling_matrix(const Float f) const
     {
         MatrixType mat;
-        mat.set_mat_mul(base::terminal_mapping_matrix(), base::current_mapping_matrix());
+        mat.set_matmul(base::terminal_mapping_matrix(), base::current_mapping_matrix());
         return mat;
     };
 
@@ -79,7 +79,7 @@ public:
         MatrixType Lp = phi_matrix(f, port_mesh, base::structure_.mesh());
 
         MatrixType mat;
-        mat.set_mat_mul(voltage_map, Lp, -one);
+        mat.set_matmul(voltage_map, Lp, -one);
 
         return mat;
     };
