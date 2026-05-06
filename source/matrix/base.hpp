@@ -25,6 +25,7 @@
 #include <fstream>
 #include <iomanip>
 #include <string>
+#include <memory>
 
 #include "types.hpp"
 
@@ -178,6 +179,14 @@ public:
     */
     virtual T* data()
     { throw std::runtime_error("MatrixBase::data(): Not implemented."); };
+
+
+    /**
+    * @brief Returns a unique pointer to a newly constructed object of the derived type.
+    * @return Unique pointer to the new object.
+    */
+    virtual std::unique_ptr<MatrixBase<T>> clone() const
+    { throw std::runtime_error("MatrixBase::clone(): Not implemented."); };
 
 
     /**

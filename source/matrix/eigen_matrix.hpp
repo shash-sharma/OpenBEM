@@ -144,6 +144,10 @@ public:
     };
 
 
+    std::unique_ptr<MatrixBase<T>> clone() const override
+    { return std::make_unique<EigenMatrix<T, type, storage_order>> (*this); };
+
+
     /**
     * @brief Returns the total number of rows in the matrix.
     * @return Number of rows.
@@ -532,6 +536,9 @@ public:
         const T& a = T(1)
         ) override
     {
+        if (x.num_rows() * x.num_cols() * y.num_rows() * y.num_cols() == 0)
+            return;
+
         auto visitor = [this, a] (const auto* xc, const auto* yc)
         { matrix_ = xc->raw_matrix() * yc->raw_matrix() * a; };
 
@@ -557,6 +564,9 @@ public:
         const T& a = T(1)
         ) override
     {
+        if (x.num_rows() * x.num_cols() * y.num_rows() * y.num_cols() == 0)
+            return;
+
         if (!(std::abs(a) > float_eps))
             return;
 
