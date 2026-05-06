@@ -22,6 +22,8 @@
 #include <memory>
 #include <type_traits>
 #include <variant>
+#include <functional>
+#include <utility>
 #include <stdexcept>
 
 #include <external/Eigen/Dense>
@@ -56,11 +58,27 @@ enum class EigenMatrixType
 
 
 /**
+* @brief Enumeration of supported iterative solvers.
+*/
+enum class EigenIterativeSolverType
+{
+    EIGEN_GMRES,
+    EIGEN_BICGSTAB
+};
+
+
+/**
+* @brief Helper Eigen matrix type for custom matrix-vector products in iterative solvers.
+*/
+template <typename Obj> class MatmulMatrix;
+
+
+/**
 * @brief Base class wrapping dense and sparse Eigen matrices.
 * @tparam T - Data type to be stored in the matrix (e.g., float, double, std::complex).
 */
 template <
-    typename T,
+    typename T = Complex,
     EigenMatrixType type = EigenMatrixType::EIGEN_DENSE,
     int storage_order = Eigen::ColMajor
     >
@@ -144,6 +162,10 @@ public:
     };
 
 
+    /**
+    * @brief Returns a unique pointer to a newly constructed object of the derived type.
+    * @return Unique pointer to the new object.
+    */
     std::unique_ptr<MatrixBase<T>> clone() const override
     { return std::make_unique<EigenMatrix<T, type, storage_order>> (*this); };
 
@@ -652,13 +674,19 @@ public:
         const T& a = T(1)
         ) override
     {
-        const auto& xc = *to_same(x);
+
+        if (!(std::abs(a) > float_eps))
+            return;
+
+        auto visitor = [&] (auto* xc)
+        { matrix_.block(row_start, col_start, xc->num_rows(), xc->num_cols()) = xc->raw_matrix() * a; };
 
         if constexpr (type == EigenMatrixType::EIGEN_DENSE)
-            matrix_.block(row_start, col_start, xc.num_rows(), xc.num_cols()) = xc.raw_matrix() * a;
-
-        if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
+            std::visit(visitor, to_variant(x));
+        else
         {
+            const auto& xc = *to_same(x);
+
             std::vector<Eigen::Triplet<T>> x_triplets;
             x_triplets.reserve(xc.raw_matrix().nonZeros());
 
@@ -676,6 +704,7 @@ public:
         }
 
         return;
+
     };
 
 
@@ -693,16 +722,19 @@ public:
         const T& a = T(1)
         ) override
     {
+
         if (!(std::abs(a) > float_eps))
             return;
 
-        const auto& xc = *to_same(x);
+        auto visitor = [&] (auto* xc)
+        { matrix_.block(row_start, col_start, xc->num_rows(), xc->num_cols()) += xc->raw_matrix() * a; };
 
         if constexpr (type == EigenMatrixType::EIGEN_DENSE)
-            matrix_.block(row_start, col_start, xc.num_rows(), xc.num_cols()) += a * xc.raw_matrix();
-
-        if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
+            std::visit(visitor, to_variant(x));
+        else
         {
+            const auto& xc = *to_same(x);
+
             std::vector<Eigen::Triplet<T>> x_triplets;
             x_triplets.reserve(xc.raw_matrix().nonZeros());
 
@@ -716,6 +748,7 @@ public:
         }
 
         return;
+
     };
 
 
@@ -784,10 +817,10 @@ public:
     * @param[out] x - Solution.
     * @param[in] b - Right-hand side matrix, must have the same number of rows as this matrix.
     */
-    void mat_solve(MatrixBase<T>& x, const MatrixBase<T>& b) override
+    void mat_solve(MatrixBase<T>& x, const MatrixBase<T>& b) const override
     {
         if (!factorized_)
-            factorize();
+            throw std::runtime_error("EigenMatrix::solve(): Matrix must be factorized first.");
 
         const auto& bd =
             dynamic_cast<const EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>&> (b);
@@ -897,6 +930,149 @@ public:
             std::cout << "EigenMatrix::mat_solve_bicgstab(): [Warning] BiCGStab solve failed." << std::endl;
 
         return;
+    };
+
+
+    /**
+    * @brief Solves \f$ \mathbf{M}\mathbf{X} = \mathbf{B} \f$ for matrix \f$ \mathbf{X} \f$ with an
+    * iterative solver, where \f$ \mathbf{M} \f$ is this matrix, and \f$ \mathbf{B} \f$ is a given
+    * right-hand side matrix.
+    * @param[out] x - Solution.
+    * @param[in] b - Right-hand side matrix, must have the same number of rows as this matrix.
+    * @param[in] type - Type of iterative solver to use (optional).
+    * @param[in] tol - Tolerance for convergence (optional).
+    * @param[in] restart - Restart iteration at which the Krylov subspace is discarded (optional).
+    */
+    void mat_solve_iterative(
+        EigenMatrix<T, type, storage_order>& x,
+        const EigenMatrix<T, type, storage_order>& b,
+        const EigenIterativeSolverType solver_type = EigenIterativeSolverType::EIGEN_GMRES,
+        const Float tol = 1e-4,
+        const Index restart = 100
+        ) const
+    {
+        if (solver_type == EigenIterativeSolverType::EIGEN_GMRES)
+        {
+            mat_solve_iterative<Eigen::GMRES<MatmulMatrix<MatrixType>, Eigen::IdentityPreconditioner>> (
+                x, b, tol, restart
+                );
+        }
+        else if (solver_type == EigenIterativeSolverType::EIGEN_GMRES)
+        {
+            mat_solve_iterative<Eigen::GMRES<MatmulMatrix<MatrixType>, Eigen::IdentityPreconditioner>> (
+                x, b, tol, restart
+                );
+        }
+
+        return;
+    };
+
+
+    /**
+    * @brief Solves \f$ \mathbf{M}\mathbf{X} = \mathbf{B} \f$ for matrix \f$ \mathbf{X} \f$ with an
+    * iterative solver, where \f$ \mathbf{M} \f$ is this matrix, and \f$ \mathbf{B} \f$ is a given
+    * right-hand side matrix.
+    * @param[out] x - Solution.
+    * @param[in] b - Right-hand side matrix, must have the same number of rows as this matrix.
+    * @param[in] tol - Tolerance for convergence (optional).
+    * @param[in] restart - Restart iteration at which the Krylov subspace is discarded (optional).
+    */
+    template<typename Solver = Eigen::GMRES<MatrixType, Eigen::IdentityPreconditioner>>
+    void mat_solve_iterative(
+        EigenMatrix<T, type, storage_order>& x,
+        const EigenMatrix<T, type, storage_order>& b,
+        const Float tol = 1e-4,
+        const Index restart = 100
+        ) const
+    {
+
+        Solver solver;
+
+        solver.setTolerance(tol);
+        solver.setMaxIterations(1000);
+        if constexpr (
+            std::is_same_v<Solver, Eigen::GMRES<MatrixType, Eigen::IdentityPreconditioner>>
+            )
+            solver.set_restart(restart);
+
+        solver.compute(raw_matrix());
+
+        if (solver.info() != Eigen::Success)
+            throw std::runtime_error("EigenMatrix::mat_solve_iterative(): Solver initialization failed.");
+
+        x.raw_matrix() = solver.solve(b.raw_matrix());
+
+        std::cout << "Iterations: "
+                  << solver.iterations()
+                  << " | tolerance: "
+                  << solver.tolerance()
+                  << " | residual: "
+                  << solver.error()
+                  << std::endl;
+
+        if (solver.info() != Eigen::Success)
+            std::cout << "EigenMatrix::mat_solve_iterative(): [Warning] Iterative solve failed." << std::endl;
+
+        return;
+
+    };
+
+
+    /**
+    * @brief Solves \f$ \mathbf{M}\mathbf{X} = \mathbf{B} \f$ for matrix \f$ \mathbf{X} \f$ with an
+    * iterative solver, where \f$ \mathbf{M} \f$ is this matrix, and \f$ \mathbf{B} \f$ is a given
+    * right-hand side matrix, with a an object that defines a custom matrix product.
+    * @param[out] x - Solution.
+    * @param[in] b - Right-hand side matrix, must have the same number of rows as this matrix.
+    * @param[in] obj - Custom matrix product object.
+    * @param[in] tol - Tolerance for convergence (optional).
+    * @param[in] restart - Restart iteration at which the Krylov subspace is discarded (optional).
+    */
+    template<
+        typename Obj,
+        typename Solver = Eigen::GMRES<MatmulMatrix<Obj>, Eigen::IdentityPreconditioner>
+        >
+    static void mat_solve_iterative(
+        EigenMatrix<T, type, storage_order>& x,
+        const EigenMatrix<T, type, storage_order>& b,
+        const Obj& obj,
+        const Float tol = 1e-4,
+        const Index restart = 100
+        )
+    {
+
+        MatmulMatrix<Obj> mat;
+        mat.attach(obj);
+
+        Solver solver;
+
+        solver.setTolerance(tol);
+        solver.setMaxIterations(1000);
+        if constexpr (
+            std::is_same_v<Solver, Eigen::GMRES<MatmulMatrix<Obj>, Eigen::IdentityPreconditioner>>
+            )
+            solver.set_restart(restart);
+
+        solver.compute(mat);
+
+        if (solver.info() != Eigen::Success)
+            throw std::runtime_error("EigenMatrix::mat_solve_iterative(): Solver initialization failed.");
+
+        x.raw_matrix() = solver.solve(b.raw_matrix());
+
+        std::cout << "Iterations: "
+                  << solver.iterations()
+                  << " | tolerance: "
+                  << solver.tolerance()
+                  << " | residual: "
+                  << solver.error()
+                  << std::endl;
+
+        if (solver.info() != Eigen::Success)
+            std::cout << "EigenMatrix::mat_solve_iterative(): [Warning] Iterative solve failed." << std::endl;
+
+        return;
+
     };
 
 
@@ -1077,6 +1253,120 @@ protected:
 */
 
 }
+
+
+namespace Eigen {
+namespace internal {
+template <typename Obj>
+struct traits<bem::MatmulMatrix<Obj>>:
+        public Eigen::internal::traits<Eigen::SparseMatrix<bem::Complex>> {};
+}
+}
+
+namespace bem
+{
+
+template <typename Obj>
+class MatmulMatrix: public Eigen::EigenBase<MatmulMatrix<Obj>>
+{
+public:
+
+    // --- Requirements of EigenBase ---
+
+    typedef Complex Scalar;
+    typedef Float RealScalar;
+    typedef Int StorageIndex;
+    enum {
+        ColsAtCompileTime = Eigen::Dynamic,
+        MaxColsAtCompileTime = Eigen::Dynamic,
+        IsRowMajor = false
+    };
+
+    Index rows() const { return obj_->size()[0]; };
+    Index cols() const { return obj_->size()[1]; };
+
+    template <typename Rhs>
+    Eigen::Product<MatmulMatrix<Obj>, Rhs, Eigen::AliasFreeProduct> operator*(
+        const Eigen::MatrixBase<Rhs>& x
+        ) const
+    {
+        return Eigen::Product<MatmulMatrix<Obj>, Rhs, Eigen::AliasFreeProduct> (*this, x.derived());
+    };
+
+    // --- Custom ---
+
+    void attach(const Obj& obj, const bool use_pc = false)
+    {
+        obj_ = &obj;
+        use_pc_ = use_pc;
+        return;
+    };
+
+    const Obj& obj() const { return *obj_; };
+    const bool use_pc() const { return use_pc_; };
+
+
+private:
+
+    const Obj* obj_;
+    bool use_pc_ = false;
+
+};
+
+}
+
+namespace Eigen
+{
+namespace internal
+{
+
+template <typename Rhs, typename Obj>
+struct generic_product_impl<bem::MatmulMatrix<Obj>, Rhs, SparseShape, DenseShape, GemvProduct>:
+    generic_product_impl_base<
+        bem::MatmulMatrix<Obj>,
+        Rhs,
+        generic_product_impl<bem::MatmulMatrix<Obj>, Rhs>
+        >
+{
+
+    typedef typename Product<bem::MatmulMatrix<Obj>, Rhs>::Scalar Scalar;
+
+    template <typename Dest>
+    static void scaleAndAddTo(
+        Dest& dst,
+        const bem::MatmulMatrix<Obj>& lhs,
+        const Rhs& rhs,
+        const Scalar& alpha
+        )
+    {
+        eigen_assert(alpha == Scalar(1) && "MatmulMatrix::Product: scaling is not implemented");
+        EIGEN_ONLY_USED_FOR_DEBUG(alpha);
+
+        bem::EigenMatrix<Scalar> rhsmat;
+        rhsmat.raw_matrix() = std::move(rhs);
+
+        bem::EigenMatrix<Scalar> dstmat;
+
+        if (lhs.use_pc())
+        {
+            bem::EigenMatrix<Scalar> pcrhs;
+            lhs.obj().apply_preconditioner(pcrhs, rhsmat);
+            lhs.obj().matmul(dstmat, pcrhs);
+        }
+        else
+        {
+            lhs.obj().matmul(dstmat, rhsmat);
+        }
+
+        dst = std::move(dstmat.raw_matrix());
+
+        return;
+    };
+};
+
+}
+}
+
 
 #endif
 

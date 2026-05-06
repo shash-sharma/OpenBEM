@@ -122,7 +122,7 @@ public:
     * @param[out] x - Solution.
     * @param[in] b - Right-hand side matrix, must have the same number of rows as this matrix.
     */
-    virtual void mat_solve(MatrixBase<T>& x, const MatrixBase<T>& b) = 0;
+    virtual void mat_solve(MatrixBase<T>& x, const MatrixBase<T>& b) const = 0;
 
 
     /**

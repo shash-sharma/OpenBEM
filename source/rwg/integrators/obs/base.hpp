@@ -18,6 +18,9 @@
 #ifndef BEM_RWG_OPINT_OBS_BASE_H
 #define BEM_RWG_OPINT_OBS_BASE_H
 
+#include <memory>
+#include <stdexcept>
+
 #include "types.hpp"
 #include "geometry/primitives/triangle.hpp"
 
@@ -104,6 +107,14 @@ public:
         compute_rot_grad_g_terms_ = compute_rot_grad_g_terms;
         return;
     };
+
+
+    /**
+    * @brief Returns a unique pointer to a newly constructed object of the derived type.
+    * @return Unique pointer to the new object.
+    */
+    virtual std::unique_ptr<ObsIntegratorBase> clone() const
+    { throw std::runtime_error("ObsIntegratorBase::clone(): Not implemented."); };
 
 
     /**
