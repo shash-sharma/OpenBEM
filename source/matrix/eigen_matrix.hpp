@@ -144,6 +144,10 @@ public:
     };
 
 
+    /**
+    * @brief Returns a unique pointer to a newly constructed object of the derived type.
+    * @return Unique pointer to the new object.
+    */
     std::unique_ptr<MatrixBase<T>> clone() const override
     { return std::make_unique<EigenMatrix<T, type, storage_order>> (*this); };
 

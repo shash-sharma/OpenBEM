@@ -162,6 +162,22 @@ public:
         ) override;
 
 
+    /**
+    * @brief Returns a unique pointer to a newly constructed object of the derived type.
+    * @return Unique pointer to the new object.
+    */
+    std::unique_ptr<ObsIntegratorBase> clone() const override
+    {
+        return std::make_unique<
+            ObsStrategic<
+                ObsTriangleQuadratureType,
+                SrcTriangleQuadratureType,
+                LineQuadratureType
+                >
+            > (*this);
+    };
+
+
 private:
 
     IntegrationSettings settings_;
