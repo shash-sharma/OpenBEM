@@ -454,9 +454,17 @@ public:
     * @brief Retrieves matrix values on the diagonal, zeroing out all other entries.
     * @param[out] x - Diagonal matrix.
     */
-    void get_diagonal(EigenMatrix<T, type, storage_order>& x) const
+    void get_diagonal(MatrixBase<T>& x) const override
     {
-        x.raw_matrix() = matrix_.diagonal().asDiagonal();
+        auto visitor = [&] (auto* xc)
+        {
+            xc->raw_matrix().resize(num_rows(), num_cols());
+            xc->raw_matrix().setIdentity();
+            xc->raw_matrix().diagonal() = matrix_.diagonal();
+        };
+
+        std::visit(visitor, to_variant(x));
+
         return;
     };
 
@@ -1031,8 +1039,6 @@ protected:
         else
             throw std::invalid_argument("EigenMatrix::to_variant(): Input matrix type not supported.");
     };
-
-
 
 
     MatrixType matrix_;

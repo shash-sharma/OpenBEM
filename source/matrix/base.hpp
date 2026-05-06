@@ -181,6 +181,14 @@ public:
 
 
     /**
+    * @brief Retrieves matrix values on the diagonal, zeroing out all other entries.
+    * @param[out] x - Diagonal matrix.
+    */
+    virtual void get_diagonal(MatrixBase<T>& x) const
+    { throw std::runtime_error("MatrixBase::get_diagonal(): Not implemented."); };
+
+
+    /**
     * @brief Computes \f$ \mathbf{M} = a\mathbf{X}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$ is this matrix,
     * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
     * @param[in] x - First matrix to multiply, must have the same number of columns as `y` has rows.
