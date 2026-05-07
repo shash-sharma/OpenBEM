@@ -656,13 +656,19 @@ public:
         const T& a = T(1)
         ) override
     {
-        const auto& xc = *to_same(x);
+
+        if (!(std::abs(a) > float_eps))
+            return;
+
+        auto visitor = [&] (auto* xc)
+        { matrix_.block(row_start, col_start, xc->num_rows(), xc->num_cols()) = xc->raw_matrix() * a; };
 
         if constexpr (type == EigenMatrixType::EIGEN_DENSE)
-            matrix_.block(row_start, col_start, xc.num_rows(), xc.num_cols()) = xc.raw_matrix() * a;
-
-        if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
+            std::visit(visitor, to_variant(x));
+        else
         {
+            const auto& xc = *to_same(x);
+
             std::vector<Eigen::Triplet<T>> x_triplets;
             x_triplets.reserve(xc.raw_matrix().nonZeros());
 
@@ -680,6 +686,7 @@ public:
         }
 
         return;
+
     };
 
 
@@ -697,16 +704,19 @@ public:
         const T& a = T(1)
         ) override
     {
+
         if (!(std::abs(a) > float_eps))
             return;
 
-        const auto& xc = *to_same(x);
+        auto visitor = [&] (auto* xc)
+        { matrix_.block(row_start, col_start, xc->num_rows(), xc->num_cols()) += xc->raw_matrix() * a; };
 
         if constexpr (type == EigenMatrixType::EIGEN_DENSE)
-            matrix_.block(row_start, col_start, xc.num_rows(), xc.num_cols()) += a * xc.raw_matrix();
-
-        if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
+            std::visit(visitor, to_variant(x));
+        else
         {
+            const auto& xc = *to_same(x);
+
             std::vector<Eigen::Triplet<T>> x_triplets;
             x_triplets.reserve(xc.raw_matrix().nonZeros());
 
@@ -720,6 +730,7 @@ public:
         }
 
         return;
+
     };
 
 
