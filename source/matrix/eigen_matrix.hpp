@@ -674,9 +674,6 @@ public:
         ) override
     {
 
-        if (!(std::abs(a) > float_eps))
-            return;
-
         auto visitor = [&] (auto* xc)
         { matrix_.block(row_start, col_start, xc->num_rows(), xc->num_cols()) = xc->raw_matrix() * a; };
 
@@ -748,6 +745,35 @@ public:
 
         return;
 
+    };
+
+
+    /**
+    * @brief Scales a block of this matrix.
+    * @param[in] row_start - Starting row index for the block.
+    * @param[in] col_start - Starting column index for the block.
+    * @param[in] b_rows - Number of rows in the block to scale.
+    * @param[in] b_cols - Number of columns in the block to scale.
+    * @param[in] a - Scaling factor.
+    */
+    void scale_block(
+        Index row_start,
+        Index col_start,
+        Index b_rows,
+        Index b_cols,
+        const T& a
+        ) override
+    {
+        if constexpr (type == EigenMatrixType::EIGEN_DENSE)
+            matrix_.block(row_start, col_start, b_rows, b_cols) *= a;
+        else
+        {
+            EigenMatrix<T, type, storage_order> temp;
+            get_block(temp, row_start, col_start, b_rows, b_cols);
+            set_block(temp, row_start, col_start, a);
+        }
+
+        return;
     };
 
 
