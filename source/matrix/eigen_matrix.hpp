@@ -23,7 +23,6 @@
 #include <type_traits>
 #include <variant>
 #include <functional>
-#include <utility>
 #include <stdexcept>
 
 #include <external/Eigen/Dense>
@@ -70,7 +69,7 @@ enum class EigenIterativeSolverType
 /**
 * @brief Helper Eigen matrix type for custom matrix-vector products in iterative solvers.
 */
-template <typename Obj> class MatmulMatrix;
+template <typename MatrixType> class MatmulMatrix;
 
 
 /**
@@ -167,7 +166,11 @@ public:
     * @return Unique pointer to the new object.
     */
     std::unique_ptr<MatrixBase<T>> clone() const override
-    { return std::make_unique<EigenMatrix<T, type, storage_order>> (*this); };
+    {
+        return std::make_unique<EigenMatrix<T, type, storage_order>> (
+            EigenMatrix<T, type, storage_order> ()
+            );
+    };
 
 
     /**
@@ -675,9 +678,6 @@ public:
         ) override
     {
 
-        if (!(std::abs(a) > float_eps))
-            return;
-
         auto visitor = [&] (auto* xc)
         { matrix_.block(row_start, col_start, xc->num_rows(), xc->num_cols()) = xc->raw_matrix() * a; };
 
@@ -749,6 +749,35 @@ public:
 
         return;
 
+    };
+
+
+    /**
+    * @brief Scales a block of this matrix.
+    * @param[in] row_start - Starting row index for the block.
+    * @param[in] col_start - Starting column index for the block.
+    * @param[in] b_rows - Number of rows in the block to scale.
+    * @param[in] b_cols - Number of columns in the block to scale.
+    * @param[in] a - Scaling factor.
+    */
+    void scale_block(
+        Index row_start,
+        Index col_start,
+        Index b_rows,
+        Index b_cols,
+        const T& a
+        ) override
+    {
+        if constexpr (type == EigenMatrixType::EIGEN_DENSE)
+            matrix_.block(row_start, col_start, b_rows, b_cols) *= a;
+        else
+        {
+            EigenMatrix<T, type, storage_order> temp;
+            get_block(temp, row_start, col_start, b_rows, b_cols);
+            set_block(temp, row_start, col_start, a);
+        }
+
+        return;
     };
 
 
@@ -1021,37 +1050,37 @@ public:
     /**
     * @brief Solves \f$ \mathbf{M}\mathbf{X} = \mathbf{B} \f$ for matrix \f$ \mathbf{X} \f$ with an
     * iterative solver, where \f$ \mathbf{M} \f$ is this matrix, and \f$ \mathbf{B} \f$ is a given
-    * right-hand side matrix, with a an object that defines a custom matrix product.
+    * right-hand side matrix, with a wrapper matrix that defines a custom matrix product.
     * @param[out] x - Solution.
     * @param[in] b - Right-hand side matrix, must have the same number of rows as this matrix.
-    * @param[in] obj - Custom matrix product object.
+    * @param[in] mat - Custom matrix product object.
     * @param[in] tol - Tolerance for convergence (optional).
     * @param[in] restart - Restart iteration at which the Krylov subspace is discarded (optional).
     */
     template<
-        typename Obj,
-        typename Solver = Eigen::GMRES<MatmulMatrix<Obj>, Eigen::IdentityPreconditioner>
+        typename MatmulMatrixType,
+        typename Solver = Eigen::GMRES<MatmulMatrixType, Eigen::IdentityPreconditioner>
         >
     static void mat_solve_iterative(
         EigenMatrix<T, type, storage_order>& x,
         const EigenMatrix<T, type, storage_order>& b,
-        const Obj& obj,
+        const MatmulMatrixType& mat,
         const Float tol = 1e-4,
         const Index restart = 100
         )
     {
 
-        MatmulMatrix<Obj> mat;
-        mat.attach(obj);
-
         Solver solver;
 
         solver.setTolerance(tol);
         solver.setMaxIterations(1000);
-        if constexpr (
-            std::is_same_v<Solver, Eigen::GMRES<MatmulMatrix<Obj>, Eigen::IdentityPreconditioner>>
-            )
+        if constexpr (std::is_same_v<
+                      Solver,
+                      Eigen::GMRES<MatmulMatrixType, Eigen::IdentityPreconditioner>
+                      >)
+        {
             solver.set_restart(restart);
+        }
 
         solver.compute(mat);
 
@@ -1255,19 +1284,23 @@ protected:
 }
 
 
-namespace Eigen {
-namespace internal {
-template <typename Obj>
-struct traits<bem::MatmulMatrix<Obj>>:
+namespace Eigen
+{
+namespace internal
+{
+
+template <typename MatrixType>
+struct traits<bem::MatmulMatrix<MatrixType>>:
         public Eigen::internal::traits<Eigen::SparseMatrix<bem::Complex>> {};
+
 }
 }
 
 namespace bem
 {
 
-template <typename Obj>
-class MatmulMatrix: public Eigen::EigenBase<MatmulMatrix<Obj>>
+template <typename MatrixType>
+class MatmulMatrix: public Eigen::EigenBase<MatmulMatrix<MatrixType>>
 {
 public:
 
@@ -1276,40 +1309,48 @@ public:
     typedef Complex Scalar;
     typedef Float RealScalar;
     typedef Int StorageIndex;
-    enum {
+    enum
+    {
         ColsAtCompileTime = Eigen::Dynamic,
         MaxColsAtCompileTime = Eigen::Dynamic,
         IsRowMajor = false
     };
 
-    Index rows() const { return obj_->size()[0]; };
-    Index cols() const { return obj_->size()[1]; };
+    Index rows() const { return num_rows_; };
+    Index cols() const { return num_cols_; };
 
     template <typename Rhs>
-    Eigen::Product<MatmulMatrix<Obj>, Rhs, Eigen::AliasFreeProduct> operator*(
+    Eigen::Product<MatmulMatrix<MatrixType>, Rhs, Eigen::AliasFreeProduct> operator*(
         const Eigen::MatrixBase<Rhs>& x
         ) const
     {
-        return Eigen::Product<MatmulMatrix<Obj>, Rhs, Eigen::AliasFreeProduct> (*this, x.derived());
+        return Eigen::Product<
+            MatmulMatrix<MatrixType>,
+            Rhs,
+            Eigen::AliasFreeProduct
+            > (*this, x.derived());
     };
 
     // --- Custom ---
 
-    void attach(const Obj& obj, const bool use_pc = false)
+    using Func = std::function<void (MatrixType&, const MatrixType&)>;
+
+    void attach(const Func& func, Index num_rows, Index num_cols)
     {
-        obj_ = &obj;
-        use_pc_ = use_pc;
+        func_ = &func;
+        num_rows_ = num_rows;
+        num_cols_ = num_cols;
         return;
     };
 
-    const Obj& obj() const { return *obj_; };
-    const bool use_pc() const { return use_pc_; };
+    const Func& func() const { return *func_; };
 
 
 private:
 
-    const Obj* obj_;
-    bool use_pc_ = false;
+    const Func* func_ = nullptr;
+    Index num_rows_ = 0;
+    Index num_cols_ = 0;
 
 };
 
@@ -1320,21 +1361,21 @@ namespace Eigen
 namespace internal
 {
 
-template <typename Rhs, typename Obj>
-struct generic_product_impl<bem::MatmulMatrix<Obj>, Rhs, SparseShape, DenseShape, GemvProduct>:
+template <typename Rhs, typename MatrixType>
+struct generic_product_impl<bem::MatmulMatrix<MatrixType>, Rhs, SparseShape, DenseShape, GemvProduct>:
     generic_product_impl_base<
-        bem::MatmulMatrix<Obj>,
+        bem::MatmulMatrix<MatrixType>,
         Rhs,
-        generic_product_impl<bem::MatmulMatrix<Obj>, Rhs>
+        generic_product_impl<bem::MatmulMatrix<MatrixType>, Rhs>
         >
 {
 
-    typedef typename Product<bem::MatmulMatrix<Obj>, Rhs>::Scalar Scalar;
+    typedef typename Product<bem::MatmulMatrix<MatrixType>, Rhs>::Scalar Scalar;
 
     template <typename Dest>
     static void scaleAndAddTo(
         Dest& dst,
-        const bem::MatmulMatrix<Obj>& lhs,
+        const bem::MatmulMatrix<MatrixType>& lhs,
         const Rhs& rhs,
         const Scalar& alpha
         )
@@ -1342,24 +1383,13 @@ struct generic_product_impl<bem::MatmulMatrix<Obj>, Rhs, SparseShape, DenseShape
         eigen_assert(alpha == Scalar(1) && "MatmulMatrix::Product: scaling is not implemented");
         EIGEN_ONLY_USED_FOR_DEBUG(alpha);
 
-        bem::EigenMatrix<Scalar> rhsmat;
-        rhsmat.raw_matrix() = std::move(rhs);
+        MatrixType rhs_mat;
+        rhs_mat.raw_matrix() = std::move(rhs);
 
-        bem::EigenMatrix<Scalar> dstmat;
+        MatrixType dst_mat;
+        lhs.func()(dst_mat, rhs_mat);
 
-        if (lhs.use_pc())
-        {
-            bem::EigenMatrix<Scalar> pcrhs;
-            lhs.obj().apply_preconditioner(pcrhs, rhsmat);
-            lhs.obj().matmul(dstmat, pcrhs);
-        }
-        else
-        {
-            lhs.obj().matmul(dstmat, rhsmat);
-        }
-
-        dst = std::move(dstmat.raw_matrix());
-
+        dst = std::move(dst_mat.raw_matrix());
         return;
     };
 };

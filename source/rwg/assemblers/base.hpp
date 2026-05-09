@@ -229,6 +229,25 @@ public:
 
 
     /**
+    * @brief Makes self-pairs of given triangle indices.
+    * @param[in] elems - Triangle indices.
+    * @return Triangle index pairs, with observation indices in the first row,
+    * and source indices in the second row.
+    */
+    static EigMatNX<Index, 2> make_pairs(ConstEigRef<EigRowVec<Index>> elems)
+    {
+        Index num_pairs = elems.size();
+        EigMatNX<Index, 2> pairs = EigMatNX<Index, 2>::Zero(2, num_pairs);
+
+        for (Index ii = 0; ii < elems.size(); ++ii)
+            for (uint8_t jj = 0; jj < 2; ++jj)
+                pairs(jj, ii) = elems[ii];
+
+        return pairs;
+    };
+
+
+    /**
     * @brief Virtual destructor.
     */
     virtual ~OperatorAssemblerBase() = default;

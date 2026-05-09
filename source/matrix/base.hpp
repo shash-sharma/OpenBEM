@@ -290,6 +290,24 @@ public:
 
 
     /**
+    * @brief Scales a block of this matrix.
+    * @param[in] row_start - Starting row index for the block.
+    * @param[in] col_start - Starting column index for the block.
+    * @param[in] b_rows - Number of rows in the block to scale.
+    * @param[in] b_cols - Number of columns in the block to scale.
+    * @param[in] a - Scaling factor.
+    */
+    virtual void scale_block(
+        Index row_start,
+        Index col_start,
+        Index b_rows,
+        Index b_cols,
+        const T& a
+        )
+    { throw std::runtime_error("MatrixBase::scale_block(): Not implemented."); };
+
+
+    /**
     * @brief Retrieves a block of values from this matrix.
     * @param[out] x - Matrix to store the retrieved block of values.
     * @param[in] row_start - Starting row index for the block.
