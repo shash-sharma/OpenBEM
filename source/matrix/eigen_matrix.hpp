@@ -166,7 +166,11 @@ public:
     * @return Unique pointer to the new object.
     */
     std::unique_ptr<MatrixBase<T>> clone() const override
-    { return std::make_unique<EigenMatrix<T, type, storage_order>> (*this); };
+    {
+        return std::make_unique<EigenMatrix<T, type, storage_order>> (
+            EigenMatrix<T, type, storage_order> ()
+            );
+    };
 
 
     /**
@@ -1280,12 +1284,15 @@ protected:
 }
 
 
-namespace Eigen {
-namespace internal {
+namespace Eigen
+{
+namespace internal
+{
+
 template <typename MatrixType>
 struct traits<bem::MatmulMatrix<MatrixType>>:
         public Eigen::internal::traits<Eigen::SparseMatrix<bem::Complex>> {};
-        // public Eigen::internal::traits<MatrixType> {};
+
 }
 }
 
@@ -1302,7 +1309,8 @@ public:
     typedef Complex Scalar;
     typedef Float RealScalar;
     typedef Int StorageIndex;
-    enum {
+    enum
+    {
         ColsAtCompileTime = Eigen::Dynamic,
         MaxColsAtCompileTime = Eigen::Dynamic,
         IsRowMajor = false
