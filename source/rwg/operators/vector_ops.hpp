@@ -62,7 +62,10 @@ public:
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     * @param[in] helmholtz_kernel - When false, computes the hypersingular form of kernels (optional).
     */
-    VectorRwgOps(const ObsIntegratorType obs_integrator = ObsStrategic<>(), const bool helmholtz_kernel = false):
+    VectorRwgOps(
+        const ObsIntegratorType obs_integrator = ObsStrategic<>(),
+        const bool helmholtz_kernel = false
+        ):
         obs_integrator_(obs_integrator), helmholtz_kernel_(helmholtz_kernel) {};
 
 
