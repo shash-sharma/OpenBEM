@@ -24,6 +24,7 @@
 #include "matrix/base.hpp"
 #include "matrix/eigen_matrix.hpp"
 
+#include "rwg/assemblers/index_generator.hpp"
 #include "rwg/assemblers/operator_matrix.hpp"
 
 
@@ -83,7 +84,7 @@ public:
         ):
             obs_mesh_(obs_mesh),
             src_mesh_(src_mesh),
-            elem_pairs_(OperatorAssemblerBase<3, 3>::make_pairs(obs_mesh, src_mesh)),
+            elem_pairs_(IndexGenerator::elem_pairs(obs_mesh, src_mesh)),
             flip_normals_(flip_normals) {};
 
 
@@ -116,7 +117,7 @@ public:
         ):
             obs_mesh_(mesh),
             src_mesh_(mesh),
-            elem_pairs_(OperatorAssemblerBase<3, 3>::make_pairs(mesh, mesh)),
+            elem_pairs_(IndexGenerator::elem_pairs(mesh, mesh)),
             flip_normals_(flip_normals) {};
 
 

@@ -284,10 +284,11 @@ int main(int argc, char** argv)
     // polarization depending on our use case.
 
     // Finally, we solve the system of equations to obtain the electric surface current density.
-    // The wrapper classes for matrix algebra have a `.mat_solve()` method which solves a matrix
-    // system with a given right-hand side matrix, which we'll use here.
+    // The wrapper classes for matrix algebra have `.factorize` and `.mat_solve()` methods which
+    // can be used to solve a matrix system with a given right-hand side matrix, which we'll use here.
 
     MatrixType j_tefie;
+    L.factorize();
     L.mat_solve(j_tefie, inc_e);
 
     // The solution matrix will have as many columns as the number of excitation vectors, which in
@@ -296,6 +297,7 @@ int main(int argc, char** argv)
     // Now let's do the same for the NMFIE case.
 
     MatrixType j_nmfie;
+    K.factorize();
     K.mat_solve(j_nmfie, inc_h);
 
     // Having computed the electric surface current density using both approaches, we can now

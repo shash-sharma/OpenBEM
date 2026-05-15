@@ -28,7 +28,7 @@ namespace bem::rwg
 void EdgeOperatorAssembler::prep_matrix(MatrixBase<Complex>& mat)
 {
     mat.resize(base::obs_mesh_.num_edges(), base::src_mesh_.num_edges());
-    mat.preallocate(base::elem_pairs_.cols() * 3 * 3);
+    mat.preallocate(base::elem_pairs_.cols() * EDGE_ELEM_RATIO * EDGE_ELEM_RATIO);
     return;
 };
 
@@ -41,10 +41,10 @@ void EdgeOperatorAssembler::fill_matrix(
 {
     for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
     {
-        Index col = base::src_mesh_.elem_edges(src_edge, elem_pair[1]);
+        Index col = base::src_mesh_.elem_edges()(src_edge, elem_pair[1]);
         for (uint8_t obs_edge = 0; obs_edge < 3; ++obs_edge)
         {
-            Index row = base::obs_mesh_.elem_edges(obs_edge, elem_pair[0]);
+            Index row = base::obs_mesh_.elem_edges()(obs_edge, elem_pair[0]);
             mat.add_value(row, col, values(obs_edge, src_edge));
         }
     }
@@ -74,7 +74,7 @@ void FaceOperatorAssembler::fill_matrix(
 void FaceEdgeOperatorAssembler::prep_matrix(MatrixBase<Complex>& mat)
 {
     mat.resize(base::obs_mesh_.num_elems(), base::src_mesh_.num_edges());
-    mat.preallocate(base::elem_pairs_.cols() * 3);
+    mat.preallocate(base::elem_pairs_.cols() * EDGE_ELEM_RATIO);
     return;
 };
 
@@ -88,7 +88,7 @@ void FaceEdgeOperatorAssembler::fill_matrix(
     Index row = elem_pair[0];
     for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
     {
-        Index col = base::src_mesh_.elem_edges(src_edge, elem_pair[1]);
+        Index col = base::src_mesh_.elem_edges()(src_edge, elem_pair[1]);
         mat.add_value(row, col, values(src_edge));
     }
     return;
@@ -98,7 +98,7 @@ void FaceEdgeOperatorAssembler::fill_matrix(
 void EdgeFaceOperatorAssembler::prep_matrix(MatrixBase<Complex>& mat)
 {
     mat.resize(base::obs_mesh_.num_edges(), base::src_mesh_.num_elems());
-    mat.preallocate(base::elem_pairs_.cols() * 3);
+    mat.preallocate(base::elem_pairs_.cols() * EDGE_ELEM_RATIO);
     return;
 };
 
@@ -112,7 +112,7 @@ void EdgeFaceOperatorAssembler::fill_matrix(
     Index col = elem_pair[1];
     for (uint8_t obs_edge = 0; obs_edge < 3; ++obs_edge)
     {
-        Index row = base::obs_mesh_.elem_edges(obs_edge, elem_pair[0]);
+        Index row = base::obs_mesh_.elem_edges()(obs_edge, elem_pair[0]);
         mat.add_value(row, col, values(obs_edge));
     }
     return;
@@ -122,7 +122,7 @@ void EdgeFaceOperatorAssembler::fill_matrix(
 void VectorOperatorsAssembler::prep_matrix(MatrixBase<Complex>& mat)
 {
     mat.resize(base::obs_mesh_.num_edges() * 4, base::src_mesh_.num_edges());
-    mat.preallocate(base::elem_pairs_.cols() * 12 * 3);
+    mat.preallocate(base::elem_pairs_.cols() * 4 * EDGE_ELEM_RATIO * EDGE_ELEM_RATIO);
     return;
 };
 
@@ -137,10 +137,12 @@ void VectorOperatorsAssembler::fill_matrix(
     {
         for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
         {
-            Index col = base::src_mesh_.elem_edges(src_edge, elem_pair[1]);
+            Index col = base::src_mesh_.elem_edges()(src_edge, elem_pair[1]);
             for (uint8_t obs_edge = 0; obs_edge < 3; ++obs_edge)
             {
-                Index row = base::obs_mesh_.elem_edges(obs_edge, elem_pair[0]) + base::obs_mesh_.num_edges() * op;
+                Index row = base::obs_mesh_.elem_edges()(
+                    obs_edge, elem_pair[0]
+                    ) + base::obs_mesh_.num_edges() * op;
                 mat.add_value(row, col, values(obs_edge + 3 * op, src_edge));
             }
         }

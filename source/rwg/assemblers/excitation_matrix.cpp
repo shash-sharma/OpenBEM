@@ -48,7 +48,7 @@ void EdgeExcitationAssembler::assemble(
         {
             for (uint8_t edge = 0; edge < 3; edge++)
             {
-                Index row = base::obs_mesh_.elem_edges(edge, face);
+                Index row = base::obs_mesh_.elem_edges()(edge, face);
                 mat.add_value(row, col, values(edge, col));
             }
         }

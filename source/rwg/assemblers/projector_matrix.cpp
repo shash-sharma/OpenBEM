@@ -47,7 +47,7 @@ void EdgeProjectorAssembler<obs_dim>::assemble(
 
         for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
         {
-            Index col = base::src_mesh_.elem_edges(src_edge, base::elems_[ii]);
+            Index col = base::src_mesh_.elem_edges()(src_edge, base::elems_[ii]);
 
             for (Index obs_point = 0; obs_point < base::obs_cloud_.num_points(); ++obs_point)
             {

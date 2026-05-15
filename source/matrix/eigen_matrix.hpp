@@ -41,7 +41,7 @@ namespace bem
 {
 
 /**
-* \defgroup eigmat Eigen Matrix Wrappers
+* \defgroup eigmat Eigen Matrix Wrapper
 * \ingroup matr
 * @{
 */
@@ -73,8 +73,10 @@ template <typename MatrixType> class MatmulMatrix;
 
 
 /**
-* @brief Base class wrapping dense and sparse Eigen matrices.
+* @brief Class wrapping dense and sparse Eigen matrices.
 * @tparam T - Data type to be stored in the matrix (e.g., float, double, std::complex).
+* @tparam type - Dense (default) or sparse matrix.
+* @tparam storage_order - Column (default) or row major ordering.
 */
 template <
     typename T = Complex,
@@ -96,7 +98,7 @@ class EigenMatrix: public MatrixBase<T>
 public:
 
     /**
-    * @brief Constructs an `EigenMatrixBase` object with a specified number of rows and columns.
+    * @brief Constructs an `EigenMatrix` object with a specified number of rows and columns.
     * @param[in] rows - Number of rows (optional).
     * @param[in] cols - Number of columns (optional).
     */
@@ -184,8 +186,8 @@ public:
 
 
     /**
-    * @brief Returns the total number of rows in the matrix.
-    * @return Number of rows.
+    * @brief Returns the total number of columns in the matrix.
+    * @return Number of columns.
     */
     Index num_cols() const override
     {
@@ -480,7 +482,7 @@ public:
 
 
     /**
-    * @brief Retrieves matrix values on the diagonal, zeroing out all other entries.
+    * @brief Retrieves matrix values on the diagonal.
     * @param[out] x - Diagonal matrix.
     */
     void get_diagonal(MatrixBase<T>& x) const override

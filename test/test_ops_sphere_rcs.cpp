@@ -96,6 +96,7 @@ void test_efie_pec()
 
 
     EigenMatrix<Complex> Jsurf;
+    T.factorize();
     T.mat_solve(Jsurf, Einc);
 
 
@@ -207,6 +208,7 @@ void test_nmfie_pec()
 
 
     EigenMatrix<Complex> Jsurf;
+    Kr.factorize();
     Kr.mat_solve(Jsurf, Hinc);
 
 

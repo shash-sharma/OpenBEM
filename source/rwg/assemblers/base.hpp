@@ -24,6 +24,7 @@
 #include "geometry/primitives/triangle.hpp"
 #include "matrix/base.hpp"
 #include "rwg/operators/base.hpp"
+#include "rwg/assemblers/index_generator.hpp"
 #include "rwg/excitations/base.hpp"
 #include "rwg/projectors/base.hpp"
 
@@ -78,7 +79,7 @@ public:
         ):
             obs_mesh_(obs_mesh),
             src_mesh_(src_mesh),
-            elem_pairs_(make_pairs(obs_mesh, src_mesh)) {};
+            elem_pairs_(IndexGenerator::elem_pairs(obs_mesh, src_mesh)) {};
 
 
     /**
@@ -87,7 +88,10 @@ public:
     * @param[in] elem_pairs - Observation (first row) and source (second row) triangle index pairs
     * for which the operator matrix is to be assembled.
     */
-    OperatorAssemblerBase(const TriangleMesh<3>& mesh, ConstEigRef<EigMatNX<Index, 2>> elem_pairs):
+    OperatorAssemblerBase(
+        const TriangleMesh<3>& mesh,
+        ConstEigRef<EigMatNX<Index, 2>> elem_pairs
+        ):
         obs_mesh_(mesh),
         src_mesh_(mesh),
         elem_pairs_(elem_pairs) {};
@@ -100,11 +104,11 @@ public:
     OperatorAssemblerBase(const TriangleMesh<3>& mesh):
         obs_mesh_(mesh),
         src_mesh_(mesh),
-        elem_pairs_(make_pairs(mesh, mesh)) {};
+        elem_pairs_(IndexGenerator::elem_pairs(mesh, mesh)) {};
 
 
     /**
-    * @brief Assembles the operator matrix for a given operator object and source and observation meshes.
+    * @brief Assembles the operator matrix for a given operator object.
     * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
     * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
     * @param[in] op - Operator object that computes the coefficients to be assembled into `mat`; must
@@ -121,7 +125,7 @@ public:
 
         static_assert(
             std::is_base_of<OperatorBase<obs_num_dof, src_num_dof>, OperatorType>::value,
-            "OperatorAssemblerBase::assemble(): `OperatorType` must derive from `OperatorBase<obs_num_dof, src_num_dof>`"
+            "OperatorAssemblerBase::assemble(): `OperatorType` must derive from `OperatorBase`"
             );
 
         prep_matrix(mat);
@@ -163,88 +167,6 @@ public:
         ConstEigRef<EigColVecN<Index, 2>> elem_pair,
         ConstEigRef<EigMatMN<Complex, obs_num_dof, src_num_dof>> values
         ) = 0;
-
-
-    /**
-    * @brief Generates all possible pairs of triangle indices for a given triangle mesh.
-    * @param[in] mesh - Triangle mesh.
-    * @return All possible triangle index pairs, with observation indices in the first row,
-    * and source indices in the second row.
-    */
-    static EigMatNX<Index, 2> make_pairs(const TriangleMesh<3>& mesh)
-    { return make_pairs(mesh, mesh); };
-
-
-    /**
-    * @brief Generates all possible pairs of triangle indices for given observation and source triangle meshes.
-    * @param[in] obs_mesh - Observation triangle mesh.
-    * @param[in] src_mesh - Source triangle mesh.
-    * @return All possible triangle index pairs, with observation indices in the first row,
-    * and source indices in the second row.
-    */
-    static EigMatNX<Index, 2> make_pairs(
-        const TriangleMesh<3>& obs_mesh,
-        const TriangleMesh<3>& src_mesh
-        )
-    {
-        Index num_pairs = obs_mesh.num_elems() * src_mesh.num_elems();
-        EigMatNX<Index, 2> pairs = EigMatNX<Index, 2>::Zero(2, num_pairs);
-
-        for (Index ii = 0; ii < num_pairs; ++ii)
-        {
-            pairs(0, ii) = ii / src_mesh.num_elems();
-            pairs(1, ii) = ii % src_mesh.num_elems();
-        }
-
-        return pairs;
-    };
-
-
-    /**
-    * @brief Makes all possible pairs of triangle indices for given observation and source triangle indices.
-    * @param[in] obs_elems - Observation triangle indices.
-    * @param[in] src_elems - Source triangle indices.
-    * @return All possible triangle index pairs, with observation indices in the first row,
-    * and source indices in the second row.
-    */
-    static EigMatNX<Index, 2> make_pairs(
-        ConstEigRef<EigRowVec<Index>> obs_elems,
-        ConstEigRef<EigRowVec<Index>> src_elems
-        )
-    {
-        Index num_pairs = obs_elems.size() * src_elems.size();
-        EigMatNX<Index, 2> pairs = EigMatNX<Index, 2>::Zero(2, num_pairs);
-
-        for (Index ii = 0; ii < obs_elems.size(); ++ii)
-        {
-            for (Index jj = 0; jj < src_elems.size(); ++jj)
-            {
-                pairs(0, jj + ii * src_elems.size()) = obs_elems[ii];
-                pairs(1, jj + ii * src_elems.size()) = src_elems[jj];
-            }
-        }
-
-        return pairs;
-    };
-
-
-    /**
-    * @brief Makes self-pairs of given triangle indices.
-    * @param[in] elems - Triangle indices.
-    * @return Triangle index pairs, with observation indices in the first row,
-    * and source indices in the second row.
-    */
-    static EigMatNX<Index, 2> make_pairs(ConstEigRef<EigRowVec<Index>> elems)
-    {
-        Index num_pairs = elems.size();
-        EigMatNX<Index, 2> pairs = EigMatNX<Index, 2>::Zero(2, num_pairs);
-
-        for (Index ii = 0; ii < elems.size(); ++ii)
-            for (uint8_t jj = 0; jj < 2; ++jj)
-                pairs(jj, ii) = elems[ii];
-
-        return pairs;
-    };
 
 
     /**

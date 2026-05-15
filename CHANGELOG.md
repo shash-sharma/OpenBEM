@@ -4,13 +4,17 @@
 
 ### Added
 
-- Added this changelog.
+- Changelog.
+- `IndexGenerator` helper class.
 
 ### Changed
 
 - Simplified the Eigen matrix wrapper class and unified its sparse and dense interface.
+- Improved interoperability between sparse and dense Eigen matrices.
+- `factorize()` must now be called explicitly before calling `mat_solve` in `EigenMatrix`.
 - Line integration is now only vectorized in source points, not observation points, which is a little faster.
 - Line integration speed improvements and fixed a bug in the directed angle computation.
+- Simplified `TriangleMesh` interface and added a map from edges to associated elements.
 
 ### Fixed
 
