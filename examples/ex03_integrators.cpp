@@ -219,12 +219,14 @@ int main(int argc, char** argv)
     // system with a given right-hand side matrix, which we'll use here.
 
     MatrixType j_tefie;
+    L.factorize();
     L.mat_solve(j_tefie, inc_e);
 
     // The solution matrix will have as many columns as the number of excitation vectors, which in
     // this case is just one.  Now let's do the same for the NMFIE case.
 
     MatrixType j_nmfie;
+    K.factorize();
     K.mat_solve(j_nmfie, inc_h);
 
     // Having computed the electric surface current density using both approaches, we can now

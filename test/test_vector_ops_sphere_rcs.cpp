@@ -121,6 +121,7 @@ void test_cfie_pec()
 
 
     EigenMatrix<Complex> x;
+    A.factorize();
     A.mat_solve(x, b);
 
 

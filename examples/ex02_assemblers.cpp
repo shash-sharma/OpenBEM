@@ -212,6 +212,7 @@ int main(int argc, char** argv)
     // Finally, we solve the system of equations to obtain the electric surface current density.
 
     MatrixType x;
+    A.factorize();
     A.mat_solve(x, b);
 
     // As in Example 1, the solution matrix will have as many columns as the number of excitation
@@ -223,6 +224,7 @@ int main(int argc, char** argv)
     MatrixType A_tefie = tefie.j_matrix(f, structure.background_material());
 
     MatrixType x_tefie;
+    A_tefie.factorize();
     A_tefie.mat_solve(x_tefie, inc_e);
 
     // Now we'll follow the same approach as in Example 1 to define a point cloud in the far field

@@ -24,9 +24,9 @@
 #include "types.hpp"
 
 #ifndef BEM_LINKED
-#define BEM_INLINE inline
+#define BEM_QUAD_UTIL_INLINE inline
 #else
-#define BEM_INLINE
+#define BEM_QUAD_UTIL_INLINE
 #endif
 
 
@@ -51,7 +51,8 @@ namespace bem
 *   - 3: Compare the absolute value.
 * @return `true` if the two values are within the specified tolerance, `false` otherwise.
 */
-BEM_INLINE bool compare_with_tol(
+BEM_QUAD_UTIL_INLINE
+bool compare_with_tol(
     const Complex val,
     const Complex val_ref,
     const Float tol = 1e-3,

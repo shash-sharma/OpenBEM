@@ -96,6 +96,7 @@ void test_cfie_pec_lineint()
     // Solve
 
     EigenMatrix<Complex> x;
+    A.factorize();
     A.mat_solve(x, b);
 
     // Projection
