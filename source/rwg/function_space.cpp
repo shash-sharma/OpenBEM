@@ -95,7 +95,7 @@ EigMatNX<Complex, 3> Rwg::reconstruct_field(
 
             for (uint8_t edge = 0; edge < 3; ++edge)
             {
-                Index idx = mesh.elem_edges(edge, face);
+                Index idx = mesh.elem_edges()(edge, face);
                 field.col(point) += Rwg::value(tri, edge, points.col(point), rotated) * coeffs.value(idx, 0);
             }
         }

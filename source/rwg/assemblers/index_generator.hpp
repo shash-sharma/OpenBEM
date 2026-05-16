@@ -96,20 +96,30 @@ public:
 
     /**
     * @brief Makes all possible unique element pairs from given edge pairs.
-    * @param[in] edge_pairs - Edge index pairs.
+    * @param[in] mesh - Triangle mesh.
+    * @param[in] obs_edges - Observation edge indices.
+    * @param[in] src_edges - Source edge indices.
     * @return Triangle index pairs, with observation indices in the first row,
     * and source indices in the second row.
     */
-    static EigMatNX<Index, 2> elem_pairs_from_edges(ConstEigRef<EigMatNX<Index, 2>> edge_pairs);
+    static EigMatNX<Index, 2> elem_pairs_from_edges(
+        const TriangleMesh<3>& mesh,
+        ConstEigRef<EigRowVec<Index>> obs_edges,
+        ConstEigRef<EigRowVec<Index>> src_edges
+        );
 
 
     /**
     * @brief Makes all possible unique element pairs from given edge indices.
+    * @param[in] mesh - Triangle mesh.
     * @param[in] edges - Edge indices.
     * @return Triangle index pairs, with observation indices in the first row,
     * and source indices in the second row.
     */
-    static EigMatNX<Index, 2> elem_pairs_from_edges(ConstEigRef<EigRowVec<Index>> edges);
+    static EigMatNX<Index, 2> elem_pairs_from_edges(
+        const TriangleMesh<3>& mesh,
+        ConstEigRef<EigRowVec<Index>> edges
+        );
 
 };
 

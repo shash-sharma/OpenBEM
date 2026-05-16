@@ -14,6 +14,7 @@
 - `factorize()` must now be called explicitly before calling `mat_solve` in `EigenMatrix`.
 - Line integration is now only vectorized in source points, not observation points, which is a little faster.
 - Line integration speed improvements and fixed a bug in the directed angle computation.
+- Simplified `TriangleMesh` interface and added a map from edges to associated elements.
 
 ### Fixed
 

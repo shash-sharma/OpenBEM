@@ -202,6 +202,18 @@ void TriangleMesh<dim>::generate_edges()
     for (const auto& edge: edges)
         edges_.col(edge.second) = EigColVecN<Index, 2> ({ edge.first.first, edge.first.second });
 
+    edge_elems_.resize(2, num_edges);
+    for (Index elem = 0; elem < elem_edges_.cols(); ++elem)
+    {
+        for (uint8_t edge = 0; edge < 3; ++edge)
+        {
+            if (elem_edge_polarities_(edge, elem) > 0)
+                edge_elems_(0, elem_edges_(edge, elem)) = elem;
+            else
+                edge_elems_(1, elem_edges_(edge, elem)) = elem;
+        }
+    }
+
     std::vector<Index> boundary_edges, junction_edges, internal_edges;
     for (Index edge = 0; edge < num_edges; ++edge)
     {

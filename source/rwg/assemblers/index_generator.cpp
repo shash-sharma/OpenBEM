@@ -18,6 +18,7 @@
 #include "rwg/assemblers/index_generator.hpp"
 
 #include <vector>
+#include <set>
 
 #include "types.hpp"
 #include "geometry/mesh/triangle_mesh.hpp"
@@ -91,18 +92,52 @@ EigMatNX<Index, 2> IndexGenerator::elem_pairs_self(ConstEigRef<EigRowVec<Index>>
 
 
 EigMatNX<Index, 2> IndexGenerator::elem_pairs_from_edges(
-    ConstEigRef<EigMatNX<Index, 2>> edge_pairs
+    const TriangleMesh<3>& mesh,
+    ConstEigRef<EigRowVec<Index>> obs_edges,
+    ConstEigRef<EigRowVec<Index>> src_edges
     )
 {
+
+    std::set<std::pair<Index, Index>> unique_pairs;
+
+    for (Index ii = 0; ii < obs_edges.size(); ++ii)
+    {
+        for (uint8_t iip = 0; iip < 2; ++iip)
+        {
+            for (Index jj = 0; jj < src_edges.size(); ++jj)
+            {
+                for (uint8_t jjp = 0; jjp < 2; ++jjp)
+                {
+                    unique_pairs.insert(
+                        std::make_pair(
+                            mesh.edge_elems()(iip, obs_edges[ii]),
+                            mesh.edge_elems()(jjp, src_edges[ii])
+                            )
+                        );
+                }
+            }
+        }
+    }
+
+    EigMatNX<Index, 2> pairs = EigMatNX<Index, 2>::Zero(2, unique_pairs.size());
+    for (auto it = unique_pairs.begin(); it != unique_pairs.end(); ++it)
+    {
+        Index idx = std::distance(unique_pairs.begin(), it);
+        pairs(0, idx) = it->first;
+        pairs(1, idx) = it->second;
+    }
+
+    return pairs;
 
 };
 
 
 EigMatNX<Index, 2> IndexGenerator::elem_pairs_from_edges(
+    const TriangleMesh<3>& mesh,
     ConstEigRef<EigRowVec<Index>> edges
     )
 {
-
+    return elem_pairs_from_edges(mesh, edges, edges);
 };
 
 }
