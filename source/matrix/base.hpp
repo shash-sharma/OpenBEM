@@ -55,8 +55,8 @@ public:
 
 
     /**
-    * @brief Returns the total number of rows in the matrix.
-    * @return Number of rows.
+    * @brief Returns the total number of columns in the matrix.
+    * @return Number of columns.
     */
     virtual Index num_cols() const = 0;
 
@@ -113,16 +113,6 @@ public:
     * @brief Sets all matrix entries to zero.
     */
     virtual void set_zero() = 0;
-
-
-    /**
-    * @brief Solves \f$ \mathbf{M}\mathbf{X} = \mathbf{B} \f$ for matrix \f$ \mathbf{X} \f$ with a
-    * direct solver, where \f$ \mathbf{M} \f$ is this matrix, and \f$ \mathbf{B} \f$ is a given
-    * right-hand side matrix.
-    * @param[out] x - Solution.
-    * @param[in] b - Right-hand side matrix, must have the same number of rows as this matrix.
-    */
-    virtual void mat_solve(MatrixBase<T>& x, const MatrixBase<T>& b) const = 0;
 
 
     /**
@@ -190,7 +180,7 @@ public:
 
 
     /**
-    * @brief Retrieves matrix values on the diagonal, zeroing out all other entries.
+    * @brief Retrieves matrix values on the diagonal.
     * @param[out] x - Diagonal matrix.
     */
     virtual void get_diagonal(MatrixBase<T>& x) const
@@ -330,6 +320,17 @@ public:
     */
     virtual void factorize()
     { throw std::runtime_error("MatrixBase::factorize(): Not implemented."); };
+
+
+    /**
+    * @brief Solves \f$ \mathbf{M}\mathbf{X} = \mathbf{B} \f$ for matrix \f$ \mathbf{X} \f$ with a
+    * direct solver, where \f$ \mathbf{M} \f$ is this matrix, and \f$ \mathbf{B} \f$ is a given
+    * right-hand side matrix.
+    * @param[out] x - Solution.
+    * @param[in] b - Right-hand side matrix, must have the same number of rows as this matrix.
+    */
+    virtual void mat_solve(MatrixBase<T>& x, const MatrixBase<T>& b) const;
+    { throw std::runtime_error("MatrixBase::mat_solve(): Not implemented."); };
 
 
     /**
