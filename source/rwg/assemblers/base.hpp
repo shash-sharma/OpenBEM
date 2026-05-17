@@ -108,7 +108,7 @@ public:
 
 
     /**
-    * @brief Assembles the operator matrix for a given operator object and source and observation meshes.
+    * @brief Assembles the operator matrix for a given operator object.
     * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
     * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
     * @param[in] op - Operator object that computes the coefficients to be assembled into `mat`; must
@@ -125,7 +125,7 @@ public:
 
         static_assert(
             std::is_base_of<OperatorBase<obs_num_dof, src_num_dof>, OperatorType>::value,
-            "OperatorAssemblerBase::assemble(): `OperatorType` must derive from `OperatorBase<obs_num_dof, src_num_dof>`"
+            "OperatorAssemblerBase::assemble(): `OperatorType` must derive from `OperatorBase`"
             );
 
         prep_matrix(mat);

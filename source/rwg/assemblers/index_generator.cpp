@@ -140,5 +140,81 @@ EigMatNX<Index, 2> IndexGenerator::elem_pairs_from_edges(
     return elem_pairs_from_edges(mesh, edges, edges);
 };
 
+
+EigMatNX<Index, 2> IndexGenerator::elem_pairs_from_elems_edges(
+    const TriangleMesh<3>& mesh,
+    ConstEigRef<EigRowVec<Index>> obs_elems,
+    ConstEigRef<EigRowVec<Index>> src_edges
+    )
+{
+
+    std::set<std::pair<Index, Index>> unique_pairs;
+
+    for (Index ii = 0; ii < obs_elems.size(); ++ii)
+    {
+        for (Index jj = 0; jj < src_edges.size(); ++jj)
+        {
+            for (uint8_t jjp = 0; jjp < 2; ++jjp)
+            {
+                unique_pairs.insert(
+                    std::make_pair(
+                        obs_elems[ii],
+                        mesh.edge_elems()(jjp, src_edges[ii])
+                        )
+                    );
+            }
+        }
+    }
+
+    EigMatNX<Index, 2> pairs = EigMatNX<Index, 2>::Zero(2, unique_pairs.size());
+    for (auto it = unique_pairs.begin(); it != unique_pairs.end(); ++it)
+    {
+        Index idx = std::distance(unique_pairs.begin(), it);
+        pairs(0, idx) = it->first;
+        pairs(1, idx) = it->second;
+    }
+
+    return pairs;
+
+};
+
+
+EigMatNX<Index, 2> IndexGenerator::elem_pairs_from_edges_elems(
+    const TriangleMesh<3>& mesh,
+    ConstEigRef<EigRowVec<Index>> obs_edges,
+    ConstEigRef<EigRowVec<Index>> src_elems
+    )
+{
+
+    std::set<std::pair<Index, Index>> unique_pairs;
+
+    for (Index ii = 0; ii < obs_edges.size(); ++ii)
+    {
+        for (uint8_t iip = 0; iip < 2; ++iip)
+        {
+            for (Index jj = 0; jj < src_elems.size(); ++jj)
+            {
+                unique_pairs.insert(
+                    std::make_pair(
+                        mesh.edge_elems()(iip, obs_edges[ii]),
+                        src_elems[ii]
+                        )
+                    );
+            }
+        }
+    }
+
+    EigMatNX<Index, 2> pairs = EigMatNX<Index, 2>::Zero(2, unique_pairs.size());
+    for (auto it = unique_pairs.begin(); it != unique_pairs.end(); ++it)
+    {
+        Index idx = std::distance(unique_pairs.begin(), it);
+        pairs(0, idx) = it->first;
+        pairs(1, idx) = it->second;
+    }
+
+    return pairs;
+
+};
+
 }
 

@@ -121,6 +121,36 @@ public:
         ConstEigRef<EigRowVec<Index>> edges
         );
 
+
+    /**
+    * @brief Makes all possible unique element pairs from given element-edge pairs.
+    * @param[in] mesh - Triangle mesh.
+    * @param[in] obs_elems - Observation element indices.
+    * @param[in] src_edges - Source edge indices.
+    * @return Triangle index pairs, with observation indices in the first row,
+    * and source indices in the second row.
+    */
+    static EigMatNX<Index, 2> elem_pairs_from_elems_edges(
+        const TriangleMesh<3>& mesh,
+        ConstEigRef<EigRowVec<Index>> obs_elems,
+        ConstEigRef<EigRowVec<Index>> src_edges
+        );
+
+
+    /**
+    * @brief Makes all possible unique element pairs from given edge-element pairs.
+    * @param[in] mesh - Triangle mesh.
+    * @param[in] obs_edges - Observation edge indices.
+    * @param[in] src_elems - Source element indices.
+    * @return Triangle index pairs, with observation indices in the first row,
+    * and source indices in the second row.
+    */
+    static EigMatNX<Index, 2> elem_pairs_from_edges_elems(
+        const TriangleMesh<3>& mesh,
+        ConstEigRef<EigRowVec<Index>> obs_edges,
+        ConstEigRef<EigRowVec<Index>> src_elems
+        );
+
 };
 
 /**
