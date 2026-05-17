@@ -111,7 +111,7 @@ EigMatNX<Index, 2> IndexGenerator::elem_pairs_from_edges(
                     unique_pairs.insert(
                         std::make_pair(
                             mesh.edge_elems()(iip, obs_edges[ii]),
-                            mesh.edge_elems()(jjp, src_edges[ii])
+                            mesh.edge_elems()(jjp, src_edges[jj])
                             )
                         );
                 }
@@ -159,7 +159,7 @@ EigMatNX<Index, 2> IndexGenerator::elem_pairs_from_elems_edges(
                 unique_pairs.insert(
                     std::make_pair(
                         obs_elems[ii],
-                        mesh.edge_elems()(jjp, src_edges[ii])
+                        mesh.edge_elems()(jjp, src_edges[jj])
                         )
                     );
             }
@@ -197,7 +197,7 @@ EigMatNX<Index, 2> IndexGenerator::elem_pairs_from_edges_elems(
                 unique_pairs.insert(
                     std::make_pair(
                         mesh.edge_elems()(iip, obs_edges[ii]),
-                        src_elems[ii]
+                        src_elems[jj]
                         )
                     );
             }

@@ -28,7 +28,7 @@ namespace bem::rwg
 void EdgeOperatorAssembler::prep_matrix(MatrixBase<Complex>& mat)
 {
     mat.resize(base::obs_mesh_.num_edges(), base::src_mesh_.num_edges());
-    mat.preallocate(base::elem_pairs_.cols() * 3 * 3);
+    mat.preallocate(base::elem_pairs_.cols() * EDGE_ELEM_RATIO * EDGE_ELEM_RATIO);
     return;
 };
 
@@ -74,7 +74,7 @@ void FaceOperatorAssembler::fill_matrix(
 void FaceEdgeOperatorAssembler::prep_matrix(MatrixBase<Complex>& mat)
 {
     mat.resize(base::obs_mesh_.num_elems(), base::src_mesh_.num_edges());
-    mat.preallocate(base::elem_pairs_.cols() * 3);
+    mat.preallocate(base::elem_pairs_.cols() * EDGE_ELEM_RATIO);
     return;
 };
 
@@ -98,7 +98,7 @@ void FaceEdgeOperatorAssembler::fill_matrix(
 void EdgeFaceOperatorAssembler::prep_matrix(MatrixBase<Complex>& mat)
 {
     mat.resize(base::obs_mesh_.num_edges(), base::src_mesh_.num_elems());
-    mat.preallocate(base::elem_pairs_.cols() * 3);
+    mat.preallocate(base::elem_pairs_.cols() * EDGE_ELEM_RATIO);
     return;
 };
 
@@ -122,7 +122,7 @@ void EdgeFaceOperatorAssembler::fill_matrix(
 void VectorOperatorsAssembler::prep_matrix(MatrixBase<Complex>& mat)
 {
     mat.resize(base::obs_mesh_.num_edges() * 4, base::src_mesh_.num_edges());
-    mat.preallocate(base::elem_pairs_.cols() * 12 * 3);
+    mat.preallocate(base::elem_pairs_.cols() * 4 * EDGE_ELEM_RATIO * EDGE_ELEM_RATIO);
     return;
 };
 
