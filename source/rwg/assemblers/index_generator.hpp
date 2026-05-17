@@ -95,6 +95,18 @@ public:
 
 
     /**
+    * @brief Returns all unique element indices associated with given edge indices.
+    * @param[in] mesh - Triangle mesh.
+    * @param[in] edges - Edge indices.
+    * @return Triangle indices.
+    */
+    static EigRowVec<Index> elems_from_edges(
+        const TriangleMesh<3>& mesh,
+        ConstEigRef<EigRowVec<Index>> edges
+        );
+
+
+    /**
     * @brief Makes all possible unique element pairs from given edge pairs.
     * @param[in] mesh - Triangle mesh.
     * @param[in] obs_edges - Observation edge indices.
