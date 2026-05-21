@@ -155,5 +155,27 @@ EigMatNX<Index, 2> IndexGenerator::elem_pairs_from_edges_elems(
     return elem_pairs(obs_elems, src_elems);
 };
 
+
+EigMatNX<Index, 2> IndexGenerator::unique_pairs(
+    ConstEigRef<EigMatNX<Index, 2>> pairs
+    )
+{
+    std::set<std::pair<Index, Index>> set_pairs;
+    for (Index ii = 0; ii < pairs.cols(); ++ii)
+        set_pairs.insert(std::make_pair(pairs(0, ii), pairs(1, ii)));
+
+    EigMatNX<Index, 2> unique_pairs (2, set_pairs.size());
+    Index ii = 0;
+
+    for (auto it = set_pairs.begin(); it != set_pairs.end(); ++it)
+    {
+        unique_pairs(0, ii) = it->first;
+        unique_pairs(1, ii) = it->second;
+        ii++;
+    }
+
+    return unique_pairs;
+};
+
 }
 

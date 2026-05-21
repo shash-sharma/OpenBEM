@@ -136,7 +136,9 @@ public:
             Triangle<3> obs_tri = obs_mesh_.elem_primitive(elem_pairs_(0, ii));
             Triangle<3> src_tri = src_mesh_.elem_primitive(elem_pairs_(1, ii));
 
-            EigMatMN<Complex, obs_num_dof, src_num_dof> values = op.compute(k, obs_tri, src_tri);
+            EigMatMN<Complex, obs_num_dof, src_num_dof> values = op.compute(
+                k, obs_tri, src_tri
+                );
 
 #pragma omp critical
             fill_matrix(mat, elem_pairs_.col(ii), values);

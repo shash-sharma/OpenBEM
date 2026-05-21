@@ -163,6 +163,16 @@ public:
         ConstEigRef<EigRowVec<Index>> src_elems
         );
 
+
+    /**
+    * @brief Returns unique pairs from given pairs.
+    * @param[in] pairs - Index pairs.
+    * @return Unique index pairs.
+    */
+    static EigMatNX<Index, 2> unique_pairs(
+        ConstEigRef<EigMatNX<Index, 2>> pairs
+        );
+
 };
 
 /**

@@ -6,6 +6,7 @@
 
 - Changelog.
 - `IndexGenerator` helper class.
+- `BoundingBox` geometry class.
 
 ### Changed
 
