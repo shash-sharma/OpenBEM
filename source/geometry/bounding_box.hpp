@@ -61,7 +61,7 @@ public:
     * @brief Returns the minimum and maximum corner points of the bounding box.
     * @return Read-only reference to the bounding box matrix.
     */
-    const EigMatMN<Float, dim, 2>& operator() const { return bbox_; };
+    const EigMatMN<Float, dim, 2>& operator()() const { return bbox_; };
 
 
     /**
@@ -72,8 +72,8 @@ public:
     bool encompasses(const BoundingBox& other, const Float tol = 1e-3) const
     {
         Float rel_tol = tol * diameter();
-        return (bbox_.col(0).array() <= other.bbox().col(0).array() + rel_tol).all()
-            && (bbox_.col(1).array() >= other.bbox().col(1).array() - rel_tol).all();
+        return (bbox_.col(0).array() <= other().col(0).array() + rel_tol).all()
+            && (bbox_.col(1).array() >= other().col(1).array() - rel_tol).all();
     };
 
 
@@ -85,8 +85,8 @@ public:
     bool overlaps(const BoundingBox& other, const bool strict = false) const
     {
         Float rel_tol = strict ? 0 : 1e-3 * diameter();
-        return !((bbox_.col(0).array() > other.bbox().col(1).array() + rel_tol).any()
-            || (bbox_.col(1).array() < other.bbox().col(0).array() - rel_tol).any());
+        return !((bbox_.col(0).array() > other().col(1).array() + rel_tol).any()
+            || (bbox_.col(1).array() < other().col(0).array() - rel_tol).any());
     };
 
 
