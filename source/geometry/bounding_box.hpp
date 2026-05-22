@@ -56,7 +56,7 @@ public:
         return;
     };
 
-    
+
     /**
     * @brief Returns the minimum and maximum corner points of the bounding box.
     * @return Read-only reference to the bounding box matrix.
@@ -87,6 +87,27 @@ public:
         Float rel_tol = strict ? 0 : 1e-3 * diameter();
         return !((bbox_.col(0).array() > other().col(1).array() + rel_tol).any()
             || (bbox_.col(1).array() < other().col(0).array() - rel_tol).any());
+    };
+
+
+    /**
+    * @brief Returns the percent overlap with a given bounding box.
+    * @param[in] other - Bounding box to check against.
+    * @return Percent overlap.
+    */
+    Float percent_overlap(const BoundingBox& other) const
+    {
+        EigColVecN<Float, dim> maxs = bbox_.col(0).cwiseMax(other().col(0));
+        EigColVecN<Float, dim> mins = bbox_.col(1).cwiseMin(other().col(1));
+
+        if ((mins.array() < maxs.array()).any())
+            return 0;
+
+        Float intersection = (mins - maxs).prod();
+        Float region1 = (bbox_.col(1) - bbox_.col(0)).prod();
+        Float region2 = (other().col(1) - other().col(0)).prod();
+
+        return intersection / (region1 + region2 - intersection) * 100.0;
     };
 
 
