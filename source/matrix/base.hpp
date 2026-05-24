@@ -316,6 +316,24 @@ public:
 
 
     /**
+    * @brief Copies a block of values from this matrix to the corresponding block of another.
+    * @param[out] x - Matrix to store the retrieved values in its corresponding block.
+    * @param[in] row_start - Starting row index for the block.
+    * @param[in] col_start - Starting column index for the block.
+    * @param[in] b_rows - Number of rows in the block to retrieve.
+    * @param[in] b_cols - Number of columns in the block to retrieve.
+    */
+    virtual void copy_block(
+        MatrixBase<T>& x,
+        Index row_start,
+        Index col_start,
+        Index b_rows,
+        Index b_cols
+        ) const
+    { throw std::runtime_error("MatrixBase::copy_block(): Not implemented."); };
+
+
+    /**
     * @brief Computes and stores a factorization of the matrix.
     */
     virtual void factorize()

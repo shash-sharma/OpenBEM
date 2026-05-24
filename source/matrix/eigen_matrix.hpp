@@ -815,6 +815,29 @@ public:
 
 
     /**
+    * @brief Copies a block of values from this matrix to the corresponding block of another.
+    * @param[out] x - Matrix to store the retrieved values in its corresponding block.
+    * @param[in] row_start - Starting row index for the block.
+    * @param[in] col_start - Starting column index for the block.
+    * @param[in] b_rows - Number of rows in the block to retrieve.
+    * @param[in] b_cols - Number of columns in the block to retrieve.
+    */
+    void copy_block(
+        MatrixBase<T>& x,
+        Index row_start,
+        Index col_start,
+        Index b_rows,
+        Index b_cols
+        ) const override
+    {
+        std::unique_ptr<MatrixBase<T>> temp = x.clone();
+        get_block(*temp, row_start, col_start, b_rows, b_cols);
+        x.set_block(*temp, row_start, col_start);
+        return;
+    };
+
+
+    /**
     * @brief Computes and stores the LU factors. The original matrix is not modified.
     */
     void factorize() override
