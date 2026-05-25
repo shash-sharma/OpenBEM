@@ -504,7 +504,7 @@ public:
     * @brief Computes \f$ \mathbf{M} = \mathbf{M} + a\mathbf{X} \f$ where \f$ \mathbf{M} \f$ is this matrix,
     * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ is a matrix.
     * @param[in] x - Matrix to scale and add, must have the same dimensions as this matrix.
-    * @param[in] a - Scalar which which to scale `x`.
+    * @param[in] a - Scalar with which to scale `x`.
     */
     void add_ax(const MatrixBase<T>& x, const T& a = T(1)) override
     {
@@ -531,8 +531,8 @@ public:
     * \f$ a \f$ and \f$ b \f$ are scalars, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
     * @param[in] x - First matrix to scale and add, must have the same dimensions as `y`.
     * @param[in] y - Second matrix to scale and add, must have the same dimensions as `x`.
-    * @param[in] a - Scalar which which to scale `x`.
-    * @param[in] b - Scalar which which to scale `y`.
+    * @param[in] a - Scalar with which to scale `x`.
+    * @param[in] b - Scalar with which to scale `y`.
     */
     void set_axpby(
         const EigenMatrix<T, type, storage_order>& x,
@@ -555,7 +555,7 @@ public:
     * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
     * @param[in] x - First matrix to multiply, must have the same number of columns as `y` has rows.
     * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
-    * @param[in] a - Scalar which which to scale the product of `x` and `y`.
+    * @param[in] a - Scalar with which to scale the product of `x` and `y`.
     */
     void set_matmul(
         const MatrixBase<T>& x,
@@ -583,7 +583,7 @@ public:
     * is this matrix, \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
     * @param[in] x - First matrix to multiply, must have the same number of columns as `y` has rows.
     * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
-    * @param[in] a - Scalar which which to scale the product of `x` and `y`.
+    * @param[in] a - Scalar with which to scale the product of `x` and `y`.
     */
     void add_matmul(
         const MatrixBase<T>& x,
@@ -614,7 +614,7 @@ public:
     * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
     * @param[out] x - Multiplication result.
     * @param[in] y - Matrix with which to multiply, must have the same number of rows as this matrix.
-    * @param[in] a - Scalar which which to scale the product.
+    * @param[in] a - Scalar with which to scale the product.
     */
     void matmul(
         MatrixBase<T>& x,
@@ -642,7 +642,7 @@ public:
     * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
     * @param[out] x - Multiplication result.
     * @param[in] y - Matrix with which to multiply, must have the same number of rows as this matrix.
-    * @param[in] a - Scalar which which to scale the product.
+    * @param[in] a - Scalar with which to scale the product.
     */
     void matmuladd(
         MatrixBase<T>& x,

@@ -97,7 +97,7 @@ public:
     * @brief Computes \f$ \mathbf{M} = \mathbf{M} + a\mathbf{X} \f$ where \f$ \mathbf{M} \f$ is this matrix,
     * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ is a matrix.
     * @param[in] x - Matrix to scale and add, must have the same dimensions as this matrix.
-    * @param[in] a - Scalar which which to scale `x`.
+    * @param[in] a - Scalar with which to scale `x`.
     */
     virtual void add_ax(const MatrixBase<T>& x, const T& a = T(1)) = 0;
 
@@ -192,7 +192,7 @@ public:
     * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
     * @param[in] x - First matrix to multiply, must have the same number of columns as `y` has rows.
     * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
-    * @param[in] a - Scalar which which to scale the product of `x` and `y`.
+    * @param[in] a - Scalar with which to scale the product of `x` and `y`.
     */
     virtual void set_matmul(
         const MatrixBase<T>& x,
@@ -207,7 +207,7 @@ public:
     * is this matrix, \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
     * @param[in] x - First matrix to multiply, must have the same number of columns as `y` has rows.
     * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
-    * @param[in] a - Scalar which which to scale the product of `x` and `y`.
+    * @param[in] a - Scalar with which to scale the product of `x` and `y`.
     */
     virtual void add_matmul(
         const MatrixBase<T>& x,
@@ -222,7 +222,7 @@ public:
     * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
     * @param[out] x - Multiplication result.
     * @param[in] y - Matrix with which to multiply, must have the same number of rows as this matrix.
-    * @param[in] a - Scalar which which to scale the product.
+    * @param[in] a - Scalar with which to scale the product.
     */
     virtual void matmul(
         MatrixBase<T>& x,
@@ -237,7 +237,7 @@ public:
     * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
     * @param[out] x - Multiplication result.
     * @param[in] y - Matrix with which to multiply, must have the same number of rows as this matrix.
-    * @param[in] a - Scalar which which to scale the product.
+    * @param[in] a - Scalar with which to scale the product.
     */
     virtual void matmuladd(
         MatrixBase<T>& x,
