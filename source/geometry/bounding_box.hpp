@@ -81,10 +81,15 @@ public:
     * @brief Checks whether a given bounding box overlaps with this one.
     * @param[in] other - Bounding box to check against.
     * @param[in] strict - If `true`, then touching does not count as an overlap (optional).
+    * @param[in] tol - Relative tolerance for comparison (optional).
     */
-    bool overlaps(const BoundingBox& other, const bool strict = false) const
+    bool overlaps(
+        const BoundingBox& other,
+        const bool strict = false,
+        const Float tol = 1e-3
+        ) const
     {
-        Float rel_tol = strict ? 0 : 1e-3 * diameter();
+        Float rel_tol = strict ? 0 : tol * diameter();
         return !((bbox_.col(0).array() > other().col(1).array() + rel_tol).any()
             || (bbox_.col(1).array() < other().col(0).array() - rel_tol).any());
     };
