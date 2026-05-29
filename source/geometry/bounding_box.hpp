@@ -120,7 +120,7 @@ public:
     * @brief Extends the bounding box to include a given point.
     * @param[in] point - Point used to extend the bounding box.
     */
-    void extend(const EigColVecN<Float, dim>& point)
+    void extend(ConstEigRef<EigColVecN<Float, dim>> point)
     {
         bbox_.col(0) = bbox_.col(0).cwiseMin(point);
         bbox_.col(1) = bbox_.col(1).cwiseMax(point);
