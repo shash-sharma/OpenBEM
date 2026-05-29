@@ -65,6 +65,20 @@ public:
 
 
     /**
+    * @brief Returns the minimum corner points of the bounding box.
+    * @return Read-only reference to the bounding box minimum corner points.
+    */
+    EigColVecN<Float, dim> min() const { return bbox_.col(0); };
+
+
+    /**
+    * @brief Returns the maximum corner points of the bounding box.
+    * @return Read-only reference to the bounding box maximum corner points.
+    */
+    EigColVecN<Float, dim> max() const { return bbox_.col(1); };
+
+
+    /**
     * @brief Checks whether a given bounding box is encompassed by this one.
     * @param[in] other - Bounding box to check against.
     * @param[in] tol - Relative tolerance for comparison (optional).
@@ -72,8 +86,8 @@ public:
     bool encompasses(const BoundingBox& other, const Float tol = 1e-3) const
     {
         Float rel_tol = tol * diameter();
-        return (bbox_.col(0).array() <= other().col(0).array() + rel_tol).all()
-            && (bbox_.col(1).array() >= other().col(1).array() - rel_tol).all();
+        return (min().array() <= other.min().array() + rel_tol).all()
+            && (max().array() >= other.max().array() - rel_tol).all();
     };
 
 
@@ -90,8 +104,8 @@ public:
         ) const
     {
         Float rel_tol = strict ? 0 : tol * diameter();
-        return !((bbox_.col(0).array() > other().col(1).array() + rel_tol).any()
-            || (bbox_.col(1).array() < other().col(0).array() - rel_tol).any());
+        return !((min().array() > other.max().array() + rel_tol).any()
+            || (max().array() < other.min().array() - rel_tol).any());
     };
 
 
@@ -102,17 +116,35 @@ public:
     */
     Float percent_overlap(const BoundingBox& other) const
     {
-        EigColVecN<Float, dim> maxs = bbox_.col(0).cwiseMax(other().col(0));
-        EigColVecN<Float, dim> mins = bbox_.col(1).cwiseMin(other().col(1));
+        EigColVecN<Float, dim> maxs = min().cwiseMax(other.min());
+        EigColVecN<Float, dim> mins = max().cwiseMin(other.max());
 
         if ((mins.array() < maxs.array()).any())
             return 0;
 
         Float intersection = (mins - maxs).prod();
-        Float region1 = (bbox_.col(1) - bbox_.col(0)).prod();
-        Float region2 = (other().col(1) - other().col(0)).prod();
+        Float region1 = (max() - min()).prod();
+        Float region2 = (other.max() - other.min()).prod();
 
         return intersection / (region1 + region2 - intersection) * 100.0;
+    };
+
+
+    /**
+    * @brief Returns the signed edge-to-edge distance along each axis to a given bounding box.
+    * @param[in] other - Bounding box to check against.
+    * @return Signed distance to the other bounding box along each axis, where a negative distance
+    * indicates an overlap.
+    */
+    EigColVecN<Float, dim> distance(const BoundingBox& other) const
+    {
+        EigColVecN<Float, dim> sep_r = other.min() - max();
+        EigColVecN<Float, dim> sep_l = min() - other.max();
+
+        EigColVecN<Float, dim> separated_dist = (sep_r.cwiseMax(sep_l)).cwiseMax(0.0);
+        EigColVecN<Float, dim> overlap_dist = max().cwiseMin(other.max()) - min().cwiseMax(other.min());
+
+        return (separated_dist.array() > 0).select(separated_dist, -overlap_dist);
     };
 
 
@@ -122,8 +154,8 @@ public:
     */
     void extend(ConstEigRef<EigColVecN<Float, dim>> point)
     {
-        bbox_.col(0) = bbox_.col(0).cwiseMin(point);
-        bbox_.col(1) = bbox_.col(1).cwiseMax(point);
+        bbox_.col(0) = min().cwiseMin(point);
+        bbox_.col(1) = max().cwiseMax(point);
         return;
     };
 
@@ -134,7 +166,7 @@ public:
     */
     Float diameter() const
     {
-        return (bbox_.col(1) - bbox_.col(0)).norm();
+        return (max() - min()).norm();
     };
 
 
