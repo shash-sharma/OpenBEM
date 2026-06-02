@@ -46,10 +46,10 @@ namespace bem::rwg
 * @tparam ObsIntegratorType - Type of the observation triangle integrator, must derive from `ObsIntegratorBase`.
 */
 template <typename ObsIntegratorType = ObsStrategic<>>
-class VectorRwgOps: public OperatorBase<12, 3>
+class VectorRwgOps: public OperatorBase<3, 12>
 {
 
-    using base = OperatorBase<12, 3>;
+    using base = OperatorBase<3, 12>;
     static_assert(
         std::is_base_of<ObsIntegratorBase, ObsIntegratorType>::value,
         "VectorRwgOps: `ObsIntegratorType` must derive from `ObsIntegratorBase`"
@@ -77,10 +77,10 @@ public:
     * @return Operator values for each pair of observation and source degrees of freedom, for each operator.
     * @details
     * Rows of the output matrix correspond to observation edges, and columns correspond to
-    * source edges. The operators are stacked row by row; the first three rows correspond to the first
+    * source edges. The operators are stacked column by column; the first three columns correspond to the first
     * operator, the next three to the next operator, and so on.
     */
-    EigMatMN<Complex, 12, 3> compute(
+    EigMatMN<Complex, 3, 12> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
