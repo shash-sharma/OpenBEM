@@ -29,7 +29,7 @@ namespace bem::rwg
 {
 
 template <typename ObsIntegratorType>
-EigMatMN<Complex, 12, 3> VectorRwgOps<ObsIntegratorType>::compute(
+EigMatMN<Complex, 3, 12> VectorRwgOps<ObsIntegratorType>::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
@@ -43,22 +43,22 @@ EigMatMN<Complex, 12, 3> VectorRwgOps<ObsIntegratorType>::compute(
     obs_integrator_.set_compute_terms(true, true, true, true);
     const ObsResult obs_result = obs_integrator_.integrate(k, obs_tri_local, src_tri_local);
 
-    EigMatMN<Complex, 12, 3> ops;
+    EigMatMN<Complex, 3, 12> ops;
 
-    ops.middleRows(0, 3) = vector_single_layer_.assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
-    ops.middleRows(3, 3) = vector_double_layer_pv_.assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
-    ops.middleRows(6, 3) = rot_vector_single_layer_.assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
-    ops.middleRows(9, 3) = rot_vector_double_layer_pv_.assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
+    ops.middleCols(0, 3) = vector_single_layer_.assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
+    ops.middleCols(3, 3) = vector_double_layer_pv_.assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
+    ops.middleCols(6, 3) = rot_vector_single_layer_.assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
+    ops.middleCols(9, 3) = rot_vector_double_layer_pv_.assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
 
     if (!helmholtz_kernel_)
     {
         Complex h = scalar_single_layer_.assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result)[0] / k / k;
-        ops.middleRows(0, 3) -= h * obs_tri.edge_polarities().transpose() * src_tri.edge_polarities();
+        ops.middleCols(0, 3) -= h * obs_tri.edge_polarities().transpose() * src_tri.edge_polarities();
 
         EigMatMN<Complex, 3, 1> rot_h = rot_grad_scalar_single_layer_.assemble(
             k, obs_tri_local, src_tri_local.to_3d(), obs_result
             ) / k / k;
-        ops.middleRows(6, 3) += rot_h * src_tri.edge_polarities();
+        ops.middleCols(6, 3) += rot_h * src_tri.edge_polarities();
     }
 
     return ops;

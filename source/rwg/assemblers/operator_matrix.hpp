@@ -184,10 +184,10 @@ public:
 /**
 * @brief Class for generating the full set of vector operator matrices for RWG observation and source functions.
 */
-class VectorOperatorsAssembler: public OperatorAssemblerBase<12, 3>
+class VectorOperatorsAssembler: public OperatorAssemblerBase<3, 12>
 {
 
-    using base = OperatorAssemblerBase<12, 3>;
+    using base = OperatorAssemblerBase<3, 12>;
     using base::base;
 
 public:
@@ -196,7 +196,7 @@ public:
     * @brief Prepares the matrix for assembly (e.g., resizing and preallocation).
     * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
     * to source edges, and rows corresponding to observation edges. The four vector operator matrices
-    * are stacked along the vertical direction.
+    * are stacked along the horizontal direction.
     */
     void prep_matrix(MatrixBase<Complex>& mat) override;
 
@@ -208,12 +208,12 @@ public:
     * the vertical direction.
     * @param[in] elem_pair - Observation (first entry) and source (second entry) triangle index pair.
     * @param[in] values - Operator values for each pair of observation and source degrees of freedom,
-    * for all operators stacked along the vertical direction.
+    * for all operators stacked along the horizontal direction.
     */
     void fill_matrix(
         MatrixBase<Complex>& mat,
         ConstEigRef<EigColVecN<Index, 2>> elem_pair,
-        ConstEigRef<EigMatMN<Complex, 12, 3>> values
+        ConstEigRef<EigMatMN<Complex, 3, 12>> values
         ) override;
 
 };
