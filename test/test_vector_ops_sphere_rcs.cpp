@@ -87,7 +87,7 @@ void test_cfie_pec()
     T.scale(-J * omega * mu);
 
     EigenMatrix<Complex> K;
-    mats.get_block(K, mesh.num_edges() * 3, 0, mesh.num_edges(), mesh.num_edges());
+    mats.get_block(K, 0, mesh.num_edges() * 3, mesh.num_edges(), mesh.num_edges());
 
     EigenMatrix<Complex> I;
     I_assembler.assemble(I, op_I, k);
