@@ -39,7 +39,6 @@ SrcResult SrcStrategic<TriangleQuadratureType, LineQuadratureType>::integrate(
     EigRowVec<Float> r_obs_dist = (r_obs.colwise() - src_tri_centroid).colwise().norm();
 
     Float min_dist = r_obs_dist.minCoeff();
-    Float min_dist_wvl = min_dist * std::real(k) / two_pi;
     Float longest_edge_wvl = src_tri.longest_edge_length() * std::real(k) / two_pi;
 
     Float skin_depth = -one / std::imag(k);
@@ -47,19 +46,13 @@ SrcResult SrcStrategic<TriangleQuadratureType, LineQuadratureType>::integrate(
         if (min_dist > std::max(settings_.threshold_skin_depths * skin_depth, 2 * src_tri.longest_edge_length()))
             return src_hgf_.zeros(k, src_tri, r_obs);
 
-
-    Float threshold_wvl = settings_.threshold_wvl_singularity < 0 ?
-        (Float)0.1 : settings_.threshold_wvl_singularity;
-
     Float threshold_dist = settings_.threshold_dist_singularity < 0 ?
         src_tri.longest_edge_length() * 5 : settings_.threshold_dist_singularity;
 
     Float threshold_line_int = settings_.threshold_length_line_int < 0 ?
         one : settings_.threshold_length_line_int;
 
-
     bool line_integration = threshold_line_int >= 0 && longest_edge_wvl >= threshold_line_int;
-    // bool singularity_subtraction = (min_dist <= threshold_dist || min_dist_wvl <= threshold_wvl);
     bool singularity_subtraction = min_dist <= threshold_dist;
     bool singularity_separation = false;
 

@@ -36,7 +36,6 @@ ObsResult ObsStrategic<ObsTriangleQuadratureType, SrcTriangleQuadratureType, Lin
 {
 
     Float dist = (obs_tri.centroid() - src_tri.to_3d().centroid()).norm();
-    Float dist_wvl = dist * std::real(k) / two_pi;
     Float longest_edge_wvl = src_tri.longest_edge_length() * std::real(k) / two_pi;
 
     Float skin_depth = -one / std::imag(k);
@@ -44,27 +43,19 @@ ObsResult ObsStrategic<ObsTriangleQuadratureType, SrcTriangleQuadratureType, Lin
         if (dist > std::max(settings_.threshold_skin_depths * skin_depth, 2 * src_tri.longest_edge_length()))
             return ObsResult();
 
-
-    Float threshold_wvl = settings_.threshold_wvl_singularity < 0 ?
-        (Float)0.1 : settings_.threshold_wvl_singularity;
-
     Float threshold_dist = settings_.threshold_dist_singularity < 0 ?
-        src_tri.longest_edge_length() * 5 : settings_.threshold_dist_singularity;
+        src_tri.longest_edge_length() * 2 : settings_.threshold_dist_singularity;
 
     Float threshold_line_int = settings_.threshold_length_line_int < 0 ?
         one : settings_.threshold_length_line_int;
 
-
     bool line_integration = threshold_line_int >= 0 &&
         longest_edge_wvl >= threshold_line_int;
 
-    // bool singularity_subtraction = (
-    //     GeometryOps<3>::common_vertices(obs_tri, src_tri.to_3d()) > 0 ||
-    //     dist <= threshold_dist ||
-    //     dist_wvl <= threshold_wvl
-    //     );
-
-    bool singularity_subtraction = GeometryOps<3>::common_vertices(obs_tri, src_tri.to_3d()) > 0;
+    bool singularity_subtraction = (
+        GeometryOps<3>::common_vertices(obs_tri, src_tri.to_3d()) > 0 ||
+        dist <= threshold_dist
+        );
 
     bool singularity_separation = false;
 
