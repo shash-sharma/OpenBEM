@@ -55,14 +55,14 @@ struct SrcIntegrationSettings
     /** Source triangle line integration order. */
     Float line_order = 10;
 
-    /** Electrical distance below which singularity treatment is applied (disabled if negative). */
-    Float threshold_wvl_singularity = 0.1;
+    /** Electrical distance below which singularity treatment is applied (default 0.1 if negative). */
+    Float threshold_wvl_singularity = -1;
 
     /** Physical distance below which singularity treatment is applied (disabled if negative). */
     Float threshold_dist_singularity = -1;
 
-    /** Electrical length of src_tri edge above which line integration is used (disabled if negative). */
-    Float threshold_length_line_int = 1;
+    /** Electrical length of src_tri edge above which line integration is used (default 1 if negative). */
+    Float threshold_length_line_int = -1;
 
     /** Number of skin depths beyond which interactions should be ignored (disabled if negative). */
     Float threshold_skin_depths = 10;

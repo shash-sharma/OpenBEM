@@ -102,7 +102,7 @@ EigRowVec<Complex> SingularitySubtractedTaylorHGF::compute(
 {
     EigRowVec<Float> r = (r_src.colwise() - r_obs).colwise().norm();
 
-    if (std::abs(k) == 0.0)
+    if (std::real(k) == 0.0)
         return EigRowVec<Complex>::Zero(1, r.cols());
 
     const Float tol = KERNEL_DEFAULT_TOL;
@@ -116,7 +116,7 @@ EigRowVec<Complex> SingularitySubtractedTaylorHGF::compute(
     {
         multiplier.array() *= -jkr.array() / (Float)jj;
         val += multiplier;
-        if ((multiplier.array().abs() <= tol * val.array().abs()).all())
+        if ((multiplier.cwiseAbs2().array() <= tol * tol * val.cwiseAbs2().array()).all())
             break;
     }
     val.array() /= four_pi;
@@ -134,7 +134,7 @@ EigMatNX<Complex, 3> SingularitySubtractedTaylorHGF::compute_grad(
     EigMatNX<Float, 3> r_diff = -(r_src.colwise() - r_obs);
     EigRowVec<Float> r = r_diff.colwise().norm();
 
-    if (std::abs(k) == 0.0)
+    if (std::real(k) == 0.0)
         return EigMatNX<Complex, 3>::Zero(3, r.cols());
 
     const Float tol = KERNEL_DEFAULT_TOL;
@@ -148,7 +148,7 @@ EigMatNX<Complex, 3> SingularitySubtractedTaylorHGF::compute_grad(
     {
         multiplier.array() *= -jkr.array() / (Float)jj;
         scalar_term += multiplier;
-        if ((multiplier.array().abs() <= tol * scalar_term.array().abs()).all())
+        if ((multiplier.cwiseAbs2().array() <= tol * tol * scalar_term.cwiseAbs2().array()).all())
             break;
     }
     scalar_term *= -1.0 / four_pi;

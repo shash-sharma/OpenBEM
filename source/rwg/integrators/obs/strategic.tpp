@@ -44,18 +44,16 @@ ObsResult ObsStrategic<ObsTriangleQuadratureType, SrcTriangleQuadratureType, Lin
         if (dist > std::max(settings_.threshold_skin_depths * skin_depth, 2 * src_tri.longest_edge_length()))
             return ObsResult();
 
-    Float threshold_wvl = std::max(
-        settings_.threshold_wvl_singularity,
-        (Float)0.1
-    );
-    Float threshold_dist = std::max(
-        settings_.threshold_dist_singularity,
-        src_tri.longest_edge_length() * 5
-    );
-    Float threshold_line_int = std::min(
-        settings_.threshold_length_line_int,
-        one
-    );
+
+    Float threshold_wvl = settings_.threshold_wvl_singularity < 0 ?
+        (Float)0.1 : settings_.threshold_wvl_singularity;
+
+    Float threshold_dist = settings_.threshold_dist_singularity < 0 ?
+        src_tri.longest_edge_length() * 5 : settings_.threshold_dist_singularity;
+
+    Float threshold_line_int = settings_.threshold_length_line_int < 0 ?
+        one : settings_.threshold_length_line_int;
+
 
     bool line_integration = threshold_line_int >= 0 &&
         longest_edge_wvl >= threshold_line_int;
