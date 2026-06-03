@@ -35,7 +35,6 @@ namespace bem
 */
 class HGF: public ScalarKernelBase<3>
 {
-
 public:
 
     /**
@@ -56,7 +55,7 @@ public:
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
         ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
-        ) const;
+        ) override;
 
 
     /**
@@ -79,7 +78,16 @@ public:
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
         ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
-        ) const;
+        ) override;
+
+
+protected:
+
+    // class-wide containers to avoid repeated memory (de)allocation
+    EigRowVec<Float> r_;
+    EigMatNX<Float, 3> r_diff_;
+    EigRowVec<Complex> jkr_;
+    EigRowVec<Complex> val_;
 
 };
 
@@ -110,7 +118,7 @@ public:
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
         ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
-        ) const;
+        ) override;
 
 
     /**
@@ -136,7 +144,18 @@ public:
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
         ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
-        ) const;
+        ) override;
+
+
+protected:
+
+    // class-wide containers to avoid repeated memory (de)allocation
+    EigRowVec<Float> r_;
+    EigMatNX<Float, 3> r_diff_;
+    EigRowVec<Float> r_sq_;
+    EigRowVec<Float> r_cu_;
+    EigRowVec<Complex> jkr_;
+    EigRowVec<Complex> val_;
 
 };
 
@@ -173,7 +192,7 @@ public:
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
         ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
-        ) const;
+        ) override;
 
 
     /**
@@ -207,7 +226,17 @@ public:
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
         ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
-        ) const;
+        ) override;
+
+
+protected:
+
+    // class-wide containers to avoid repeated memory (de)allocation
+    EigRowVec<Float> r_;
+    EigMatNX<Float, 3> r_diff_;
+    EigRowVec<Complex> jkr_;
+    EigRowVec<Complex> multiplier_;
+    EigRowVec<Complex> val_;
 
 };
 
