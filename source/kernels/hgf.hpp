@@ -55,7 +55,7 @@ public:
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
         ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
-        ) override;
+        ) const override;
 
 
     /**
@@ -78,16 +78,7 @@ public:
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
         ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
-        ) override;
-
-
-protected:
-
-    // class-wide containers to avoid repeated memory (de)allocation
-    EigRowVec<Float> r_;
-    EigMatNX<Float, 3> r_diff_;
-    EigRowVec<Complex> jkr_;
-    EigRowVec<Complex> val_;
+        ) const override;
 
 };
 
@@ -118,7 +109,7 @@ public:
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
         ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
-        ) override;
+        ) const override;
 
 
     /**
@@ -144,18 +135,7 @@ public:
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
         ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
-        ) override;
-
-
-protected:
-
-    // class-wide containers to avoid repeated memory (de)allocation
-    EigRowVec<Float> r_;
-    EigMatNX<Float, 3> r_diff_;
-    EigRowVec<Float> r_sq_;
-    EigRowVec<Float> r_cu_;
-    EigRowVec<Complex> jkr_;
-    EigRowVec<Complex> val_;
+        ) const override;
 
 };
 
@@ -192,7 +172,7 @@ public:
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
         ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
-        ) override;
+        ) const override;
 
 
     /**
@@ -226,17 +206,7 @@ public:
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
         ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
-        ) override;
-
-
-protected:
-
-    // class-wide containers to avoid repeated memory (de)allocation
-    EigRowVec<Float> r_;
-    EigMatNX<Float, 3> r_diff_;
-    EigRowVec<Complex> jkr_;
-    EigRowVec<Complex> multiplier_;
-    EigRowVec<Complex> val_;
+        ) const override;
 
 };
 

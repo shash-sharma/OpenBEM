@@ -32,11 +32,11 @@ EigRowVec<Complex> HGF::compute(
     ConstEigRef<EigColVecN<Float, 3>> r_obs,
     ConstEigRef<EigMatNX<Float, 3>> r_src,
     const Complex k
-    )
+    ) const
 {
-    r_ = (r_src.colwise() - r_obs).colwise().norm();
-    assert(r_.array().all() > 0 && "HGF::compute(): Distance must be greater than 0.");
-    return Eigen::exp(-J * k * r_.array()) / r_.array() / four_pi;
+    EigRowVec<Float> r = (r_src.colwise() - r_obs).colwise().norm();
+    assert(r.array().all() > 0 && "HGF::compute(): Distance must be greater than 0.");
+    return Eigen::exp(-J * k * r.array()) / r.array() / four_pi;
 }
 
 
@@ -44,17 +44,17 @@ EigMatNX<Complex, 3> HGF::compute_grad(
     ConstEigRef<EigColVecN<Float, 3>> r_obs,
     ConstEigRef<EigMatNX<Float, 3>> r_src,
     const Complex k
-    )
+    ) const
 {
-    r_diff_ = -(r_src.colwise() - r_obs);
-    r_ = r_diff_.colwise().norm();
-    assert(r_.array().all() > 0 && "HGF::compute_grad(): Distance must be greater than 0.");
+    EigMatNX<Float, 3> r_diff = -(r_src.colwise() - r_obs);
+    EigRowVec<Float> r = r_diff.colwise().norm();
+    assert(r.array().all() > 0 && "HGF::compute_grad(): Distance must be greater than 0.");
 
-    jkr_ = J * k * r_.array();
-    val_ = -Eigen::exp(-jkr_.array()) * (one + jkr_.array()) /
-        (r_.array() * r_.array() * r_.array()) / four_pi;
+    const EigRowVec<Complex> jkr = J * k * r.array();
+    const EigRowVec<Complex> scalar_term = -Eigen::exp(-jkr.array()) * (one + jkr.array()) /
+        (r.array() * r.array() * r.array()) / four_pi;
 
-    return r_diff_.array().rowwise() * val_.array();
+    return r_diff.array().rowwise() * scalar_term.array();
 }
 
 
@@ -62,11 +62,11 @@ EigRowVec<Complex> SingularitySubtractedHGF::compute(
     ConstEigRef<EigColVecN<Float, 3>> r_obs,
     ConstEigRef<EigMatNX<Float, 3>> r_src,
     const Complex k
-    )
+    ) const
 {
-    r_ = (r_src.colwise() - r_obs).colwise().norm();
-    assert(r_.array().all() > 0 && "SingularitySubtractedHGF::compute(): Distance must be greater than 0.");
-    return (Eigen::exp(-J * k * r_.array()) - one) / r_.array() / four_pi;
+    EigRowVec<Float> r = (r_src.colwise() - r_obs).colwise().norm();
+    assert(r.array().all() > 0 && "SingularitySubtractedHGF::compute(): Distance must be greater than 0.");
+    return (Eigen::exp(-J * k * r.array()) - one) / r.array() / four_pi;
 }
 
 
@@ -74,21 +74,21 @@ EigMatNX<Complex, 3> SingularitySubtractedHGF::compute_grad(
     ConstEigRef<EigColVecN<Float, 3>> r_obs,
     ConstEigRef<EigMatNX<Float, 3>> r_src,
     const Complex k
-    )
+    ) const
 {
-    r_diff_ = -(r_src.colwise() - r_obs);
-    r_ = r_diff_.colwise().norm();
-    assert(r_.array().all() > 0 && "SingularitySubtractedHGF::compute_grad(): Distance must be greater than 0.");
+    EigMatNX<Float, 3> r_diff = -(r_src.colwise() - r_obs);
+    EigRowVec<Float> r = r_diff.colwise().norm();
+    assert(r.array().all() > 0 && "SingularitySubtractedHGF::compute_grad(): Distance must be greater than 0.");
 
-    jkr_ = J * k * r_.array();
-    r_sq_ = r_.array() * r_.array();
-    r_cu_ = r_sq_.array() * r_.array();
+    const EigRowVec<Complex> jkr = J * k * r.array();
+    const EigRowVec<Float> r_sq = r.array() * r.array();
+    const EigRowVec<Float> r_cu = r_sq.array() * r.array();
 
-    val_ = -(
-        Eigen::exp(-jkr_.array()) * (one + jkr_.array()) - (one + half * k * k * r_sq_.array())
-        ) / r_cu_.array() / four_pi;
+    EigRowVec<Complex> scalar_term = -(
+        Eigen::exp(-jkr.array()) * (one + jkr.array()) - (one + half * k * k * r_sq.array())
+        ) / r_cu.array() / four_pi;
 
-    return r_diff_.array().rowwise() * val_.array();
+    return r_diff.array().rowwise() * scalar_term.array();
 }
 
 
@@ -96,30 +96,30 @@ EigRowVec<Complex> SingularitySubtractedTaylorHGF::compute(
     ConstEigRef<EigColVecN<Float, 3>> r_obs,
     ConstEigRef<EigMatNX<Float, 3>> r_src,
     const Complex k
-    )
+    ) const
 {
-    r_ = (r_src.colwise() - r_obs).colwise().norm();
+    EigRowVec<Float> r = (r_src.colwise() - r_obs).colwise().norm();
 
     if (std::real(k) == 0.0)
-        return EigRowVec<Complex>::Zero(1, r_.cols());
+        return EigRowVec<Complex>::Zero(1, r.cols());
 
     const Float tol = KERNEL_DEFAULT_TOL;
     const Complex jk = J * k;
-    jkr_ = jk * r_;
+    const EigRowVec<Complex> jkr = jk * r;
 
-    multiplier_ = EigRowVec<Complex>::Constant(1, r_.cols(), -jk);
-    val_ = multiplier_;
+    EigRowVec<Complex> multiplier = EigRowVec<Complex>::Constant(1, r.cols(), -jk);
+    EigRowVec<Complex> val = multiplier;
 
     for (uint32_t jj = 2; true; jj++)
     {
-        multiplier_.array() *= -jkr_.array() / (Float)jj;
-        val_ += multiplier_;
-        if ((multiplier_.cwiseAbs2().array() <= tol * tol * val_.cwiseAbs2().array()).all())
+        multiplier.array() *= -jkr.array() / (Float)jj;
+        val += multiplier;
+        if ((multiplier.cwiseAbs2().array() <= tol * tol * val.cwiseAbs2().array()).all())
             break;
     }
-    val_.array() /= four_pi;
+    val.array() /= four_pi;
 
-    return val_;
+    return val;
 }
 
 
@@ -127,31 +127,31 @@ EigMatNX<Complex, 3> SingularitySubtractedTaylorHGF::compute_grad(
     ConstEigRef<EigColVecN<Float, 3>> r_obs,
     ConstEigRef<EigMatNX<Float, 3>> r_src,
     const Complex k
-    )
+    ) const
 {
-    r_diff_ = -(r_src.colwise() - r_obs);
-    r_ = r_diff_.colwise().norm();
+    EigMatNX<Float, 3> r_diff = -(r_src.colwise() - r_obs);
+    EigRowVec<Float> r = r_diff.colwise().norm();
 
     if (std::real(k) == 0.0)
-        return EigMatNX<Complex, 3>::Zero(3, r_.cols());
+        return EigMatNX<Complex, 3>::Zero(3, r.cols());
 
     const Float tol = KERNEL_DEFAULT_TOL;
     const Complex jk = J * k;
     const Complex jkc = jk * k * k;
-    jkr_ = jk * r_;
+    const EigRowVec<Complex> jkr = jk * r;
 
-    multiplier_ = jkc * (one + jkr_.array()) / (Float)6.0;
-    val_ = -jkc / two + multiplier_.array();
+    EigRowVec<Complex> multiplier = jkc * (one + jkr.array()) / (Float)6.0;
+    EigRowVec<Complex> scalar_term = -jkc / two + multiplier.array();
     for (uint32_t jj = 4; true; jj++)
     {
-        multiplier_.array() *= -jkr_.array() / (Float)jj;
-        val_ += multiplier_;
-        if ((multiplier_.cwiseAbs2().array() <= tol * tol * val_.cwiseAbs2().array()).all())
+        multiplier.array() *= -jkr.array() / (Float)jj;
+        scalar_term += multiplier;
+        if ((multiplier.cwiseAbs2().array() <= tol * tol * scalar_term.cwiseAbs2().array()).all())
             break;
     }
-    val_ *= -1.0 / four_pi;
+    scalar_term *= -1.0 / four_pi;
 
-    return r_diff_.array().rowwise() * val_.array();
+    return r_diff.array().rowwise() * scalar_term.array();
 }
 
 }

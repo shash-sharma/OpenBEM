@@ -57,7 +57,7 @@ public:
         ConstEigRef<EigColVecN<Float, dim>> r_obs,
         ConstEigRef<EigMatNX<Float, dim>> r_src,
         const Complex k
-        ) = 0;
+        ) const = 0;
 
 
     /**
@@ -71,7 +71,7 @@ public:
         ConstEigRef<EigColVecN<Float, dim>> r_obs,
         ConstEigRef<EigMatNX<Float, dim>> r_src,
         const Complex k
-        ) = 0;
+        ) const = 0;
 
 
     /**

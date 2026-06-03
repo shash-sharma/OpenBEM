@@ -59,7 +59,8 @@ SrcResult SrcStrategic<TriangleQuadratureType, LineQuadratureType>::integrate(
 
 
     bool line_integration = threshold_line_int >= 0 && longest_edge_wvl >= threshold_line_int;
-    bool singularity_subtraction = (min_dist <= threshold_dist || min_dist_wvl <= threshold_wvl);
+    // bool singularity_subtraction = (min_dist <= threshold_dist || min_dist_wvl <= threshold_wvl);
+    bool singularity_subtraction = min_dist <= threshold_dist;
     bool singularity_separation = false;
 
     if (line_integration)

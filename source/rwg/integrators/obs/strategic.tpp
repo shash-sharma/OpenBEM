@@ -58,11 +58,13 @@ ObsResult ObsStrategic<ObsTriangleQuadratureType, SrcTriangleQuadratureType, Lin
     bool line_integration = threshold_line_int >= 0 &&
         longest_edge_wvl >= threshold_line_int;
 
-    bool singularity_subtraction = (
-        GeometryOps<3>::common_vertices(obs_tri, src_tri.to_3d()) > 0 ||
-        dist <= threshold_dist ||
-        dist_wvl <= threshold_wvl
-        );
+    // bool singularity_subtraction = (
+    //     GeometryOps<3>::common_vertices(obs_tri, src_tri.to_3d()) > 0 ||
+    //     dist <= threshold_dist ||
+    //     dist_wvl <= threshold_wvl
+    //     );
+
+    bool singularity_subtraction = GeometryOps<3>::common_vertices(obs_tri, src_tri.to_3d()) > 0;
 
     bool singularity_separation = false;
 
