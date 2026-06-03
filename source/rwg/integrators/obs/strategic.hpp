@@ -66,9 +66,6 @@ struct IntegrationSettings
     /** Source triangle line integration order. */
     Float src_line_order = 10;
 
-    /** Electrical distance below which singularity treatment is applied (default 0.1 if negative). */
-    Float threshold_wvl_singularity = -1;
-
     /** Physical distance below which singularity treatment is applied (disabled if negative). */
     Float threshold_dist_singularity = -1;
 
