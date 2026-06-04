@@ -51,21 +51,21 @@ namespace bem::rwg
 * to source edges.
 */
 template <typename TriangleQuadratureType = GaussTriangleQuadrature<3>>
-class IdentityOp: public OperatorBase<Rwg, Rwg>
+class VectorIdentityOp: public OperatorBase<Rwg, Rwg>
 {
 
     static_assert(
         std::is_base_of<TriangleQuadratureBase<3>, TriangleQuadratureType>::value,
-        "IdentityOp: `TriangleQuadratureType` must derive from `TriangleQuadratureBase<3>`"
+        "VectorIdentityOp: `TriangleQuadratureType` must derive from `TriangleQuadratureBase<3>`"
         );
 
 public:
 
     /**
-    * @brief Constructs an `IdentityOp` object with a specified quadrature object for integration.
+    * @brief Constructs a `VectorIdentityOp` object with a specified quadrature object for integration.
     * @param[in] tri_quad - Triangle quadrature object to use for integration.
     */
-    IdentityOp(const TriangleQuadratureType tri_quad = GaussTriangleQuadrature<3>()):
+    VectorIdentityOp(const TriangleQuadratureType tri_quad = GaussTriangleQuadrature<3>()):
         tri_quad_(tri_quad) {};
 
 
@@ -108,21 +108,21 @@ private:
 * to source edges.
 */
 template <typename TriangleQuadratureType = GaussTriangleQuadrature<3>>
-class RotIdentityOp: public OperatorBase<NxRwg, Rwg>
+class RotVectorIdentityOp: public OperatorBase<NxRwg, Rwg>
 {
 
     static_assert(
         std::is_base_of<TriangleQuadratureBase<3>, TriangleQuadratureType>::value,
-        "RotIdentityOp: `TriangleQuadratureType` must derive from `TriangleQuadratureBase<3>`"
+        "RotVectorIdentityOp: `TriangleQuadratureType` must derive from `TriangleQuadratureBase<3>`"
         );
 
 public:
 
     /**
-    * @brief Constructs a `RotIdentityOp` object with a specified quadrature object for integration.
+    * @brief Constructs a `RotVectorIdentityOp` object with a specified quadrature object for integration.
     * @param[in] tri_quad - Triangle quadrature object to use for integration.
     */
-    RotIdentityOp(const TriangleQuadratureType tri_quad = GaussTriangleQuadrature<3>()):
+    RotVectorIdentityOp(const TriangleQuadratureType tri_quad = GaussTriangleQuadrature<3>()):
         tri_quad_(tri_quad) {};
 
 

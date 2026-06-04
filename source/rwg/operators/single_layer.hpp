@@ -18,6 +18,8 @@
 #ifndef BEM_RWG_OPS_SINGLE_LAYER_H
 #define BEM_RWG_OPS_SINGLE_LAYER_H
 
+#include <memory>
+
 #include "types.hpp"
 #include "geometry/primitives/triangle.hpp"
 #include "rwg/function_space.hpp"
@@ -99,6 +101,14 @@ public:
         const Triangle<3>& src_tri,
         const ObsResult& obs_result
         ) override;
+
+
+    /**
+    * @brief Returns a unique pointer to a deep copy of this object.
+    * @return Unique pointer to the new object.
+    */
+    std::unique_ptr<OperatorBase<Rwg, Rwg>> clone() const override
+    { return std::make_unique<VectorSingleLayerOp<ObsIntegratorType>> (*this); };
 
 
 protected:

@@ -28,7 +28,7 @@ namespace bem::rwg
 {
 
 template <typename TriangleQuadratureType>
-EigMatMN<Complex, 3, 3> IdentityOp<TriangleQuadratureType>::compute(
+EigMatMN<Complex, 3, 3> VectorIdentityOp<TriangleQuadratureType>::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
@@ -65,7 +65,7 @@ EigMatMN<Complex, 3, 3> IdentityOp<TriangleQuadratureType>::compute(
 
 
 template <typename TriangleQuadratureType>
-EigMatMN<Complex, 3, 3> RotIdentityOp<TriangleQuadratureType>::compute(
+EigMatMN<Complex, 3, 3> RotVectorIdentityOp<TriangleQuadratureType>::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
