@@ -19,7 +19,8 @@
 #define BEM_RWG_OPS_OPSET_H
 
 #include <stdexcept>
-#include <iostream>
+#include <tuple>
+#include <array>
 
 #include "types.hpp"
 
@@ -72,21 +73,61 @@ public:
     * @param[in] obs_tri - Observation triangle.
     * @param[in] src_tri - Source triangle.
     * @return Operator values for each pair of observation and source degrees of freedom, for each operator.
-    * @details
-    * Rows of the output matrix correspond to observation edges, and columns correspond to
-    * source edges. The operators are stacked column by column; the first three columns correspond to the first
-    * operator, the next three to the next operator, and so on.
+    * @details Rows of the output matrix correspond to observation degrees of freedom, and columns
+    * correspond to source degrees of freedom. The operators are stacked column by column; the first
+    * three columns correspond to the first operator, the next three to the next operator, and so
+    * on, because an operator is assumed to have at most 3 observation and 3 source degrees of
+    * freedom. If it has fewer degrees of freedom, the remaining entries of its 3x3 block will be
+    * zeros.
     */
-    EigMatMN<Complex, 3, 12> compute(
-        Ops... ops,
+    EigMatMN<Complex, 3, 3 * num_ops> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
-        ) override;
+        )
+    {
+
+        Triangle<3> obs_tri_local;
+        Triangle<2> src_tri_local;
+        transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
+
+        obs_integrator_.set_compute_terms(true, true, true, true);
+        const ObsResult obs_result = obs_integrator_.integrate(
+            k, obs_tri_local, src_tri_local
+            );
+
+        std::array<Index, num_ops> idxs;
+        std::iota(idxs.begin(), idxs.end(), 0);
+
+        EigMatMN<Complex, 3, 3 * num_ops> result;
+
+        std::apply(
+        [&] (auto&&... op)
+        {
+            std::apply(
+                [&] (auto&&... idx)
+                {([&]
+                {
+
+                    result.block(
+                        0, 3 * idx, op::TestSpaceType::dof, op::ExpansionSpaceType::dof
+                        ) = op.assemble(
+                            k, obs_tri_local, src_tri_local.to_3d(), obs_result
+                            );
+
+                }(), ...); },
+                idxs
+                );
+        },
+        ops_
+        );
+
+        return result;
+
+    };
 
 
     // ops_(std::move(ops)...)
-    // std::tuple<Ops...> ops_;
     // constexpr size_t num_ops =
     // sizeof...(Ops);
 
@@ -94,6 +135,8 @@ public:
 protected:
 
     ObsIntegratorType obs_integrator_;
+    std::tuple<Ops...> ops_;
+    static constexpr size_t num_ops = std::tuple_size<decltype(ops_)>::value>;
 
     VectorSingleLayerOp<ObsIntegratorType> vector_single_layer_;
     RotVectorSingleLayerOp<ObsIntegratorType> rot_vector_single_layer_;
