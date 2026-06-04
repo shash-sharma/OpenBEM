@@ -42,27 +42,9 @@ const Index EDGE_ELEM_RATIO = 2;
 
 /**
 * @brief Base class for generating BEM operator matrices.
-* @tparam TestSpace - Testing function space.
-* @tparam ExpansionSpace - Expansion function space.
 */
-template <typename TestSpace, typename ExpansionSpace>
 class OperatorAssemblerBase
 {
-
-    static_assert(
-        std::is_base_of<FunctionSpaceBase<
-            TestSpace, TestSpace::dof, TestSpace::dim
-            >, TestSpace>::value,
-        "OperatorAssemblerBase: `TestSpace` must derive from `FunctionSpaceBase`"
-        );
-
-    static_assert(
-        std::is_base_of<FunctionSpaceBase<
-            ExpansionSpace, ExpansionSpace::dof, ExpansionSpace::dim
-            >, ExpansionSpace>::value,
-        "OperatorAssemblerBase: `ExpansionSpace` must derive from `FunctionSpaceBase`"
-        );
-
 public:
 
     /**
@@ -74,7 +56,7 @@ public:
     */
     virtual void assemble(
         MatrixBase<Complex>& mat,
-        const OperatorBase<TestSpace, ExpansionSpace>& op,
+        const OperatorBase& op,
         const Complex k
         ) = 0;
 
@@ -82,22 +64,28 @@ public:
     /**
     * @brief Prepares the matrix for assembly (e.g., resizing and preallocation).
     * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
+    * @param[in] op - Operator object that computes the coefficients to assemble into `mat`.
     * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
     */
-    virtual void prep_matrix(MatrixBase<Complex>& mat) {};
+    virtual void prep_matrix(
+        MatrixBase<Complex>& mat,
+        const OperatorBase& op
+        ) {};
 
 
     /**
     * @brief Fills operator values in the matrix based on source and observation meshes and degrees of freedom.
     * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
     * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
+    * @param[in] op - Operator object that computes the coefficients to assemble into `mat`.
     * @param[in] elem_pair - Observation (first entry) and source (second entry) triangle index pair.
     * @param[in] values - Operator values for each pair of observation and source degrees of freedom.
     */
     virtual void fill_matrix(
         MatrixBase<Complex>& mat,
+        const OperatorBase& op,
         ConstEigRef<EigColVecN<Index, 2>> elem_pair,
-        ConstEigRef<EigMatMN<Complex, TestSpace::dof, ExpansionSpace::dof>> values
+        ConstEigRef<EigMat<Complex>> values
         ) {};
 
 
@@ -111,19 +99,9 @@ public:
 
 /**
 * @brief Base class for generating excitation matrices for RWG-based BEM systems.
-* @tparam TestSpace - Testing function space.
 */
-template <typename TestSpace>
 class ExcitationAssemblerBase
 {
-
-    static_assert(
-        std::is_base_of<FunctionSpaceBase<
-            TestSpace, TestSpace::dof, TestSpace::dim
-            >, TestSpace>::value,
-        "ExcitationAssemblerBase: `TestSpace` must derive from `FunctionSpaceBase`"
-        );
-
 public:
 
     /**
@@ -135,7 +113,7 @@ public:
     */
     virtual void assemble(
         MatrixBase<Complex>& mat,
-        ExcitationBase<TestSpace>& exc,
+        ExcitationBase& exc,
         const Complex k
         ) = 0;
 
@@ -150,19 +128,11 @@ public:
 
 /**
 * @brief Base class for generating RWG-based BEM projector matrices.
-* @tparam ExpansionSpace - Expansion function space.
 * @tparam obs_dim - Dimension of the projected fields.
 */
-template <typename ExpansionSpace, uint8_t obs_dim>
+template <uint8_t obs_dim>
 class ProjectorAssemblerBase
 {
-
-    static_assert(
-        std::is_base_of<FunctionSpaceBase<
-            ExpansionSpace, ExpansionSpace::dof, ExpansionSpace::dim
-            >, ExpansionSpace>::value,
-        "ProjectorAssemblerBase: `ExpansionSpace` must derive from `FunctionSpaceBase`"
-        );
 
     static_assert((obs_dim > 0), "`obs_dim` must be greater than 0.");
 
@@ -177,7 +147,7 @@ public:
     */
     virtual void assemble(
         MatrixBase<Complex>& mat,
-        ProjectorBase<ExpansionSpace>& op,
+        ProjectorBase& op,
         const Complex k
         ) = 0;
 

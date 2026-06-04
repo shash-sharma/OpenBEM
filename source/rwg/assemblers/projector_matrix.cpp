@@ -15,9 +15,6 @@
 * Classes for assembling RWG-based BEM projector matrices.
 */
 
-#ifndef BEM_RWG_PROJ_ASSEMBLER_I
-#define BEM_RWG_PROJ_ASSEMBLER_I
-
 #include "rwg/assemblers/projector_matrix.hpp"
 
 #include "types.hpp"
@@ -29,15 +26,15 @@
 namespace bem::rwg
 {
 
-template <typename ExpansionSpace, uint8_t obs_dim>
-void ProjectorAssembler<ExpansionSpace, obs_dim>::assemble(
+template <uint8_t obs_dim>
+void ProjectorAssembler<obs_dim>::assemble(
     MatrixBase<Complex>& mat,
-    ProjectorBase<ExpansionSpace>& op,
+    ProjectorBase& op,
     const Complex k
     )
 {
 
-    if constexpr (ExpansionSpace::dof == 3)
+    if (op.src_dof() == 3)
     {
 
         mat.resize(obs_cloud_.num_points() * obs_dim, mesh_.num_edges());
@@ -68,7 +65,7 @@ void ProjectorAssembler<ExpansionSpace, obs_dim>::assemble(
 
     }
 
-    else if constexpr (ExpansionSpace::dof == 1)
+    else if (op.src_dof() == 1)
     {
 
         mat.resize(obs_cloud_.num_points() * obs_dim, mesh_.num_elems());
@@ -98,6 +95,8 @@ void ProjectorAssembler<ExpansionSpace, obs_dim>::assemble(
 
 };
 
+template class ProjectorAssembler<1>;
+template class ProjectorAssembler<3>;
+
 }
 
-#endif

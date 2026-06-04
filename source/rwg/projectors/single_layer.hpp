@@ -38,7 +38,7 @@ namespace bem::rwg
 * @brief Class for computing the vector single-layer potential projector.
 */
 template <typename SrcIntegratorType = SrcStrategic<>>
-class VectorSingleLayerProj: public ProjectorBase<Rwg>
+class VectorSingleLayerProj: public ProjectorBase
 {
 
     static_assert(
@@ -54,6 +54,13 @@ public:
     */
     VectorSingleLayerProj(const SrcIntegratorType src_integrator = SrcStrategic<>()):
         src_integrator_(src_integrator) {};
+
+
+    /**
+    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
+    * @return Number of source degrees of freedom per triangle.
+    */
+    uint8_t src_dof() const override { return 3; };
 
 
     /**
@@ -75,7 +82,7 @@ public:
     * \f$ (F_{xi}, F_{yi}, F_{zi}) \f$ are the components of the projected field \f$ \vec{F} \f$
     * defined at the observation point \f$ (x_i, y_i, z_i) \f$.
     */
-    EigMatXN<Complex, 3> compute(
+    EigMat<Complex> compute(
         const Complex k,
         ConstEigRef<EigMatNX<Float, 3>> obs_points,
         const Triangle<3>& src_tri
@@ -93,7 +100,7 @@ private:
 * @brief Class for computing the scalar single-layer potential projector.
 */
 template <typename SrcIntegratorType = SrcStrategic<>>
-class ScalarSingleLayerProj: public ProjectorBase<Pulse>
+class ScalarSingleLayerProj: public ProjectorBase
 {
 
     static_assert(
@@ -112,6 +119,13 @@ public:
 
 
     /**
+    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
+    * @return Number of source degrees of freedom per triangle.
+    */
+    uint8_t src_dof() const override { return 1; };
+
+
+    /**
     * @brief Computes the scalar single-layer projector.
     * @param[in] k - Complex wavenumber.
     * @param[in] obs_points - Observation coordinates on which to project the generated field.
@@ -126,7 +140,7 @@ public:
     * pulse function associated with the source triangle. Rows of the output matrix correspond to
     * observation points.
     */
-    EigMatXN<Complex, 1> compute(
+    EigMat<Complex> compute(
         const Complex k,
         ConstEigRef<EigMatNX<Float, 3>> obs_points,
         const Triangle<3>& src_tri
@@ -144,7 +158,7 @@ private:
 * @brief Class for computing the gradient of the scalar single-layer potential projector.
 */
 template <typename SrcIntegratorType = SrcStrategic<>>
-class GradScalarSingleLayerProj: public ProjectorBase<Pulse>
+class GradScalarSingleLayerProj: public ProjectorBase
 {
 
     static_assert(
@@ -160,6 +174,13 @@ public:
     */
     GradScalarSingleLayerProj(const SrcIntegratorType src_integrator = SrcStrategic<>()):
         src_integrator_(src_integrator) {};
+
+
+    /**
+    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
+    * @return Number of source degrees of freedom per triangle.
+    */
+    uint8_t src_dof() const override { return 1; };
 
 
     /**
@@ -181,7 +202,7 @@ public:
     * \f$ (F_{xi}, F_{yi}, F_{zi}) \f$ are the components of the gradient of the projected scalar field,
     * defined at the observation point \f$ (x_i, y_i, z_i) \f$.
     */
-    EigMatXN<Complex, 1> compute(
+    EigMat<Complex> compute(
         const Complex k,
         ConstEigRef<EigMatNX<Float, 3>> obs_points,
         const Triangle<3>& src_tri
@@ -198,7 +219,7 @@ private:
 * @brief Class for computing the vector hypersingular potential projector.
 */
 template <typename SrcIntegratorType = SrcStrategic<>>
-class VectorHypersingularProj: public ProjectorBase<Rwg>
+class VectorHypersingularProj: public ProjectorBase
 {
 
     static_assert(
@@ -214,6 +235,13 @@ public:
     */
     VectorHypersingularProj(const SrcIntegratorType src_integrator = SrcStrategic<>()):
         proj_g_(src_integrator), proj_gradg_(src_integrator) {};
+
+
+    /**
+    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
+    * @return Number of source degrees of freedom per triangle.
+    */
+    uint8_t src_dof() const override { return 3; };
 
 
     /**
@@ -237,7 +265,7 @@ public:
     * \f$ (F_{xi}, F_{yi}, F_{zi}) \f$ are the components of the projected field \f$ \vec{F} \f$
     * defined at the observation point \f$ (x_i, y_i, z_i) \f$.
     */
-    EigMatXN<Complex, 3> compute(
+    EigMat<Complex> compute(
         const Complex k,
         ConstEigRef<EigMatNX<Float, 3>> obs_points,
         const Triangle<3>& src_tri

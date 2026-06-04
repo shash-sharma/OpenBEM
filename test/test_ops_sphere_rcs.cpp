@@ -74,10 +74,10 @@ void test_efie_pec()
 
 
     VectorHypersingularOp op_T;
-    OperatorAssembler<Rwg, Rwg> T_assembler (mesh, mesh);
+    OperatorAssembler assembler (mesh, mesh);
 
     EigenMatrix<Complex> T;
-    T_assembler.assemble(T, op_T, k);
+    assembler.assemble(T, op_T, k);
     T.scale(-J * omega * mu);
 
 
@@ -89,7 +89,7 @@ void test_efie_pec()
     amp << 1;
 
     RwgPlaneWave pw (dir, pol, pos, amp);
-    ExcitationAssembler<Rwg> pw_assembler (mesh);
+    ExcitationAssembler pw_assembler (mesh);
 
     EigenMatrix<Complex> Einc;
     pw_assembler.assemble(Einc, pw, k);
@@ -113,7 +113,7 @@ void test_efie_pec()
 
 
     VectorHypersingularProj<> op_T_proj;
-    ProjectorAssembler<Rwg, 3> T_proj_assembler (cloud, mesh);
+    ProjectorAssembler<3> T_proj_assembler (cloud, mesh);
 
     EigenMatrix<Complex> T_proj;
     T_proj_assembler.assemble(T_proj, op_T_proj, k);
@@ -185,12 +185,11 @@ void test_nmfie_pec()
 
     RotVectorDoubleLayerPvOp op_Kr_pv;
     VectorIdentityOp op_I;
-    OperatorAssembler<NxRwg, Rwg> Kr_assembler (mesh, mesh);
-    OperatorAssembler<Rwg, Rwg> I_assembler (mesh, mesh);
+    OperatorAssembler assembler (mesh, mesh);
 
     EigenMatrix<Complex> Kr, I;
-    Kr_assembler.assemble(Kr, op_Kr_pv, k);
-    I_assembler.assemble(I, op_I, k);
+    assembler.assemble(Kr, op_Kr_pv, k);
+    assembler.assemble(I, op_I, k);
     Kr.add_ax(I, 0.5);
 
 
@@ -202,7 +201,7 @@ void test_nmfie_pec()
     amp << 1 / std::sqrt(mu / eps);
 
     NxRwgPlaneWave pw (dir, pol, pos, amp);
-    ExcitationAssembler<NxRwg> pw_assembler (mesh);
+    ExcitationAssembler pw_assembler (mesh);
 
     EigenMatrix<Complex> Hinc;
     pw_assembler.assemble(Hinc, pw, k);
@@ -225,7 +224,7 @@ void test_nmfie_pec()
     cloud.set_polar_data(start, stop, center, num_pts);
 
     VectorHypersingularProj<> op_T_proj;
-    ProjectorAssembler<Rwg, 3> T_proj_assembler (cloud, mesh);
+    ProjectorAssembler<3> T_proj_assembler (cloud, mesh);
 
     EigenMatrix<Complex> T_proj;
     T_proj_assembler.assemble(T_proj, op_T_proj, k);

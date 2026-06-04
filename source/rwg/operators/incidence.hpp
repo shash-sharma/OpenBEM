@@ -45,9 +45,23 @@ namespace bem::rwg
 * \f$ i \f$ are considered normalized such that the output contains \f$ 1 \f$, \f$ -1 \f$, or \f$ 0 \f$.
 * Columns of the output correspond to source edges.
 */
-class DivergenceOp: public OperatorBase<Pulse, Rwg>
+class DivergenceOp: public OperatorBase
 {
 public:
+
+    /**
+    * @brief Returns the number of degrees of freedom per triangle for the testing function space.
+    * @return Number of observation degrees of freedom per triangle.
+    */
+    uint8_t obs_dof() const override { return 1; };
+
+
+    /**
+    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
+    * @return Number of source degrees of freedom per triangle.
+    */
+    uint8_t src_dof() const override { return 3; };
+
 
     /**
     * @brief Computes an incidence matrix that can be used to take the divergence of RWG functions.
@@ -56,7 +70,7 @@ public:
     * @param[in] src_tri - Source triangle.
     * @return Operator values for each source triangle edge.
     */
-    EigMatMN<Complex, 1, 3> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
@@ -73,10 +87,26 @@ public:
 
 
     /**
+    * @brief Assembles the computed integrals into the final operator values.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] obs_tri - Observation triangle in the source's local coordinate system.
+    * @param[in] src_tri - Source triangle in its local coordinate system.
+    * @param[in] obs_result - Integration result.
+    * @return Operator values for each observation triangle edge and source triangle face.
+    */
+    EigMat<Complex> assemble(
+        const Complex k,
+        const Triangle<3>& obs_tri,
+        const Triangle<3>& src_tri,
+        const ObsResult& obs_result
+        ) override { return compute(k, obs_tri, src_tri); };
+
+
+    /**
     * @brief Returns a unique pointer to a deep copy of this object.
     * @return Unique pointer to the new object.
     */
-    std::unique_ptr<OperatorBase<Pulse, Rwg>> clone() const override
+    std::unique_ptr<OperatorBase> clone() const override
     { return std::make_unique<DivergenceOp> (*this); };
 
 };

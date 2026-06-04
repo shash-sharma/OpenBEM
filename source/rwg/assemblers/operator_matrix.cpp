@@ -15,9 +15,6 @@
 * Classes for assembling RWG-based BEM operator matrices.
 */
 
-#ifndef BEM_RWG_OP_ASSEMBLER_I
-#define BEM_RWG_OP_ASSEMBLER_I
-
 #include "rwg/assemblers/operator_matrix.hpp"
 
 #include "types.hpp"
@@ -29,19 +26,18 @@
 namespace bem::rwg
 {
 
-template <typename TestSpace, typename ExpansionSpace>
-void OperatorAssembler<TestSpace, ExpansionSpace>::assemble(
+void OperatorAssembler::assemble(
     MatrixBase<Complex>& mat,
-    const OperatorBase<TestSpace, ExpansionSpace>& op,
+    const OperatorBase& op,
     const Complex k
     )
 {
 
-    prep_matrix(mat);
+    prep_matrix(mat, op);
 
 #pragma omp parallel
     {
-        std::unique_ptr<OperatorBase<TestSpace, ExpansionSpace>> opc = op.clone();
+        std::unique_ptr<OperatorBase> opc = op.clone();
 
 #pragma omp for
         for (Index ii = 0; ii < elem_pairs_.cols(); ++ii)
@@ -49,12 +45,12 @@ void OperatorAssembler<TestSpace, ExpansionSpace>::assemble(
             Triangle<3> obs_tri = obs_mesh_.elem_primitive(elem_pairs_(0, ii));
             Triangle<3> src_tri = src_mesh_.elem_primitive(elem_pairs_(1, ii));
 
-            EigMatMN<Complex, TestSpace::dof, ExpansionSpace::dof> values = opc->compute(
+            EigMat<Complex> values = opc->compute(
                 k, obs_tri, src_tri
                 );
 
 #pragma omp critical
-            fill_matrix(mat, elem_pairs_.col(ii), values);
+            fill_matrix(mat, op, elem_pairs_.col(ii), values);
         }
     }
 
@@ -64,29 +60,31 @@ void OperatorAssembler<TestSpace, ExpansionSpace>::assemble(
 };
 
 
-template <typename TestSpace, typename ExpansionSpace>
-void OperatorAssembler<TestSpace, ExpansionSpace>::prep_matrix(MatrixBase<Complex>& mat)
+void OperatorAssembler::prep_matrix(
+    MatrixBase<Complex>& mat,
+    const OperatorBase& op
+    )
 {
 
-    if constexpr (TestSpace::dof == 3 && ExpansionSpace::dof == 3)
+    if (op.obs_dof() == 3 && op.src_dof() == 3)
     {
         mat.resize(obs_mesh_.num_edges(), src_mesh_.num_edges());
         mat.preallocate(elem_pairs_.cols() * EDGE_ELEM_RATIO * EDGE_ELEM_RATIO);
     }
 
-    else if constexpr (TestSpace::dof == 1 && ExpansionSpace::dof == 3)
+    else if (op.obs_dof() == 1 && op.src_dof() == 3)
     {
         mat.resize(obs_mesh_.num_elems(), src_mesh_.num_edges());
         mat.preallocate(elem_pairs_.cols() * EDGE_ELEM_RATIO);
     }
 
-    else if constexpr (TestSpace::dof == 3 && ExpansionSpace::dof == 1)
+    else if (op.obs_dof() == 3 && op.src_dof() == 1)
     {
         mat.resize(obs_mesh_.num_edges(), src_mesh_.num_elems());
         mat.preallocate(elem_pairs_.cols() * EDGE_ELEM_RATIO);
     }
 
-    else if constexpr (TestSpace::dof == 1 && ExpansionSpace::dof == 1)
+    else if (op.obs_dof() == 1 && op.src_dof() == 1)
     {
         mat.resize(obs_mesh_.num_elems(), src_mesh_.num_elems());
         mat.preallocate(elem_pairs_.cols());
@@ -97,15 +95,15 @@ void OperatorAssembler<TestSpace, ExpansionSpace>::prep_matrix(MatrixBase<Comple
 }
 
 
-template <typename TestSpace, typename ExpansionSpace>
-void OperatorAssembler<TestSpace, ExpansionSpace>::fill_matrix(
+void OperatorAssembler::fill_matrix(
     MatrixBase<Complex>& mat,
+    const OperatorBase& op,
     ConstEigRef<EigColVecN<Index, 2>> elem_pair,
-    ConstEigRef<EigMatMN<Complex, TestSpace::dof, ExpansionSpace::dof>> values
+    ConstEigRef<EigMat<Complex>> values
     )
 {
 
-    if constexpr (TestSpace::dof == 3 && ExpansionSpace::dof == 3)
+    if (op.obs_dof() == 3 && op.src_dof() == 3)
     {
         for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
         {
@@ -118,71 +116,34 @@ void OperatorAssembler<TestSpace, ExpansionSpace>::fill_matrix(
         }
     }
 
-    else if constexpr (TestSpace::dof == 1 && ExpansionSpace::dof == 3)
+    else if (op.obs_dof() == 1 && op.src_dof() == 3)
     {
         Index row = elem_pair[0];
         for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
         {
             Index col = src_mesh_.elem_edges()(src_edge, elem_pair[1]);
-            mat.add_value(row, col, values(src_edge));
+            mat.add_value(row, col, values(0, src_edge));
         }
     }
 
-    else if constexpr (TestSpace::dof == 3 && ExpansionSpace::dof == 1)
+    else if (op.obs_dof() == 3 && op.src_dof() == 1)
     {
         Index col = elem_pair[1];
         for (uint8_t obs_edge = 0; obs_edge < 3; ++obs_edge)
         {
             Index row = obs_mesh_.elem_edges()(obs_edge, elem_pair[0]);
-            mat.add_value(row, col, values(obs_edge));
+            mat.add_value(row, col, values(obs_edge, 0));
         }
     }
 
-    else if constexpr (TestSpace::dof == 1 && ExpansionSpace::dof == 1)
+    else if (op.obs_dof() == 1 && op.src_dof() == 1)
     {
-        mat.set_value(elem_pair[0], elem_pair[1], values[0]);
+        mat.set_value(elem_pair[0], elem_pair[1], values(0, 0));
     }
 
     return;
 
 };
 
-
-
-
-// template <>
-// void VectorOperatorsAssembler::prep_matrix(MatrixBase<Complex>& mat)
-// {
-//     mat.resize(obs_mesh_.num_edges(), src_mesh_.num_edges() * 4);
-//     mat.preallocate(elem_pairs_.cols() * 4 * EDGE_ELEM_RATIO * EDGE_ELEM_RATIO);
-//     return;
-// };
-
-
-// template <>
-// void VectorOperatorsAssembler::fill_matrix(
-//     MatrixBase<Complex>& mat,
-//     ConstEigRef<EigColVecN<Index, 2>> elem_pair,
-//     ConstEigRef<EigMatMN<Complex, 3, 12>> values
-//     )
-// {
-//     for (uint8_t op = 0; op < 4; ++op)
-//     {
-//         Index offset = src_mesh_.num_edges() * op;
-
-//         for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
-//         {
-//             Index col = src_mesh_.elem_edges()(src_edge, elem_pair[1]) + offset;
-//             for (uint8_t obs_edge = 0; obs_edge < 3; ++obs_edge)
-//             {
-//                 Index row = obs_mesh_.elem_edges()(obs_edge, elem_pair[0]);
-//                 mat.add_value(row, col, values(obs_edge, src_edge + 3 * op));
-//             }
-//         }
-//     }
-//     return;
-// };
-
 }
 
-#endif

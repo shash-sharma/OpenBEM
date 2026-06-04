@@ -28,7 +28,7 @@ namespace bem::rwg
 {
 
 template <typename SrcIntegratorType>
-EigMatXN<Complex, 3> VectorSingleLayerProj<SrcIntegratorType>::compute(
+EigMat<Complex> VectorSingleLayerProj<SrcIntegratorType>::compute(
     const Complex k,
     ConstEigRef<EigMatNX<Float, 3>> obs_points,
     const Triangle<3>& src_tri
@@ -56,8 +56,7 @@ EigMatXN<Complex, 3> VectorSingleLayerProj<SrcIntegratorType>::compute(
             src_result.g;
         result.col(jj) = (
             local_uvw.leftCols(2) * rwg_g
-            ).reshaped(3 * obs_points.cols(), 1) *
-                            norms(jj);
+            ).reshaped(3 * obs_points.cols(), 1) * norms(jj);
     }
 
     return result;
@@ -66,7 +65,7 @@ EigMatXN<Complex, 3> VectorSingleLayerProj<SrcIntegratorType>::compute(
 
 
 template <typename SrcIntegratorType>
-EigMatXN<Complex, 1> ScalarSingleLayerProj<SrcIntegratorType>::compute(
+EigMat<Complex> ScalarSingleLayerProj<SrcIntegratorType>::compute(
     const Complex k,
     ConstEigRef<EigMatNX<Float, 3>> obs_points,
     const Triangle<3>& src_tri
@@ -89,7 +88,7 @@ EigMatXN<Complex, 1> ScalarSingleLayerProj<SrcIntegratorType>::compute(
 
 
 template <typename SrcIntegratorType>
-EigMatXN<Complex, 1> GradScalarSingleLayerProj<SrcIntegratorType>::compute(
+EigMat<Complex> GradScalarSingleLayerProj<SrcIntegratorType>::compute(
     const Complex k,
     ConstEigRef<EigMatNX<Float, 3>> obs_points,
     const Triangle<3>& src_tri
@@ -117,7 +116,7 @@ EigMatXN<Complex, 1> GradScalarSingleLayerProj<SrcIntegratorType>::compute(
 
 
 template <typename SrcIntegratorType>
-EigMatXN<Complex, 3> VectorHypersingularProj<SrcIntegratorType>::compute(
+EigMat<Complex> VectorHypersingularProj<SrcIntegratorType>::compute(
     const Complex k,
     ConstEigRef<EigMatNX<Float, 3>> obs_points,
     const Triangle<3>& src_tri

@@ -25,7 +25,7 @@
 namespace bem::rwg
 {
 
-EigMatNX<Complex, 3> RwgPlaneWave::compute(const Complex k, const Triangle<3>& obs_tri)
+EigMat<Complex> RwgPlaneWave::compute(const Complex k, const Triangle<3>& obs_tri)
 {
     Index rhs = 0;
 
@@ -41,7 +41,7 @@ EigMatNX<Complex, 3> RwgPlaneWave::compute(const Complex k, const Triangle<3>& o
 };
 
 
-EigMatNX<Complex, 3> NxRwgPlaneWave::compute(const Complex k, const Triangle<3>& obs_tri)
+EigMat<Complex> NxRwgPlaneWave::compute(const Complex k, const Triangle<3>& obs_tri)
 {
     Index rhs = 0;
 

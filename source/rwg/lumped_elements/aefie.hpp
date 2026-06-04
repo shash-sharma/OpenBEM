@@ -119,9 +119,9 @@ protected:
         Complex eps_eff = base::structure_.background_material().eps_eff(f);
 
         ScalarSingleLayerOp op_Lp;
-        OperatorAssembler<Pulse, Pulse> assm_face (obs_mesh, src_mesh);
+        OperatorAssembler assm (obs_mesh, src_mesh);
         MatrixType Lp;
-        assm_face.assemble(Lp, op_Lp, k);
+        assm.assemble(Lp, op_Lp, k);
         Lp.scale(one / eps_eff);
 
         return Lp;

@@ -16,6 +16,7 @@
 - Line integration is now only vectorized in source points, not observation points, which is a little faster.
 - Line integration speed improvements and fixed a bug in the directed angle computation.
 - Simplified `TriangleMesh` interface and added a map from edges to associated elements.
+- Refactored operator and assembler classes and added support for multiple operator generation.
 
 ### Fixed
 

@@ -36,7 +36,7 @@ namespace bem::rwg
 {
 
 // Forward declarations
-template <typename ExpansionSpace> class ProjectorBase;
+class ProjectorBase;
 
 /**
 * \addtogroup assm
@@ -45,14 +45,13 @@ template <typename ExpansionSpace> class ProjectorBase;
 
 /**
 * @brief Class for generating projector matrices for RWG-based systems.
-* @tparam ExpansionSpace - Expansion function space.
 * @tparam obs_dim - Dimension of the projected fields.
 */
-template <typename ExpansionSpace, uint8_t obs_dim = 3>
-class ProjectorAssembler: public ProjectorAssemblerBase<ExpansionSpace, obs_dim>
+template <uint8_t obs_dim = 3>
+class ProjectorAssembler: public ProjectorAssemblerBase<obs_dim>
 {
 
-    using base = ProjectorAssemblerBase<ExpansionSpace, obs_dim>;
+    using base = ProjectorAssemblerBase<obs_dim>;
 
 public:
 
@@ -86,7 +85,7 @@ public:
     */
     void assemble(
         MatrixBase<Complex>& mat,
-        ProjectorBase<ExpansionSpace>& op,
+        ProjectorBase& op,
         const Complex k
         ) override;
 
@@ -105,6 +104,8 @@ protected:
 
 }
 
-#include "rwg/assemblers/projector_matrix.tpp"
+#ifndef BEM_LINKED
+#include "rwg/assemblers/projector_matrix.cpp"
+#endif
 
 #endif

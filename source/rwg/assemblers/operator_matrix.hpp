@@ -18,7 +18,12 @@
 #ifndef BEM_RWG_OP_ASSEMBLER_H
 #define BEM_RWG_OP_ASSEMBLER_H
 
+#include <memory>
+#include <vector>
+
 #include "types.hpp"
+#include "rwg/integrators/obs/base.hpp"
+#include "rwg/integrators/obs/strategic.hpp"
 #include "rwg/function_space.hpp"
 #include "rwg/assemblers/base.hpp"
 
@@ -40,14 +45,11 @@ namespace bem::rwg
 
 /**
 * @brief Class for generating operator matrices for RWG observation and source functions.
-* @tparam TestSpace - Testing function space.
-* @tparam ExpansionSpace - Expansion function space.
 */
-template <typename TestSpace, typename ExpansionSpace>
-class OperatorAssembler: public OperatorAssemblerBase<TestSpace, ExpansionSpace>
+class OperatorAssembler: public OperatorAssemblerBase
 {
 
-    using base = OperatorAssemblerBase<TestSpace, ExpansionSpace>;
+    using base = OperatorAssemblerBase;
 
 public:
 
@@ -86,25 +88,14 @@ public:
 
 
     /**
-    * @brief Assembles the operator matrix for a given operator object.
-    * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
-    * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
-    * @param[in] op - Operator object that computes the coefficients to assemble into `mat`.
-    * @param[in] k - Complex wavenumber.
-    */
-    void assemble(
-        MatrixBase<Complex>& mat,
-        const OperatorBase<TestSpace, ExpansionSpace>& op,
-        const Complex k
-        ) override;
-
-
-    /**
     * @brief Prepares the matrix for assembly (e.g., resizing and preallocation).
     * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
     * to source edges, and rows corresponding to observation edges.
     */
-    void prep_matrix(MatrixBase<Complex>& mat) override;
+    void prep_matrix(
+        MatrixBase<Complex>& mat,
+        const OperatorBase& op
+        ) override;
 
 
     /**
@@ -116,9 +107,39 @@ public:
     */
     void fill_matrix(
         MatrixBase<Complex>& mat,
+        const OperatorBase& op,
         ConstEigRef<EigColVecN<Index, 2>> elem_pair,
-        ConstEigRef<EigMatMN<Complex, TestSpace::dof, ExpansionSpace::dof>> values
+        ConstEigRef<EigMat<Complex>> values
         ) override;
+
+
+    /**
+    * @brief Assembles the operator matrix for a given operator object.
+    * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
+    * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
+    * @param[in] op - Operator object that computes the coefficients to assemble into `mat`.
+    * @param[in] k - Complex wavenumber.
+    */
+    void assemble(
+        MatrixBase<Complex>& mat,
+        const OperatorBase& op,
+        const Complex k
+        ) override;
+
+
+    /**
+    * @brief Assembles operator matrices for given operator objects.
+    * @param[out] mats - Matrices to store the assembled operator coefficients, with columns corresponding
+    * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
+    * @param[in] ops - Operator objects that compute the coefficients to assemble into `mat`.
+    * @param[in] k - Complex wavenumber.
+    */
+    template <typename MatrixType, typename ObsIntegratorType = ObsStrategic<>, typename... Ops>
+    void assemble(
+        std::vector<MatrixType>& mats,
+        const Complex k,
+        const ObsIntegratorType obs_integrator = ObsStrategic<>()
+        );
 
 
 protected:
@@ -130,45 +151,61 @@ protected:
 };
 
 
+template <typename MatrixType, typename ObsIntegratorType, typename... Ops>
+void OperatorAssembler::assemble(
+    std::vector<MatrixType>& mats,
+    const Complex k,
+    ObsIntegratorType obs_integrator
+    )
+{
 
+    static_assert((std::is_base_of_v<OperatorBase, Ops> && ...));
 
+    std::vector<std::unique_ptr<OperatorBase>> ops;
+    (ops.push_back(std::make_unique<Ops>()), ...);
 
-// /**
-// * @brief Class for generating the full set of vector operator matrices for RWG observation and source functions.
-// */
-// class VectorOperatorsAssembler: public OperatorAssemblerBase<3, 12>
-// {
+    mats.resize(ops.size());
+    for (Index ii = 0; ii < ops.size(); ++ii)
+        prep_matrix(mats[ii], *ops[ii]);
 
-//     using base = OperatorAssemblerBase<3, 12>;
-//     using base::base;
+#pragma omp parallel firstprivate(obs_integrator)
+    {
 
-// public:
+        std::vector<std::unique_ptr<OperatorBase>> ops;
+        (ops.push_back(std::make_unique<Ops>()), ...);
 
-//     /**
-//     * @brief Prepares the matrix for assembly (e.g., resizing and preallocation).
-//     * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
-//     * to source edges, and rows corresponding to observation edges. The four vector operator matrices
-//     * are stacked along the horizontal direction.
-//     */
-//     void prep_matrix(MatrixBase<Complex>& mat) override;
+#pragma omp for
+        for (Index ii = 0; ii < elem_pairs_.cols(); ++ii)
+        {
+            Triangle<3> obs_tri = obs_mesh_.elem_primitive(elem_pairs_(0, ii));
+            Triangle<3> src_tri = src_mesh_.elem_primitive(elem_pairs_(1, ii));
 
+            Triangle<3> obs_tri_local;
+            Triangle<2> src_tri_local;
+            OperatorBase::transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
-//     /**
-//     * @brief Fills operator values in the matrix for edge-based RWG observation and source functions.
-//     * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
-//     * to source edges, and rows corresponding to observation edges, for all operators stacked along
-//     * the vertical direction.
-//     * @param[in] elem_pair - Observation (first entry) and source (second entry) triangle index pair.
-//     * @param[in] values - Operator values for each pair of observation and source degrees of freedom,
-//     * for all operators stacked along the horizontal direction.
-//     */
-//     void fill_matrix(
-//         MatrixBase<Complex>& mat,
-//         ConstEigRef<EigColVecN<Index, 2>> elem_pair,
-//         ConstEigRef<EigMatMN<Complex, 3, 12>> values
-//         ) override;
+            obs_integrator.set_compute_terms(true, true, true, true);
+            const ObsResult obs_result = obs_integrator.integrate(k, obs_tri_local, src_tri_local);
 
-// };
+            for (Index jj = 0; jj < ops.size(); ++jj)
+            {
+                EigMat<Complex> values = ops[jj]->assemble(
+                    k, obs_tri_local, src_tri_local.to_3d(), obs_result
+                    );
+
+#pragma omp critical
+                fill_matrix(mats[jj], *ops[jj], elem_pairs_.col(ii), values);
+            }
+        }
+
+    }
+
+    for (auto& mat: mats)
+        mat.assemble();
+
+    return;
+
+}
 
 /**
 * @}
@@ -176,6 +213,8 @@ protected:
 
 }
 
-#include "rwg/assemblers/operator_matrix.tpp"
+#ifndef BEM_LINKED
+#include "rwg/assemblers/operator_matrix.cpp"
+#endif
 
 #endif

@@ -103,19 +103,19 @@ void test_unit_cube_rwg_g(Complex k)
 
     EigenMatrix<Complex> mat;
 
-    ProjectorAssembler<Rwg, 3> proj_1_mat (cloud, mesh);
+    ProjectorAssembler<3> proj_1_mat (cloud, mesh);
     proj_1_mat.assemble(mat, proj_1, k);
 
-    ProjectorAssembler<Pulse, 3> proj_2_mat (cloud, mesh);
+    ProjectorAssembler<3> proj_2_mat (cloud, mesh);
     proj_2_mat.assemble(mat, proj_2, k);
 
-    ProjectorAssembler<Rwg, 3> proj_3_mat (cloud, mesh);
+    ProjectorAssembler<3> proj_3_mat (cloud, mesh);
     proj_3_mat.assemble(mat, proj_3, k);
 
-    ProjectorAssembler<Rwg, 3> proj_4_mat (cloud, mesh);
+    ProjectorAssembler<3> proj_4_mat (cloud, mesh);
     proj_4_mat.assemble(mat, proj_4, k);
 
-    ProjectorAssembler<Pulse, 1> proj_5_mat (cloud, mesh);
+    ProjectorAssembler<1> proj_5_mat (cloud, mesh);
     proj_5_mat.assemble(mat, proj_5, k);
 
 

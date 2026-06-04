@@ -35,8 +35,9 @@
 #include "rwg/integrators/obs/quadrature.hpp"
 
 #include "rwg/operators/gram.hpp"
+#include "rwg/operators/single_layer.hpp"
+#include "rwg/operators/double_layer.hpp"
 #include "rwg/operators/incidence.hpp"
-#include "rwg/operators/vector_ops.hpp"
 
 #include "rwg/excitations/plane_wave.hpp"
 
@@ -72,30 +73,24 @@ void test_cfie_pec()
     Float dist = 1e2 * lambda;
 
 
-    VectorRwgOps ops;
-    VectorOperatorsAssembler assembler (mesh, mesh);
+    OperatorAssembler assm (mesh);
+    std::vector<EigenMatrix<Complex>> mats;
 
-    EigenMatrix<Complex> mats;
-    assembler.assemble(mats, ops, k);
+    assm.assemble<
+        EigenMatrix<Complex>,
+        ObsStrategic<>,
+        VectorHypersingularOp<>,
+        RotVectorDoubleLayerPvOp<>,
+        VectorIdentityOp<>
+        > (mats, k);
 
-    RwgRwgOp op_I;
-    EdgeOperatorAssembler I_assembler (mesh, mesh);
-
-
-    EigenMatrix<Complex> T;
-    mats.get_block(T, 0, 0, mesh.num_edges(), mesh.num_edges());
-    T.scale(-J * omega * mu);
-
-    EigenMatrix<Complex> K;
-    mats.get_block(K, 0, mesh.num_edges() * 3, mesh.num_edges(), mesh.num_edges());
-
-    EigenMatrix<Complex> I;
-    I_assembler.assemble(I, op_I, k);
-    I.scale(half);
+    EigenMatrix<Complex>& T = mats[0];
+    EigenMatrix<Complex>& K = mats[1];
+    EigenMatrix<Complex>& I = mats[2];
 
     EigenMatrix<Complex> A;
-    A.set_axpby(T, K);
-    A.add_ax(I);
+    A.set_axpby(T, K, -J * omega * mu);
+    A.add_ax(I, half);
 
 
     EigColVecN<Float, 3> dir, pol_e, pol_h, pos;
@@ -108,7 +103,7 @@ void test_cfie_pec()
 
     RwgPlaneWave pwe (dir, pol_e, pos, amp);
     NxRwgPlaneWave pwh (dir, pol_h, pos, amp / std::sqrt(mu / eps));
-    EdgeExcitationAssembler pw_assembler (mesh);
+    ExcitationAssembler pw_assembler (mesh);
 
     EigenMatrix<Complex> Einc;
     pw_assembler.assemble(Einc, pwe, k);
@@ -138,7 +133,7 @@ void test_cfie_pec()
 
 
     VectorHypersingularProj op_T_proj;
-    EdgeProjectorAssembler<3> T_proj_assembler (cloud, mesh);
+    ProjectorAssembler T_proj_assembler (cloud, mesh);
 
     EigenMatrix<Complex> T_proj;
     T_proj_assembler.assemble(T_proj, op_T_proj, k);
@@ -191,7 +186,7 @@ int main(int argc, char** argv)
 {
 
     std::cout << "\n====================================================" << std::endl;
-    std::cout << "test_vector_ops_sphere_rcs.cpp" << std::endl;
+    std::cout << "test_op_set_sphere_rcs.cpp" << std::endl;
     std::cout << "====================================================\n" << std::endl;
 
     test_cfie_pec();

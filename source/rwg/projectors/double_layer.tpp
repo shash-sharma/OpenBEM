@@ -28,7 +28,7 @@ namespace bem::rwg
 {
 
 template <typename SrcIntegratorType>
-EigMatXN<Complex, 3> VectorDoubleLayerProj<SrcIntegratorType>::compute(
+EigMat<Complex> VectorDoubleLayerProj<SrcIntegratorType>::compute(
     const Complex k,
     ConstEigRef<EigMatNX<Float, 3>> obs_points,
     const Triangle<3>& src_tri

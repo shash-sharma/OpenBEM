@@ -38,7 +38,7 @@ namespace bem::rwg
 * @brief Class for computing the vector double-layer potential projector.
 */
 template <typename SrcIntegratorType = SrcStrategic<>>
-class VectorDoubleLayerProj: public ProjectorBase<Rwg>
+class VectorDoubleLayerProj: public ProjectorBase
 {
 
     static_assert(
@@ -55,6 +55,13 @@ public:
 
     VectorDoubleLayerProj(const SrcIntegratorType src_integrator = SrcStrategic<>()):
         src_integrator_(src_integrator) {};
+
+
+    /**
+    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
+    * @return Number of source degrees of freedom per triangle.
+    */
+    uint8_t src_dof() const override { return 3; };
 
 
     /**
@@ -76,7 +83,7 @@ public:
     * \f$ (F_{xi}, F_{yi}, F_{zi}) \f$ are the components of the projected field \f$ \vec{F} \f$
     * defined at the observation point \f$ (x_i, y_i, z_i) \f$.
     */
-    EigMatXN<Complex, 3> compute(
+    EigMat<Complex> compute(
         const Complex k,
         ConstEigRef<EigMatNX<Float, 3>> obs_points,
         const Triangle<3>& src_tri

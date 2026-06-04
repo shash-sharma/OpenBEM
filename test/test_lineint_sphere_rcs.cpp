@@ -49,21 +49,19 @@ void test_cfie_pec_lineint()
 
     VectorHypersingularOp op_T (obs_quad);
     RotVectorDoubleLayerPvOp op_Kr_pv (obs_quad);
-
     VectorIdentityOp op_I;
 
     // Assembly
 
-    OperatorAssembler<Rwg, Rwg> assembler_t (mesh, mesh);
-    OperatorAssembler<NxRwg, Rwg> assembler_r (mesh, mesh);
+    OperatorAssembler assembler (mesh, mesh);
 
     EigenMatrix<Complex> T;
-    assembler_t.assemble(T, op_T, k);
+    assembler.assemble(T, op_T, k);
     T.scale(-J * omega * mu);
 
     EigenMatrix<Complex> Kr, I;
-    assembler_r.assemble(Kr, op_Kr_pv, k);
-    assembler_t.assemble(I, op_I, k);
+    assembler.assemble(Kr, op_Kr_pv, k);
+    assembler.assemble(I, op_I, k);
     Kr.add_ax(I, 0.5);
 
     EigenMatrix<Complex> A;
@@ -83,14 +81,13 @@ void test_cfie_pec_lineint()
     RwgPlaneWave pw_e (dir, pol_e, pos, amp_e);
     NxRwgPlaneWave pw_h (dir, pol_h, pos, amp_h);
 
-    ExcitationAssembler<Rwg> pw_assembler_t (mesh);
-    ExcitationAssembler<NxRwg> pw_assembler_r (mesh);
+    ExcitationAssembler pw_assembler (mesh);
 
     EigenMatrix<Complex> Einc;
-    pw_assembler_t.assemble(Einc, pw_e, k);
+    pw_assembler.assemble(Einc, pw_e, k);
 
     EigenMatrix<Complex> Hinc;
-    pw_assembler_r.assemble(Hinc, pw_h, k);
+    pw_assembler.assemble(Hinc, pw_h, k);
 
     EigenMatrix<Complex> b;
     b.set_axpby(Einc, Hinc);
@@ -115,7 +112,7 @@ void test_cfie_pec_lineint()
     cloud.set_polar_data(start, stop, center, num_pts);
 
     VectorHypersingularProj<> op_T_proj;
-    ProjectorAssembler<Rwg, 3> T_proj_assembler (cloud, mesh);
+    ProjectorAssembler<3> T_proj_assembler (cloud, mesh);
 
     EigenMatrix<Complex> T_proj;
     T_proj_assembler.assemble(T_proj, op_T_proj, k);
