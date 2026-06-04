@@ -27,6 +27,8 @@
 #include "matrix/base.hpp"
 #include "matrix/eigen_matrix.hpp"
 
+#include "rwg/function_space.hpp"
+
 #include "rwg/integral_equations/base.hpp"
 
 #include "rwg/operators/single_layer.hpp"
@@ -93,7 +95,7 @@ public:
         Complex k = material.k(f);
 
         MatrixType Kr;
-        assembler_.assemble(Kr, op_Kr_, k);
+        assembler_r_.assemble(Kr, op_Kr_, k);
 
         if (!base::flip_normals_)
             Kr.scale(-one);
@@ -120,7 +122,7 @@ public:
         Complex sigma = material.sigma();
 
         MatrixType Tr;
-        assembler_.assemble(Tr, op_Tr_, k);
+        assembler_r_.assemble(Tr, op_Tr_, k);
 
         Tr.scale(J * two_pi * f * eps + sigma);
 
@@ -137,9 +139,9 @@ public:
     */
     MatrixType id_matrix()
     {
-        RwgRwgOp<> op_I;
+        VectorIdentityOp<> op_I;
         MatrixType I;
-        assembler_.assemble(I, op_I, 0);
+        assembler_t_.assemble(I, op_I, 0);
         return I;
     };
 
@@ -164,7 +166,7 @@ public:
         obs_elems_vec.erase(std::unique(obs_elems_vec.begin(), obs_elems_vec.end()), obs_elems_vec.end());
 
         EigRowVec<Index> obs_elems = EigRowVec<Index>::Map(&obs_elems_vec[0], obs_elems_vec.size());
-        EdgeExcitationAssembler exc_assembler (base::obs_mesh_, obs_elems);
+        ExcitationAssembler<Rwg> exc_assembler (base::obs_mesh_, obs_elems);
 
         Complex k = material.k(f);
         MatrixType inc (base::obs_mesh_.num_edges(), exc.num_excitations());
@@ -192,7 +194,7 @@ public:
     {
         Complex k = material.k(f);
 
-        EdgeProjectorAssembler<3> proj_assembler (points, base::src_mesh_);
+        ProjectorAssembler<Rwg, 3> proj_assembler (points, base::src_mesh_);
 
         MatrixType K;
         proj_assembler.assemble(K, proj_K_, k);
@@ -218,7 +220,7 @@ public:
         Complex eps = material.eps();
         Complex sigma = material.sigma();
 
-        EdgeProjectorAssembler<3> proj_assembler (points, base::src_mesh_);
+        ProjectorAssembler<Rwg, 3> proj_assembler (points, base::src_mesh_);
 
         MatrixType T;
         proj_assembler.assemble(T, proj_T_, k);
@@ -237,7 +239,12 @@ protected:
     VectorHypersingularProj<> proj_T_;
     VectorDoubleLayerProj<> proj_K_;
 
-    EdgeOperatorAssembler assembler_ = EdgeOperatorAssembler(base::obs_mesh_, base::src_mesh_, base::elem_pairs_);
+    OperatorAssembler<Rwg, Rwg> assembler_t_ = OperatorAssembler<Rwg, Rwg> (
+        base::obs_mesh_, base::src_mesh_, base::elem_pairs_
+        );
+    OperatorAssembler<NxRwg, Rwg> assembler_r_ = OperatorAssembler<NxRwg, Rwg> (
+        base::obs_mesh_, base::src_mesh_, base::elem_pairs_
+        );
 
 };
 

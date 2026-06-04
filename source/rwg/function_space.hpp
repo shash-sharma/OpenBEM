@@ -30,11 +30,6 @@ namespace bem
 // Forward declarations
 template <typename T> class MatrixBase;
 template <uint8_t dim> class TriangleMesh;
-}
-
-
-namespace bem::rwg
-{
 
 /**
 * \defgroup basis Basis Functions

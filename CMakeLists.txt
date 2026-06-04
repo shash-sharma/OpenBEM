@@ -178,9 +178,6 @@ set(SRC_FILES
     ${SRC_DIR}/kernels/hgf.cpp
     ${SRC_DIR}/rwg/function_space.cpp
     ${SRC_DIR}/rwg/assemblers/index_generator.cpp
-    ${SRC_DIR}/rwg/assemblers/operator_matrix.cpp
-    ${SRC_DIR}/rwg/assemblers/excitation_matrix.cpp
-    ${SRC_DIR}/rwg/assemblers/projector_matrix.cpp
     ${SRC_DIR}/rwg/excitations/inf_gap.cpp
     ${SRC_DIR}/rwg/excitations/plane_wave.cpp
 )

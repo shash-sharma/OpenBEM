@@ -179,7 +179,7 @@ EigMatMN<Complex, 1, 1> ScalarSingleLayerOp<ObsIntegratorType>::assemble(
     EigMatMN<Complex, 1, 1> result = EigMatMN<Complex, 1, 1>::Zero(1, 1);
 
     result[0] = obs_result.g;
-    result[0] *= Pulse::normalization(obs_tri) * Pulse::normalization(src_tri);
+    result[0] *= Pulse::normalization(obs_tri)[0] * Pulse::normalization(src_tri)[0];
 
     return result;
 };
@@ -241,7 +241,7 @@ EigMatMN<Complex, 3, 1> RotGradScalarSingleLayerOp<ObsIntegratorType>::assemble(
         //     - nz * ((I[0] * ym - I[3] * xm) - (I[1] - I[4])));
     }
 
-    result.array() *= NxRwg::normalization(obs_tri).array() * Pulse::normalization(src_tri);
+    result.array() *= NxRwg::normalization(obs_tri).array() * Pulse::normalization(src_tri)[0];
 
     return result;
 

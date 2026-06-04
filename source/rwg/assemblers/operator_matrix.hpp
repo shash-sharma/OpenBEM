@@ -19,6 +19,7 @@
 #define BEM_RWG_OP_ASSEMBLER_H
 
 #include "types.hpp"
+#include "rwg/function_space.hpp"
 #include "rwg/assemblers/base.hpp"
 
 
@@ -41,14 +42,64 @@ const Index EDGE_ELEM_RATIO = 2;
 
 /**
 * @brief Class for generating operator matrices for RWG observation and source functions.
+* @tparam TestSpace - Testing function space.
+* @tparam ExpansionSpace - Expansion function space.
 */
-class EdgeOperatorAssembler: public OperatorAssemblerBase<3, 3>
+template <typename TestSpace, typename ExpansionSpace>
+class OperatorAssembler: public OperatorAssemblerBase<TestSpace, ExpansionSpace>
 {
 
-    using base = OperatorAssemblerBase<3, 3>;
-    using base::base;
+    using base = OperatorAssemblerBase<TestSpace, ExpansionSpace>;
 
 public:
+
+    /**
+    * @brief Constructs an `OperatorAssembler` for given observation and source meshes.
+    * @param[in] obs_mesh - Observation triangle mesh for which the operator matrix is to be assembled.
+    * @param[in] src_mesh - Source triangle mesh for which the operator matrix is to be assembled.
+    * @param[in] elem_pairs - Observation (first row) and source (second row) triangle index pairs
+    * for which the operator matrix is to be assembled (optional).
+    */
+    OperatorAssembler(
+        const TriangleMesh<3>& obs_mesh,
+        const TriangleMesh<3>& src_mesh,
+        const EigMatNX<Index, 2> elem_pairs = EigMatNX<Index, 2>::Zero(2, 0)
+        ):
+            obs_mesh_(obs_mesh),
+            src_mesh_(src_mesh),
+            elem_pairs_(elem_pairs)
+    {
+        if (elem_pairs_.cols() == 0)
+            elem_pairs_ = IndexGenerator::elem_pairs(obs_mesh_, src_mesh_);
+        return;
+    };
+
+
+    /**
+    * @brief Constructs an `OperatorAssembler` for a given mesh.
+    * @param[in] mesh - Triangle mesh for which the operator matrix is to be assembled.
+    * @param[in] elem_pairs - Observation (first row) and source (second row) triangle index pairs
+    * for which the operator matrix is to be assembled (optional).
+    */
+    OperatorAssembler(
+        const TriangleMesh<3>& mesh,
+        const EigMatNX<Index, 2> elem_pairs = EigMatNX<Index, 2>::Zero(2, 0)
+        ): OperatorAssembler(mesh, mesh, elem_pairs) {};
+
+
+    /**
+    * @brief Assembles the operator matrix for a given operator object.
+    * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
+    * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
+    * @param[in] op - Operator object that computes the coefficients to assemble into `mat`.
+    * @param[in] k - Complex wavenumber.
+    */
+    void assemble(
+        MatrixBase<Complex>& mat,
+        const OperatorBase<TestSpace, ExpansionSpace>& op,
+        const Complex k
+        ) override;
+
 
     /**
     * @brief Prepares the matrix for assembly (e.g., resizing and preallocation).
@@ -68,155 +119,58 @@ public:
     void fill_matrix(
         MatrixBase<Complex>& mat,
         ConstEigRef<EigColVecN<Index, 2>> elem_pair,
-        ConstEigRef<EigMatMN<Complex, 3, 3>> values
+        ConstEigRef<EigMatMN<Complex, TestSpace::dof, ExpansionSpace::dof>> values
         ) override;
+
+
+protected:
+
+    const TriangleMesh<3>& obs_mesh_;
+    const TriangleMesh<3>& src_mesh_;
+    EigMatNX<Index, 2> elem_pairs_;
 
 };
 
 
-/**
-* @brief Class for generating operator matrices for pulse observation and source functions.
-*/
-class FaceOperatorAssembler: public OperatorAssemblerBase<1, 1>
-{
-
-    using base = OperatorAssemblerBase<1, 1>;
-    using base::base;
-
-public:
-
-    /**
-    * @brief Prepares the matrix for assembly (e.g., resizing and preallocation).
-    * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
-    * to source faces, and rows corresponding to observation faces.
-    */
-    void prep_matrix(MatrixBase<Complex>& mat) override;
 
 
-    /**
-    * @brief Fills operator values in the matrix for face-based pulse observation and source functions.
-    * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
-    * to source faces, and rows corresponding to observation faces.
-    * @param[in] elem_pair - Observation (first entry) and source (second entry) triangle index pair.
-    * @param[in] values - Operator values for each pair of observation and source degrees of freedom.
-    */
-    void fill_matrix(
-        MatrixBase<Complex>& mat,
-        ConstEigRef<EigColVecN<Index, 2>> elem_pair,
-        ConstEigRef<EigMatMN<Complex, 1, 1>> values
-        ) override;
 
-};
+// /**
+// * @brief Class for generating the full set of vector operator matrices for RWG observation and source functions.
+// */
+// class VectorOperatorsAssembler: public OperatorAssemblerBase<3, 12>
+// {
 
+//     using base = OperatorAssemblerBase<3, 12>;
+//     using base::base;
 
-/**
-* @brief Class for generating operator matrices for pulse observation and RWG source functions.
-*/
-class FaceEdgeOperatorAssembler: public OperatorAssemblerBase<1, 3>
-{
+// public:
 
-    using base = OperatorAssemblerBase<1, 3>;
-    using base::base;
-
-public:
-
-    /**
-    * @brief Prepares the matrix for assembly (e.g., resizing and preallocation).
-    * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
-    * to source edges, and rows corresponding to observation faces.
-    */
-    void prep_matrix(MatrixBase<Complex>& mat) override;
+//     /**
+//     * @brief Prepares the matrix for assembly (e.g., resizing and preallocation).
+//     * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
+//     * to source edges, and rows corresponding to observation edges. The four vector operator matrices
+//     * are stacked along the horizontal direction.
+//     */
+//     void prep_matrix(MatrixBase<Complex>& mat) override;
 
 
-    /**
-    * @brief Fills operator values in the matrix for face-based pulse observation functions and edge-based
-    * RWG source functions.
-    * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
-    * to source edges, and rows corresponding to observation faces.
-    * @param[in] elem_pair - Observation (first entry) and source (second entry) triangle index pair.
-    * @param[in] values - Operator values for each pair of observation and source degrees of freedom.
-    */
-    void fill_matrix(
-        MatrixBase<Complex>& mat,
-        ConstEigRef<EigColVecN<Index, 2>> elem_pair,
-        ConstEigRef<EigMatMN<Complex, 1, 3>> values
-        ) override;
+//     /**
+//     * @brief Fills operator values in the matrix for edge-based RWG observation and source functions.
+//     * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
+//     * to source edges, and rows corresponding to observation edges, for all operators stacked along
+//     * the vertical direction.
+//     * @param[in] elem_pair - Observation (first entry) and source (second entry) triangle index pair.
+//     * @param[in] values - Operator values for each pair of observation and source degrees of freedom,
+//     * for all operators stacked along the horizontal direction.
+//     */
+//     void fill_matrix(
+//         MatrixBase<Complex>& mat,
+//         ConstEigRef<EigColVecN<Index, 2>> elem_pair,
+//         ConstEigRef<EigMatMN<Complex, 3, 12>> values
+//         ) override;
 
-};
-
-
-/**
-* @brief Class for generating operator matrices for RWG observation and pulse source functions.
-*/
-class EdgeFaceOperatorAssembler: public OperatorAssemblerBase<3, 1>
-{
-
-    using base = OperatorAssemblerBase<3, 1>;
-    using base::base;
-
-public:
-
-    /**
-    * @brief Prepares the matrix for assembly (e.g., resizing and preallocation).
-    * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
-    * to source faces, and rows corresponding to observation edges.
-    */
-    void prep_matrix(MatrixBase<Complex>& mat) override;
-
-
-    /**
-    * @brief Fills operator values in the matrix for face-based pulse source functions and edge-based
-    * RWG observation functions.
-    * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
-    * to source faces, and rows corresponding to observation edges.
-    * @param[in] elem_pair - Observation (first entry) and source (second entry) triangle index pair.
-    * @param[in] values - Operator values for each pair of observation and source degrees of freedom.
-    */
-    void fill_matrix(
-        MatrixBase<Complex>& mat,
-        ConstEigRef<EigColVecN<Index, 2>> elem_pair,
-        ConstEigRef<EigMatMN<Complex, 3, 1>> values
-        ) override;
-
-};
-
-
-/**
-* @brief Class for generating the full set of vector operator matrices for RWG observation and source functions.
-*/
-class VectorOperatorsAssembler: public OperatorAssemblerBase<3, 12>
-{
-
-    using base = OperatorAssemblerBase<3, 12>;
-    using base::base;
-
-public:
-
-    /**
-    * @brief Prepares the matrix for assembly (e.g., resizing and preallocation).
-    * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
-    * to source edges, and rows corresponding to observation edges. The four vector operator matrices
-    * are stacked along the horizontal direction.
-    */
-    void prep_matrix(MatrixBase<Complex>& mat) override;
-
-
-    /**
-    * @brief Fills operator values in the matrix for edge-based RWG observation and source functions.
-    * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
-    * to source edges, and rows corresponding to observation edges, for all operators stacked along
-    * the vertical direction.
-    * @param[in] elem_pair - Observation (first entry) and source (second entry) triangle index pair.
-    * @param[in] values - Operator values for each pair of observation and source degrees of freedom,
-    * for all operators stacked along the horizontal direction.
-    */
-    void fill_matrix(
-        MatrixBase<Complex>& mat,
-        ConstEigRef<EigColVecN<Index, 2>> elem_pair,
-        ConstEigRef<EigMatMN<Complex, 3, 12>> values
-        ) override;
-
-};
+// };
 
 /**
 * @}
@@ -224,8 +178,6 @@ public:
 
 }
 
-#ifndef BEM_LINKED
-#include "rwg/assemblers/operator_matrix.cpp"
-#endif
+#include "rwg/assemblers/operator_matrix.tpp"
 
 #endif

@@ -45,17 +45,17 @@ class OperatorBase
 {
 
     static_assert(
-        std::is_base_of<
-            FunctionSpaceBase<TestSpace, TestSpace::dof, TestSpace::dim>, TestSpace
-            >::value,
-        "OperatorBase: `TestSpace` must derive from `FunctionSpaceBase`"
+        std::is_base_of<FunctionSpaceBase<
+            TestSpace, TestSpace::dof, TestSpace::dim
+            >, TestSpace>::value,
+        "OperatorAssemblerBase: `TestSpace` must derive from `FunctionSpaceBase`"
         );
 
     static_assert(
-        std::is_base_of<
-            FunctionSpaceBase<ExpansionSpace, TestSpace::dof, TestSpace::dim>, ExpansionSpace
-            >::value,
-        "OperatorBase: `ExpansionSpace` must derive from `FunctionSpaceBase`"
+        std::is_base_of<FunctionSpaceBase<
+            ExpansionSpace, ExpansionSpace::dof, ExpansionSpace::dim
+            >, ExpansionSpace>::value,
+        "OperatorAssemblerBase: `ExpansionSpace` must derive from `FunctionSpaceBase`"
         );
 
 public:

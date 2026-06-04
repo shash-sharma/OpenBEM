@@ -185,6 +185,14 @@ public:
         ) override;
 
 
+    /**
+    * @brief Returns a unique pointer to a deep copy of this object.
+    * @return Unique pointer to the new object.
+    */
+    std::unique_ptr<OperatorBase<NxRwg, Rwg>> clone() const override
+    { return std::make_unique<RotVectorSingleLayerOp<ObsIntegratorType>> (*this); };
+
+
 protected:
 
     ObsIntegratorType obs_integrator_;
@@ -254,6 +262,14 @@ public:
         const Triangle<3>& src_tri,
         const ObsResult& obs_result
         ) override;
+
+
+    /**
+    * @brief Returns a unique pointer to a deep copy of this object.
+    * @return Unique pointer to the new object.
+    */
+    std::unique_ptr<OperatorBase<Pulse, Pulse>> clone() const override
+    { return std::make_unique<ScalarSingleLayerOp<ObsIntegratorType>> (*this); };
 
 
 protected:
@@ -330,6 +346,14 @@ public:
         ) override;
 
 
+    /**
+    * @brief Returns a unique pointer to a deep copy of this object.
+    * @return Unique pointer to the new object.
+    */
+    std::unique_ptr<OperatorBase<NxRwg, Pulse>> clone() const override
+    { return std::make_unique<RotGradScalarSingleLayerOp<ObsIntegratorType>> (*this); };
+
+
 protected:
 
     ObsIntegratorType obs_integrator_;
@@ -387,6 +411,14 @@ public:
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
         ) override;
+
+
+    /**
+    * @brief Returns a unique pointer to a deep copy of this object.
+    * @return Unique pointer to the new object.
+    */
+    std::unique_ptr<OperatorBase<Rwg, Rwg>> clone() const override
+    { return std::make_unique<VectorHypersingularOp<ObsIntegratorType>> (*this); };
 
 
 protected:
@@ -448,6 +480,14 @@ public:
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
         ) override;
+
+
+    /**
+    * @brief Returns a unique pointer to a deep copy of this object.
+    * @return Unique pointer to the new object.
+    */
+    std::unique_ptr<OperatorBase<NxRwg, Rwg>> clone() const override
+    { return std::make_unique<RotVectorHypersingularOp<ObsIntegratorType>> (*this); };
 
 
 protected:

@@ -119,7 +119,7 @@ int main(int argc, char** argv)
     // For the self-interactions involving the singularity, we compute the identity operator
     // separately, as follows. This requires the `rwg/operators/gram.hpp` header.
 
-    bem::rwg::RwgRwgOp<> I_operator;
+    bem::rwg::VectorIdentityOp<> I_operator;
 
     // Each operator has a `compute()` method which takes the wave number, a source triangle, and an
     // observation triangle as argument, to compute the operator values associated with that pair of
@@ -129,11 +129,15 @@ int main(int argc, char** argv)
     // of having to write loops over triangles manually, OpenBEM provides assembler classes to do
     // this automatically.
 
-    // Since both operators' degrees of freedom are the edges of the mesh, we use the
-    // `EdgeOperatorAssembler` class. If we were using scalar pulse expansion and testing functions,
-    // for example for a scalar Poisson solver, we would instead use the `FaceOperatorAssembler`.
+    // For each operator, we define an `OperatorAssembler` to assemble the matrix.
 
-    bem::rwg::EdgeOperatorAssembler assembler (structure.mesh());
+    bem::rwg::OperatorAssembler<bem::Rwg, bem::Rwg> assembler_t (structure.mesh());
+    bem::rwg::OperatorAssembler<bem::NxRwg, bem::Rwg> assembler_r (structure.mesh());
+
+    // The template arguments indicate the testing and expansion function spaces, respectively.  The
+    // single-layer and identity operator are tangentially tested, while the double-layer one is
+    // rotationally tested. Note that the assemblers do the same thing in both cases, since they are
+    // both edge-based vector function spaces.
 
     // The assembler takes the mesh as its constructor argument. Once created, we can perform the
     // actual matrix assembly for both operators using the assember's `assemble()` method.
@@ -144,9 +148,9 @@ int main(int argc, char** argv)
     // access to OpenMP threads.
 
     MatrixType L, K, I;
-    assembler.assemble(L, L_operator, k);
-    assembler.assemble(K, Kpv_operator, k);
-    assembler.assemble(I, I_operator, k);
+    assembler_t.assemble(L, L_operator, k);
+    assembler_r.assemble(K, Kpv_operator, k);
+    assembler_t.assemble(I, I_operator, k);
 
     // For the TEFIE, the L operator must be scaled appropriately.
 
@@ -189,20 +193,23 @@ int main(int argc, char** argv)
     bem::rwg::RwgPlaneWave pw_e (dir, pol_e, pos, amp_e);
     bem::rwg::NxRwgPlaneWave pw_h (dir, pol_h, pos, amp_h);
 
-    // Now we'll use an `EdgeExcitationAssembler` which works similarly to the
-    // `EdgeOperatorAssembler` above. This requires the header
+    // Now we'll use an `ExcitationAssembler` which works similarly to the
+    // `OperatorAssembler` above. This requires the header
     // `rwg/assemblers/excitation_matrix.hpp`.
 
-    bem::rwg::EdgeExcitationAssembler exc_assembler (structure.mesh());
+    bem::rwg::ExcitationAssembler<bem::Rwg> exc_assembler_e (structure.mesh());
+    bem::rwg::ExcitationAssembler<bem::NxRwg> exc_assembler_h (structure.mesh());
+
+    // The template argument indicates the testing function space.
 
     // Now we'll use the assembler and its `assemble()` method, providing each plane wave object, to
     // obtain the excitation vectors for the TEFIE and the NMFIE.
 
     MatrixType inc_e;
-    exc_assembler.assemble(inc_e, pw_e, k);
+    exc_assembler_e.assemble(inc_e, pw_e, k);
 
     MatrixType inc_h;
-    exc_assembler.assemble(inc_h, pw_h, k);
+    exc_assembler_h.assemble(inc_h, pw_h, k);
 
     // Since we're solving the CFIE, we need to also combine the excitation matrices.
 
@@ -258,11 +265,12 @@ int main(int argc, char** argv)
     bem::rwg::VectorHypersingularProj<> L_projector;
 
     // Next, similar to the RWG operators, define an assembler to assemble the projector matrix,
-    // using the `EdgeProjectorAssembler` class, which works in much the same way as the assembler
+    // using the `ProjectorAssembler` class, which works in much the same way as the assembler
     // classes we've already seen. This requires the header `rwg/assemblers/projector_matrix.hpp`.
 
-    bem::rwg::EdgeProjectorAssembler<3> proj_assembler (projection_points, structure.mesh());
+    bem::rwg::ProjectorAssembler<bem::Rwg, 3> proj_assembler (projection_points, structure.mesh());
 
+    // The template argument `Rwg` indicates that the expansion function space is the RWG space.
     // The template argument `3` indicates the dimension of the projected field, which is 3 in this
     // case since it's a vector field.
 
@@ -325,11 +333,10 @@ int main(int argc, char** argv)
     // Finally, we'll export the surface current density computed with the CFIE into the Gmsh
     // post-processing format, as in Example 1.
 
-    bem::EigMatNX<bem::Float, 3> j_surf = bem::rwg::Rwg::reconstruct_field(
+    bem::EigMatNX<bem::Float, 3> j_surf = bem::Rwg::reconstruct_field(
         structure.mesh(), // mesh with which the field is associated
         x, // RWG coefficients computed using the CFIE
-        structure.mesh().elem_centroids(), // points at which to compute field values
-        false // whether the field was expanded using rotated RWGs; `false` means regular RWGs
+        structure.mesh().elem_centroids() // points at which to compute field values
         ).array().real(); // Eigen syntax to keep only the real part of the computed currents
 
     bem::MeshTransfer::write_gmsh_v2_vector_field(structure, path + "msh/ex02_jsurf_cfie", j_surf);

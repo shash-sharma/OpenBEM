@@ -30,7 +30,7 @@
 #include "quadrature/triangle/base.hpp"
 
 
-namespace bem::rwg
+namespace bem
 {
 
 EigMatNX<Float, 3> Rwg::value(
@@ -39,7 +39,7 @@ EigMatNX<Float, 3> Rwg::value(
     uint8_t idx
     )
 {
-    return (points.colwise() - tri.v((edge + 2) % 3)) * normalization(tri)[edge];
+    return (points.colwise() - tri.v((idx + 2) % 3)) * normalization(tri)[idx];
 };
 
 
@@ -105,8 +105,8 @@ EigMatNX<Float, 3> NxRwg::value(
     )
 {
     return -(
-        points.colwise() - tri.v((edge + 2) % 3)
-        ).colwise().cross(tri.normal()) * normalization(tri)[edge];
+        points.colwise() - tri.v((idx + 2) % 3)
+        ).colwise().cross(tri.normal()) * normalization(tri)[idx];
 };
 
 
