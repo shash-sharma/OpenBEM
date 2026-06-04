@@ -18,6 +18,8 @@
 #ifndef BEM_RWG_ASSEMBLER_BASE_H
 #define BEM_RWG_ASSEMBLER_BASE_H
 
+#include <memory>
+
 #include "types.hpp"
 #include "geometry/point_cloud.hpp"
 #include "geometry/mesh/triangle_mesh.hpp"
@@ -111,41 +113,40 @@ public:
     * @brief Assembles the operator matrix for a given operator object.
     * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
     * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
-    * @param[in] op - Operator object that computes the coefficients to be assembled into `mat`; must
-    * inherit from `OperatorBase<obs_num_dof, src_num_dof>`.
+    * @param[in] op - Operator object that computes the coefficients to assemble into `mat`.
     * @param[in] k - Complex wavenumber.
     */
-    template <typename OperatorType>
     void assemble(
         MatrixBase<Complex>& mat,
-        OperatorType op,
+        const OperatorBase<obs_num_dof, src_num_dof>& op,
         const Complex k
         )
     {
 
-        static_assert(
-            std::is_base_of<OperatorBase<obs_num_dof, src_num_dof>, OperatorType>::value,
-            "OperatorAssemblerBase::assemble(): `OperatorType` must derive from `OperatorBase`"
-            );
-
         prep_matrix(mat);
 
-#pragma omp parallel for firstprivate(op)
+#pragma omp parallel
+{
+        std::unique_ptr<OperatorBase<obs_num_dof, src_num_dof>> opc = op.clone();
+
+#pragma omp for
         for (Index ii = 0; ii < elem_pairs_.cols(); ++ii)
         {
             Triangle<3> obs_tri = obs_mesh_.elem_primitive(elem_pairs_(0, ii));
             Triangle<3> src_tri = src_mesh_.elem_primitive(elem_pairs_(1, ii));
 
-            EigMatMN<Complex, obs_num_dof, src_num_dof> values = op.compute(
+            EigMatMN<Complex, obs_num_dof, src_num_dof> values = opc->compute(
                 k, obs_tri, src_tri
                 );
 
 #pragma omp critical
             fill_matrix(mat, elem_pairs_.col(ii), values);
         }
+}
 
         mat.assemble();
         return;
+
     };
 
 

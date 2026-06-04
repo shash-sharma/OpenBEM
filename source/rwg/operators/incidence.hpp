@@ -70,6 +70,14 @@ public:
         return result;
     };
 
+
+    /**
+    * @brief Returns a unique pointer to a deep copy of this object.
+    * @return Unique pointer to the new object.
+    */
+    std::unique_ptr<OperatorBase<1, 3>> clone() const override
+    { return std::make_unique<DivRwgOp> (*this); };
+
 };
 
 /**

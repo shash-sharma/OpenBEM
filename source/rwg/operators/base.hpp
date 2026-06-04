@@ -18,6 +18,8 @@
 #ifndef BEM_RWG_OPS_BASE_H
 #define BEM_RWG_OPS_BASE_H
 
+#include <memory>
+
 #include "types.hpp"
 #include "geometry/operations.hpp"
 #include "geometry/primitives/triangle.hpp"
@@ -112,6 +114,14 @@ public:
 
         return;
     };
+
+
+    /**
+    * @brief Returns a unique pointer to a newly constructed object of the derived type.
+    * @return Unique pointer to the new object.
+    */
+    virtual std::unique_ptr<OperatorBase<obs_num_dof, src_num_dof>> clone() const
+    { throw std::runtime_error("OperatorBase::clone(): Not implemented."); };
 
 
     /**

@@ -87,6 +87,14 @@ public:
         ) override;
 
 
+    /**
+    * @brief Returns a unique pointer to a deep copy of this object.
+    * @return Unique pointer to the new object.
+    */
+    std::unique_ptr<OperatorBase<3, 12>> clone() const override
+    { return std::make_unique<VectorRwgOps<ObsIntegratorType>> (*this); };
+
+
 protected:
 
     ObsIntegratorType obs_integrator_;

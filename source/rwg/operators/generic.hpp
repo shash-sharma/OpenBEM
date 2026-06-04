@@ -161,6 +161,14 @@ public:
         ) override;
 
 
+    /**
+    * @brief Returns a unique pointer to a deep copy of this object.
+    * @return Unique pointer to the new object.
+    */
+    std::unique_ptr<OperatorBase<3, 3>> clone() const override
+    { return std::make_unique<GenericRwgOp<ObsIntegratorType>> (*this); };
+
+
 private:
 
     OperatorName op_name_;
@@ -212,6 +220,14 @@ public:
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
         ) override;
+
+
+    /**
+    * @brief Returns a unique pointer to a deep copy of this object.
+    * @return Unique pointer to the new object.
+    */
+    std::unique_ptr<OperatorBase<1, 1>> clone() const override
+    { return std::make_unique<GenericPulseOp<ObsIntegratorType>> (*this); };
 
 
 private:
