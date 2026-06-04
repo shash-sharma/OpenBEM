@@ -20,10 +20,9 @@
 
 #include "types.hpp"
 #include "constants.hpp"
-
 #include "geometry/primitives/triangle.hpp"
 #include "quadrature/triangle/gauss.hpp"
-
+#include "rwg/function_space.hpp"
 #include "rwg/operators/base.hpp"
 
 
@@ -52,21 +51,21 @@ namespace bem::rwg
 * to source edges.
 */
 template <typename TriangleQuadratureType = GaussTriangleQuadrature<3>>
-class RwgRwgOp: public OperatorBase<3, 3>
+class IdentityOp: public OperatorBase<Rwg, Rwg>
 {
 
     static_assert(
         std::is_base_of<TriangleQuadratureBase<3>, TriangleQuadratureType>::value,
-        "RwgRwgOp: `TriangleQuadratureType` must derive from `TriangleQuadratureBase<3>`"
+        "IdentityOp: `TriangleQuadratureType` must derive from `TriangleQuadratureBase<3>`"
         );
 
 public:
 
     /**
-    * @brief Constructs an `RwgRwgOp` object with a specified quadrature object for integration.
+    * @brief Constructs an `IdentityOp` object with a specified quadrature object for integration.
     * @param[in] tri_quad - Triangle quadrature object to use for integration.
     */
-    RwgRwgOp(const TriangleQuadratureType tri_quad = GaussTriangleQuadrature<3>()):
+    IdentityOp(const TriangleQuadratureType tri_quad = GaussTriangleQuadrature<3>()):
         tri_quad_(tri_quad) {};
 
 
@@ -109,21 +108,21 @@ private:
 * to source edges.
 */
 template <typename TriangleQuadratureType = GaussTriangleQuadrature<3>>
-class RotRwgRwgOp: public OperatorBase<3, 3>
+class RotIdentityOp: public OperatorBase<NxRwg, Rwg>
 {
 
     static_assert(
         std::is_base_of<TriangleQuadratureBase<3>, TriangleQuadratureType>::value,
-        "RotRwgRwgOp: `TriangleQuadratureType` must derive from `TriangleQuadratureBase<3>`"
+        "RotIdentityOp: `TriangleQuadratureType` must derive from `TriangleQuadratureBase<3>`"
         );
 
 public:
 
     /**
-    * @brief Constructs a `RotRwgRwgOp` object with a specified quadrature object for integration.
+    * @brief Constructs a `RotIdentityOp` object with a specified quadrature object for integration.
     * @param[in] tri_quad - Triangle quadrature object to use for integration.
     */
-    RotRwgRwgOp(const TriangleQuadratureType tri_quad = GaussTriangleQuadrature<3>()):
+    RotIdentityOp(const TriangleQuadratureType tri_quad = GaussTriangleQuadrature<3>()):
         tri_quad_(tri_quad) {};
 
 

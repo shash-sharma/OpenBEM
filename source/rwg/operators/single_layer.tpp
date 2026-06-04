@@ -143,7 +143,7 @@ EigMatMN<Complex, 3, 3> RotVectorSingleLayerOp<ObsIntegratorType>::assemble(
     }
 
     result.array() *= (
-        Rwg::normalization(obs_tri).transpose() * Rwg::normalization(src_tri)
+        NxRwg::normalization(obs_tri).transpose() * Rwg::normalization(src_tri)
         ).array();
 
     return result;
@@ -241,7 +241,7 @@ EigMatMN<Complex, 3, 1> RotGradScalarSingleLayerOp<ObsIntegratorType>::assemble(
         //     - nz * ((I[0] * ym - I[3] * xm) - (I[1] - I[4])));
     }
 
-    result.array() *= Rwg::normalization(obs_tri).array() * Pulse::normalization(src_tri);
+    result.array() *= NxRwg::normalization(obs_tri).array() * Pulse::normalization(src_tri);
 
     return result;
 

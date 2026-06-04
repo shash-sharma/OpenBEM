@@ -20,9 +20,8 @@
 
 #include "types.hpp"
 #include "geometry/primitives/triangle.hpp"
-
+#include "rwg/function_space.hpp"
 #include "rwg/operators/base.hpp"
-
 #include "rwg/integrators/obs/base.hpp"
 #include "rwg/integrators/obs/strategic.hpp"
 
@@ -51,7 +50,7 @@ namespace bem::rwg
 * correspond to source edges.
 */
 template <typename ObsIntegratorType = ObsStrategic<>>
-class VectorSingleLayerOp: public OperatorBase<3, 3>
+class VectorSingleLayerOp: public OperatorBase<Rwg, Rwg>
 {
 
     static_assert(
@@ -125,7 +124,7 @@ protected:
 * and columns correspond to source edges.
 */
 template <typename ObsIntegratorType = ObsStrategic<>>
-class RotVectorSingleLayerOp: public OperatorBase<3, 3>
+class RotVectorSingleLayerOp: public OperatorBase<NxRwg, Rwg>
 {
 
     static_assert(
@@ -196,7 +195,7 @@ protected:
 * function that is a non-zero constant inside the associated triangle, and zero outside.
 */
 template <typename ObsIntegratorType = ObsStrategic<>>
-class ScalarSingleLayerOp: public OperatorBase<1, 1>
+class ScalarSingleLayerOp: public OperatorBase<Pulse, Pulse>
 {
 
     static_assert(
@@ -270,7 +269,7 @@ protected:
 * associated with `obs_tri`. Rows of the output matrix correspond to observation edges.
 */
 template <typename ObsIntegratorType = ObsStrategic<>>
-class RotGradScalarSingleLayerOp: public OperatorBase<3, 1>
+class RotGradScalarSingleLayerOp: public OperatorBase<NxRwg, Pulse>
 {
 
     static_assert(
@@ -345,7 +344,7 @@ protected:
 * edges, and columns correspond to source edges.
 */
 template <typename ObsIntegratorType = ObsStrategic<>>
-class VectorHypersingularOp: public OperatorBase<3, 3>
+class VectorHypersingularOp: public OperatorBase<Rwg, Rwg>
 {
 
     static_assert(
@@ -406,7 +405,7 @@ protected:
 * and columns correspond to source edges.
 */
 template <typename ObsIntegratorType = ObsStrategic<>>
-class RotVectorHypersingularOp: public OperatorBase<3, 3>
+class RotVectorHypersingularOp: public OperatorBase<NxRwg, Rwg>
 {
 
     static_assert(

@@ -23,9 +23,8 @@
 #include "types.hpp"
 #include "constants.hpp"
 #include "geometry/primitives/triangle.hpp"
-
+#include "rwg/function_space.hpp"
 #include "rwg/operators/base.hpp"
-
 #include "rwg/integrators/obs/base.hpp"
 #include "rwg/integrators/obs/strategic.hpp"
 
@@ -54,7 +53,7 @@ namespace bem::rwg
 * correspond to source edges.
 */
 template <typename ObsIntegratorType = ObsStrategic<>>
-class VectorDoubleLayerPvOp: public OperatorBase<3, 3>
+class VectorDoubleLayerPvOp: public OperatorBase<Rwg, Rwg>
 {
 
     static_assert(
@@ -128,7 +127,7 @@ protected:
 * correspond to source edges.
 */
 template <typename ObsIntegratorType = ObsStrategic<>>
-class RotVectorDoubleLayerPvOp: public OperatorBase<3, 3>
+class RotVectorDoubleLayerPvOp: public OperatorBase<NxRwg, Rwg>
 {
 
     static_assert(

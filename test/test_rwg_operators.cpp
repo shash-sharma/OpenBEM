@@ -561,6 +561,8 @@ int main(int argc, char** argv)
     VectorSingleLayerOp<> op_default_1;
     VectorHypersingularOp<> op_default_2;
 
+    // test::OperatorBase<Rwg, Rwg> test;
+
     return 0;
 
 }

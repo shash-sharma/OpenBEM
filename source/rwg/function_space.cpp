@@ -35,25 +35,18 @@ namespace bem::rwg
 
 EigMatNX<Float, 3> Rwg::value(
     const Triangle<3>& tri,
-    uint8_t edge,
     ConstEigRef<EigMatNX<Float, 3>> points,
-    const bool rotated
+    uint8_t idx
     )
 {
-    if (!rotated)
-        return (points.colwise() - tri.v((edge + 2) % 3)) * normalization(tri)[edge];
-    else
-        return -(
-            points.colwise() - tri.v((edge + 2) % 3)
-            ).colwise().cross(tri.normal()) * normalization(tri)[edge];
+    return (points.colwise() - tri.v((edge + 2) % 3)) * normalization(tri)[edge];
 };
 
 
 EigColVecN<Complex, 3> Rwg::test_field(
     const Triangle<3>& tri,
     std::function<EigMatNX<Complex, 3> (ConstEigRef<EigMatNX<Float, 3>>)> field_eval,
-    TriangleQuadratureBase<3>& tri_quad,
-    const bool rotated
+    TriangleQuadratureBase<3>& tri_quad
     )
 {
     tri_quad.compute_points_weights(tri);
@@ -64,7 +57,7 @@ EigColVecN<Complex, 3> Rwg::test_field(
     {
         result[edge] =
             ((
-                value(tri, edge, tri_quad.points(), rotated).array() * field.array()
+                value(tri, tri_quad.points(), edge).array() * field.array()
                 ).colwise().sum().matrix() * tri_quad.weights().transpose())[0];
     }
     return result;
@@ -74,8 +67,7 @@ EigColVecN<Complex, 3> Rwg::test_field(
 EigMatNX<Complex, 3> Rwg::reconstruct_field(
     const TriangleMesh<3>& mesh,
     const MatrixBase<Complex>& coeffs,
-    ConstEigRef<EigMatNX<Float, 3>> points,
-    const bool rotated
+    ConstEigRef<EigMatNX<Float, 3>> points
     )
 {
     if (coeffs.num_cols() > 1)
@@ -96,7 +88,74 @@ EigMatNX<Complex, 3> Rwg::reconstruct_field(
             for (uint8_t edge = 0; edge < 3; ++edge)
             {
                 Index idx = mesh.elem_edges()(edge, face);
-                field.col(point) += Rwg::value(tri, edge, points.col(point), rotated) * coeffs.value(idx, 0);
+                field.col(point) += value(tri, points.col(point), edge) * coeffs.value(idx, 0);
+            }
+        }
+    }
+
+    return field;
+
+};
+
+
+EigMatNX<Float, 3> NxRwg::value(
+    const Triangle<3>& tri,
+    ConstEigRef<EigMatNX<Float, 3>> points,
+    uint8_t idx
+    )
+{
+    return -(
+        points.colwise() - tri.v((edge + 2) % 3)
+        ).colwise().cross(tri.normal()) * normalization(tri)[edge];
+};
+
+
+EigColVecN<Complex, 3> NxRwg::test_field(
+    const Triangle<3>& tri,
+    std::function<EigMatNX<Complex, 3> (ConstEigRef<EigMatNX<Float, 3>>)> field_eval,
+    TriangleQuadratureBase<3>& tri_quad
+    )
+{
+    tri_quad.compute_points_weights(tri);
+    EigMatNX<Complex, 3> field = field_eval(tri_quad.points());
+
+    EigColVecN<Complex, 3> result = EigColVecN<Complex, 3>::Zero(3, 1);
+    for (uint8_t edge = 0; edge < 3; ++edge)
+    {
+        result[edge] =
+            ((
+                value(tri, tri_quad.points(), edge).array() * field.array()
+                ).colwise().sum().matrix() * tri_quad.weights().transpose())[0];
+    }
+    return result;
+};
+
+
+EigMatNX<Complex, 3> NxRwg::reconstruct_field(
+    const TriangleMesh<3>& mesh,
+    const MatrixBase<Complex>& coeffs,
+    ConstEigRef<EigMatNX<Float, 3>> points
+    )
+{
+    if (coeffs.num_cols() > 1)
+        throw std::runtime_error("NxRwg::reconstruct_field(): `coeffs` should be a column vector."
+            );
+
+    EigMatNX<Complex, 3> field = EigMatNX<Complex, 3>::Zero(3, points.cols());
+
+    for (Index point = 0; point < points.cols(); ++point)
+    {
+        for (Index face = 0; face < mesh.num_elems(); ++face)
+        {
+            Triangle<3> tri = mesh.elem_primitive(face);
+
+            if (!tri.point_in_triangle(points.col(point)))
+                continue;
+
+            for (uint8_t edge = 0; edge < 3; ++edge)
+            {
+                Index idx = mesh.elem_edges()(edge, face);
+                field.col(point) += value(tri, points.col(point), edge) * coeffs.value(idx, 0);
             }
         }
     }

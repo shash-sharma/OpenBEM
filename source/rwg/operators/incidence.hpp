@@ -20,6 +20,7 @@
 
 #include "types.hpp"
 #include "geometry/operations.hpp"
+#include "rwg/function_space.hpp"
 #include "rwg/operators/base.hpp"
 
 
@@ -44,7 +45,7 @@ namespace bem::rwg
 * \f$ i \f$ are considered normalized such that the output contains \f$ 1 \f$, \f$ -1 \f$, or \f$ 0 \f$.
 * Columns of the output correspond to source edges.
 */
-class DivRwgOp: public OperatorBase<1, 3>
+class DivRwgOp: public OperatorBase<Pulse, Rwg>
 {
 public:
 
