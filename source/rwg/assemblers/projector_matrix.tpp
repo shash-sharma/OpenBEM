@@ -32,7 +32,7 @@ namespace bem::rwg
 template <typename ExpansionSpace, uint8_t obs_dim>
 void ProjectorAssembler<ExpansionSpace, obs_dim>::assemble(
     MatrixBase<Complex>& mat,
-    ProjectorBase<ExpansionSpace::dof>& op,
+    ProjectorBase<ExpansionSpace>& op,
     const Complex k
     )
 {

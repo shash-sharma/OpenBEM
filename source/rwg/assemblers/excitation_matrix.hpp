@@ -33,7 +33,7 @@ namespace bem::rwg
 {
 
 // Forward declarations
-template <uint8_t obs_num_dof> class ExcitationBase;
+template <typename TestSpace> class ExcitationBase;
 
 /**
 * \addtogroup assm
@@ -79,7 +79,7 @@ public:
     */
     void assemble(
         MatrixBase<Complex>& mat,
-        ExcitationBase<TestSpace::dof>& exc,
+        ExcitationBase<TestSpace>& exc,
         const Complex k
         ) override;
 

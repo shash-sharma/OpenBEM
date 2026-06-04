@@ -153,7 +153,7 @@ public:
     MatrixType exc_matrix(
         const Float f,
         const Material& material,
-        ExcitationBase<3>& exc
+        ExcitationBase<Rwg>& exc
         )
     {
         std::vector<Index> obs_elems_vec (base::elem_pairs_.cols());

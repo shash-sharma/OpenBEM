@@ -149,7 +149,7 @@ protected:
         Complex eps_eff = base::structure_.background_material().eps_eff(f);
 
         ScalarSingleLayerOp op_Lp;
-        FaceOperatorAssembler assm_face (obs_mesh, src_mesh);
+        OperatorAssembler<Pulse, Pulse> assm_face (obs_mesh, src_mesh);
         MatrixType Lp;
         assm_face.assemble(Lp, op_Lp, k);
         Lp.scale(-one / eps_eff / (J * two_pi * f));
@@ -164,8 +164,8 @@ protected:
     */
     virtual MatrixType divergence_matrix() const
     {
-        DivRwgOp op_D;
-        FaceEdgeOperatorAssembler assm_div (base::structure_.mesh(), base::structure_.mesh());
+        DivergenceOp op_D;
+        OperatorAssembler<Pulse, Rwg> assm_div (base::structure_.mesh(), base::structure_.mesh());
         MatrixType D;
         assm_div.assemble(D, op_D, 0);
         return D;
@@ -246,7 +246,7 @@ protected:
         Complex eps_eff = base::structure_.background_material().eps_eff(f);
 
         RotGradScalarSingleLayerOp op_Lp;
-        EdgeFaceOperatorAssembler assm (obs_mesh, src_mesh);
+        OperatorAssembler<NxRwg, Pulse> assm (obs_mesh, src_mesh);
         MatrixType Lp;
         assm.assemble(Lp, op_Lp, k);
         Lp.scale(-one / eps_eff / (J * two_pi * f));

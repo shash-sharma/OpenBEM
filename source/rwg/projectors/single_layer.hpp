@@ -20,10 +20,9 @@
 
 #include "types.hpp"
 #include "geometry/primitives/triangle.hpp"
-
+#include "rwg/function_space.hpp"
 #include "rwg/integrators/src/base.hpp"
 #include "rwg/integrators/obs/quadrature.hpp"
-
 #include "rwg/projectors/base.hpp"
 
 
@@ -39,7 +38,7 @@ namespace bem::rwg
 * @brief Class for computing the vector single-layer potential projector.
 */
 template <typename SrcIntegratorType = SrcStrategic<>>
-class VectorSingleLayerProj: public ProjectorBase<3>
+class VectorSingleLayerProj: public ProjectorBase<Rwg>
 {
 
     static_assert(
@@ -94,7 +93,7 @@ private:
 * @brief Class for computing the scalar single-layer potential projector.
 */
 template <typename SrcIntegratorType = SrcStrategic<>>
-class ScalarSingleLayerProj: public ProjectorBase<1>
+class ScalarSingleLayerProj: public ProjectorBase<Pulse>
 {
 
     static_assert(
@@ -145,7 +144,7 @@ private:
 * @brief Class for computing the gradient of the scalar single-layer potential projector.
 */
 template <typename SrcIntegratorType = SrcStrategic<>>
-class GradScalarSingleLayerProj: public ProjectorBase<1>
+class GradScalarSingleLayerProj: public ProjectorBase<Pulse>
 {
 
     static_assert(
@@ -199,7 +198,7 @@ private:
 * @brief Class for computing the vector hypersingular potential projector.
 */
 template <typename SrcIntegratorType = SrcStrategic<>>
-class VectorHypersingularProj: public ProjectorBase<3>
+class VectorHypersingularProj: public ProjectorBase<Rwg>
 {
 
     static_assert(

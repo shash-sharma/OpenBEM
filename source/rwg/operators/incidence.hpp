@@ -77,7 +77,7 @@ public:
     * @return Unique pointer to the new object.
     */
     std::unique_ptr<OperatorBase<Pulse, Rwg>> clone() const override
-    { return std::make_unique<DivergenceOp<ObsIntegratorType>> (*this); };
+    { return std::make_unique<DivergenceOp> (*this); };
 
 };
 

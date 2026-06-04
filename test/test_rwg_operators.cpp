@@ -42,7 +42,6 @@
 #include "rwg/operators/double_layer.hpp"
 #include "rwg/operators/gram.hpp"
 #include "rwg/operators/incidence.hpp"
-#include "rwg/operators/generic.hpp"
 
 
 using namespace bem;
@@ -53,7 +52,7 @@ const Float LAMBDA = 1;
 
 
 void test_self_term(
-    OperatorName op, Complex k, Float tol = 1e-3, bool print_anyway = false
+    Complex k, Float tol = 1e-3, bool print_anyway = false
     )
 {
     Float a = LAMBDA / 10;
@@ -68,7 +67,7 @@ void test_self_term(
     SingularitySubtractedTaylorHGF sthgf;
 
     compare_quad_and_line(
-        op, k, sthgf, src_tri, obs_tri,
+        k, sthgf, src_tri, obs_tri,
         src_quad_order, obs_quad_order, src_line_order,
         tol, print_anyway, true, "test_self_term"
         );
@@ -78,7 +77,7 @@ void test_self_term(
 
 
 void test_shared_edge(
-    OperatorName op, Complex k, Float tol = 1e-3, bool print_anyway = false
+    Complex k, Float tol = 1e-3, bool print_anyway = false
     )
 {
     Float a = LAMBDA / 10;
@@ -93,7 +92,7 @@ void test_shared_edge(
     SingularitySubtractedTaylorHGF sthgf;
 
     compare_quad_and_line(
-        op, k, sthgf, src_tri, obs_tri,
+        k, sthgf, src_tri, obs_tri,
         src_quad_order, obs_quad_order, src_line_order,
         tol, print_anyway, true, "test_shared_edge"
         );
@@ -103,7 +102,7 @@ void test_shared_edge(
 
 
 void test_shared_edge_partial(
-    OperatorName op, Complex k, Float tol = 1e-3, bool print_anyway = false
+    Complex k, Float tol = 1e-3, bool print_anyway = false
     )
 {
     Float a = LAMBDA / 10;
@@ -118,7 +117,7 @@ void test_shared_edge_partial(
     SingularitySubtractedTaylorHGF sthgf;
 
     compare_quad_and_line(
-        op, k, sthgf, src_tri, obs_tri,
+        k, sthgf, src_tri, obs_tri,
         src_quad_order, obs_quad_order, src_line_order,
         tol, print_anyway, true, "test_shared_edge_partial"
         );
@@ -128,7 +127,7 @@ void test_shared_edge_partial(
 
 
 void test_shared_vertex(
-    OperatorName op, Complex k, Float tol = 1e-3, bool print_anyway = false
+    Complex k, Float tol = 1e-3, bool print_anyway = false
     )
 {
     Float a = LAMBDA / 10;
@@ -143,7 +142,7 @@ void test_shared_vertex(
     SingularitySubtractedTaylorHGF sthgf;
 
     compare_quad_and_line(
-        op, k, sthgf, src_tri, obs_tri,
+        k, sthgf, src_tri, obs_tri,
         src_quad_order, obs_quad_order, src_line_order,
         tol, print_anyway, true, "test_shared_vertex"
         );
@@ -153,7 +152,7 @@ void test_shared_vertex(
 
 
 void test_parallel_above(
-    OperatorName op, Complex k, Float tol = 1e-3, bool print_anyway = false
+    Complex k, Float tol = 1e-3, bool print_anyway = false
     )
 {
     Float a = LAMBDA / 10;
@@ -174,7 +173,7 @@ void test_parallel_above(
     SingularitySubtractedTaylorHGF sthgf;
 
     compare_quad_and_line(
-        op, k, sthgf, src_tri, obs_tri,
+        k, sthgf, src_tri, obs_tri,
         src_quad_order, obs_quad_order, src_line_order,
         tol, print_anyway, true, "test_parallel_above"
         );
@@ -184,7 +183,7 @@ void test_parallel_above(
 
 
 void test_parallel_below(
-    OperatorName op, Complex k, Float tol = 1e-3, bool print_anyway = false
+    Complex k, Float tol = 1e-3, bool print_anyway = false
     )
 {
     Float a = LAMBDA / 10;
@@ -205,7 +204,7 @@ void test_parallel_below(
     SingularitySubtractedTaylorHGF sthgf;
 
     compare_quad_and_line(
-        op, k, sthgf, src_tri, obs_tri,
+        k, sthgf, src_tri, obs_tri,
         src_quad_order, obs_quad_order, src_line_order,
         tol, print_anyway, true, "test_parallel_below"
         );
@@ -215,7 +214,7 @@ void test_parallel_below(
 
 
 void test_parallel_exact(
-    OperatorName op, Complex k, Float tol = 1e-3, bool print_anyway = false
+    Complex k, Float tol = 1e-3, bool print_anyway = false
     )
 {
     Float a = LAMBDA / 10;
@@ -237,7 +236,7 @@ void test_parallel_exact(
     SingularitySubtractedTaylorHGF sthgf;
 
     compare_quad_and_line(
-        op, k, sthgf, src_tri, obs_tri,
+        k, sthgf, src_tri, obs_tri,
         src_quad_order, obs_quad_order, src_line_order,
         tol, print_anyway, true, "test_parallel_exact"
         );
@@ -247,7 +246,7 @@ void test_parallel_exact(
 
 
 void test_coplanar(
-    OperatorName op, Complex k, Float tol = 1e-3, bool print_anyway = false
+    Complex k, Float tol = 1e-3, bool print_anyway = false
     )
 {
     Float a = LAMBDA / 10;
@@ -269,7 +268,7 @@ void test_coplanar(
     SingularitySubtractedTaylorHGF sthgf;
 
     compare_quad_and_line(
-        op, k, sthgf, src_tri, obs_tri,
+        k, sthgf, src_tri, obs_tri,
         src_quad_order, obs_quad_order, src_line_order,
         tol, print_anyway, true, "test_coplanar"
         );
@@ -279,7 +278,7 @@ void test_coplanar(
 
 
 void test_perpendicular(
-    OperatorName op, Complex k, Float tol = 1e-3, bool print_anyway = false
+    Complex k, Float tol = 1e-3, bool print_anyway = false
     )
 {
     Float a = LAMBDA / 10;
@@ -301,7 +300,7 @@ void test_perpendicular(
     SingularitySubtractedTaylorHGF sthgf;
 
     compare_quad_and_line(
-        op, k, sthgf, src_tri, obs_tri,
+        k, sthgf, src_tri, obs_tri,
         src_quad_order, obs_quad_order, src_line_order,
         tol, print_anyway, true, "test_perpendicular"
         );
@@ -311,7 +310,7 @@ void test_perpendicular(
 
 
 void test_proj_on_vertex(
-    OperatorName op, Complex k, Float tol = 1e-3, bool print_anyway = false
+    Complex k, Float tol = 1e-3, bool print_anyway = false
     )
 {
     Float a = LAMBDA / 10;
@@ -335,7 +334,7 @@ void test_proj_on_vertex(
     SingularitySubtractedTaylorHGF sthgf;
 
     compare_quad_and_line(
-        op, k, sthgf, src_tri, obs_tri,
+        k, sthgf, src_tri, obs_tri,
         src_quad_order, obs_quad_order, src_line_order,
         tol, print_anyway, true, "test_proj_on_vertex"
         );
@@ -345,7 +344,7 @@ void test_proj_on_vertex(
 
 
 void test_proj_on_edge(
-    OperatorName op, Complex k, Float tol = 1e-3, bool print_anyway = false
+    Complex k, Float tol = 1e-3, bool print_anyway = false
     )
 {
     Float a = LAMBDA / 10;
@@ -374,7 +373,7 @@ void test_proj_on_edge(
     SingularitySubtractedTaylorHGF sthgf;
 
     compare_quad_and_line(
-        op, k, sthgf, src_tri, obs_tri,
+        k, sthgf, src_tri, obs_tri,
         src_quad_order, obs_quad_order, src_line_order,
         tol, print_anyway, true, "test_proj_on_edge"
         );
@@ -384,7 +383,7 @@ void test_proj_on_edge(
 
 
 void test_nudge(
-    OperatorName op, Complex k, Float tol = 1e-3, bool print_anyway = false
+    Complex k, Float tol = 1e-3, bool print_anyway = false
     )
 {
     Float a = LAMBDA / 10;
@@ -399,7 +398,7 @@ void test_nudge(
     SingularitySubtractedTaylorHGF sthgf;
 
     compare_quad_and_line(
-        op, k, sthgf, src_tri, obs_tri,
+        k, sthgf, src_tri, obs_tri,
         src_quad_order, obs_quad_order, src_line_order,
         tol, print_anyway, true, "test_nudge"
         );
@@ -409,7 +408,7 @@ void test_nudge(
 
 
 void test_partial_overlap(
-    OperatorName op, Complex k, Float tol = 1e-3, bool print_anyway = false
+    Complex k, Float tol = 1e-3, bool print_anyway = false
     )
 {
     Float a = LAMBDA / 10;
@@ -437,7 +436,7 @@ void test_partial_overlap(
     SingularitySubtractedTaylorHGF sthgf;
 
     compare_quad_and_line(
-        op, k, sthgf, src_tri, obs_tri,
+        k, sthgf, src_tri, obs_tri,
         src_quad_order, obs_quad_order, src_line_order,
         tol, print_anyway, true, "test_partial_overlap"
         );
@@ -447,7 +446,7 @@ void test_partial_overlap(
 
 
 void test_reg(
-    OperatorName op, Complex k, Float tol = 1e-3, bool print_anyway = false
+    Complex k, Float tol = 1e-3, bool print_anyway = false
     )
 {
     Float a = LAMBDA / 10;
@@ -468,7 +467,7 @@ void test_reg(
     HGF hgf;
 
     compare_quad_and_line(
-        op, k, hgf, src_tri, obs_tri,
+        k, hgf, src_tri, obs_tri,
         src_quad_order, obs_quad_order, src_line_order,
         tol, print_anyway, false, "test_reg"
         );
@@ -478,7 +477,7 @@ void test_reg(
 
 
 void test_far(
-    OperatorName op, Complex k, Float tol = 1e-3, bool print_anyway = false
+    Complex k, Float tol = 1e-3, bool print_anyway = false
     )
 {
     Float a = LAMBDA / 10;
@@ -499,7 +498,7 @@ void test_far(
     HGF hgf;
 
     compare_quad_and_line(
-        op, k, hgf, src_tri, obs_tri,
+        k, hgf, src_tri, obs_tri,
         src_quad_order, obs_quad_order, src_line_order,
         tol, print_anyway, false, "test_far"
         );
@@ -519,49 +518,22 @@ int main(int argc, char** argv)
     Float f = c0 / LAMBDA;
     Complex k = two * pi * f * std::sqrt(eps0 * (one - (Float)0.1 * J) * mu0);
 
-    std::vector<OperatorName> op_names ({
-            OperatorName::VECTOR_SINGLE_LAYER,
-            OperatorName::ROT_VECTOR_SINGLE_LAYER,
-            OperatorName::VECTOR_DOUBLE_LAYER_PV,
-            OperatorName::ROT_VECTOR_DOUBLE_LAYER_PV,
-            OperatorName::SCALAR_SINGLE_LAYER,
-            OperatorName::VECTOR_HYPERSINGULAR,
-            // OperatorName::ROT_VECTOR_HYPERSINGULAR, // TODO
-            // OperatorName::ROT_GRAD_SCALAR_SINGLE_LAYER,
-            // OperatorName::RWG_RWG,
-            // OperatorName::ROT_RWG_RWG,
-            // OperatorName::PULSE_PULSE
-        });
-
-    for (int ii = 0; ii < op_names.size(); ++ii)
-    {
-        OperatorName op_name = op_names[ii];
-
-        test_self_term(op_name, k, tol);
-        test_shared_edge(op_name, k, tol);
-        test_shared_edge_partial(op_name, k, tol);
-        test_shared_vertex(op_name, k, tol);
-        test_parallel_above(op_name, k, tol);
-        test_parallel_below(op_name, k, tol);
-        test_parallel_exact(op_name, k, tol);
-        test_coplanar(op_name, k, tol);
-        test_perpendicular(op_name, k, 4e-2);
-        test_proj_on_vertex(op_name, k, tol);
-        test_proj_on_edge(op_name, k, tol);
-        test_nudge(op_name, k, tol);
-        test_partial_overlap(op_name, k, 5e-3);
-        test_reg(op_name, k, tol);
-        test_far(op_name, k, 1.7e-3);
-        test_far(op_name, Complex(k.real(), 0), tol);
-
-        // TODO: improvements for single precision
-    }
-
-    ObsQuadrature obs_quad_default;
-    VectorSingleLayerOp<> op_default_1;
-    VectorHypersingularOp<> op_default_2;
-
-    // test::OperatorBase<Rwg, Rwg> test;
+    test_self_term(k, tol);
+    test_shared_edge(k, tol);
+    test_shared_edge_partial(k, tol);
+    test_shared_vertex(k, tol);
+    test_parallel_above(k, tol);
+    test_parallel_below(k, tol);
+    test_parallel_exact(k, tol);
+    test_coplanar(k, tol);
+    test_perpendicular(k, 4e-2);
+    test_proj_on_vertex(k, tol);
+    test_proj_on_edge(k, tol);
+    test_nudge(k, tol);
+    test_partial_overlap(k, 5e-3);
+    test_reg(k, tol);
+    test_far(k, 1.7e-3);
+    test_far(Complex(k.real(), 0), tol);
 
     return 0;
 

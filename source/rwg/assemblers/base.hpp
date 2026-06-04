@@ -33,6 +33,8 @@
 namespace bem::rwg
 {
 
+const Index EDGE_ELEM_RATIO = 2;
+
 /**
 * \addtogroup assm
 * @{
@@ -133,7 +135,7 @@ public:
     */
     virtual void assemble(
         MatrixBase<Complex>& mat,
-        ExcitationBase<TestSpace::dof>& exc,
+        ExcitationBase<TestSpace>& exc,
         const Complex k
         ) = 0;
 
@@ -175,7 +177,7 @@ public:
     */
     virtual void assemble(
         MatrixBase<Complex>& mat,
-        ProjectorBase<ExpansionSpace::dof>& op,
+        ProjectorBase<ExpansionSpace>& op,
         const Complex k
         ) = 0;
 

@@ -19,6 +19,7 @@
 #include <cmath>
 #include <vector>
 #include <array>
+#include <typeinfo>
 
 #include "types.hpp"
 
@@ -35,7 +36,9 @@
 #include "rwg/integrators/obs/base.hpp"
 #include "rwg/integrators/obs/quadrature.hpp"
 
-#include "rwg/operators/generic.hpp"
+#include "rwg/operators/single_layer.hpp"
+#include "rwg/operators/double_layer.hpp"
+#include "rwg/operators/gram.hpp"
 
 
 using namespace bem;
@@ -52,9 +55,26 @@ Triangle<3> make_triangle(Float a, Float b, Float theta, EigColVecN<Float, 3> of
 }
 
 
+template <typename ObsIntegratorType>
+auto make_ops_tuple(ObsIntegratorType& obs_int)
+{
+    return std::make_tuple(
+        VectorSingleLayerOp (obs_int),
+        RotVectorSingleLayerOp (obs_int),
+        ScalarSingleLayerOp (obs_int),
+        // RotGradScalarSingleLayerOp (obs_int),
+        VectorHypersingularOp (obs_int),
+        // RotVectorHypersingularOp (obs_int),
+        VectorDoubleLayerPvOp (obs_int),
+        RotVectorDoubleLayerPvOp (obs_int),
+        VectorIdentityOp<> (),
+        RotVectorIdentityOp<> ()
+        );
+}
+
+
 template <typename ObsIntegratorType, typename ObsIntegratorRefType>
-bool compare_ops(
-    const OperatorName op_name,
+void compare_ops(
     Complex k,
     Triangle<3> &src_tri,
     Triangle<3> &obs_tri,
@@ -66,55 +86,61 @@ bool compare_ops(
     )
 {
 
-    EigMat<Complex> result, result_ref;
+    auto ops = make_ops_tuple(obs_int);
+    auto ops_ref = make_ops_tuple(obs_int_ref);
 
-    if (op_name == OperatorName::SCALAR_SINGLE_LAYER ||
-        op_name == OperatorName::PULSE_PULSE)
-    {
-        GenericPulseOp op (op_name, obs_int);
-        result = op.compute(k, obs_tri, src_tri);
+    std::apply(
+        [&] (auto&&... op)
+        {
+            std::apply(
+                [&] (auto&&... op_ref)
+                {([&]
+                {
+                    EigMat<Complex> result, result_ref;
+                    result = op.compute(k, obs_tri, src_tri);
+                    result_ref = op_ref.compute(k, obs_tri, src_tri);
 
-        GenericPulseOp op_ref (op_name, obs_int_ref);
-        result_ref = op_ref.compute(k, obs_tri, src_tri);
-    }
-    else
-    {
-        GenericRwgOp op (op_name, obs_int);
-        result = op.compute(k, obs_tri, src_tri);
+                    EigMat<Float> error = (
+                        result_ref - result
+                        ).array().abs() / result_ref.array().abs().maxCoeff();
 
-        GenericRwgOp op_ref (op_name, obs_int_ref);
-        result_ref = op_ref.compute(k, obs_tri, src_tri);
-    }
+                    if (result_ref.array().abs().maxCoeff() == 0.0)
+                        error = (result_ref - result).array().abs();
 
-    bool pass = false;
+                    bool pass = (error.array() <= tol).all();
 
-    EigMat<Float> error = (result_ref - result).array().abs() / result_ref.array().abs().maxCoeff();
-    if (result_ref.array().abs().maxCoeff() == 0.0)
-        error = (result_ref - result).array().abs();
-    pass = (error.array() <= tol).all();
-    if (!pass || print_anyway)
-    {
-        std::cout << "====== operator " << op_name << " ======" << std::endl;
+                    if (!pass || print_anyway)
+                    {
+                        std::cout << "====== operator " << typeid(op).name()
+                                  << " ======" << std::endl;
 
-        std::cout << "--- " << message << ", k = " << k << " rad/m ---" << std::endl;
+                        std::cout << "--- " << message
+                                  << ", k = " << k
+                                  << " rad/m ---" << std::endl;
 
-        std::cout << "--- FAIL ---\n  op_name: " << op_name
-                << "\n  max error: " << error.maxCoeff()
-                << "\n  errors:\n" << error
-                // << "\n  src_tri:\n" << src_tri.v()
-                // << "\n  obs_tri:\n" << obs_tri.v()
-                << "\n  ref vals:\n" << result_ref
-                << "\n  vals:\n" << result << std::endl;
-    }
+                        std::cout << "--- FAIL ---\n  op_name: " << typeid(op).name()
+                                  << "\n  max error: " << error.maxCoeff()
+                                  << "\n  errors:\n" << error
+                            // << "\n  src_tri:\n" << src_tri.v()
+                            // << "\n  obs_tri:\n" << obs_tri.v()
+                                  << "\n  ref vals:\n" << result_ref
+                                  << "\n  vals:\n" << result << std::endl;
+                    }
 
-    return pass;
+                }(), ...); },
+                ops_ref
+                );
+        },
+        ops
+        );
+
+    return;
 
 }
 
 
 template <typename ScalarKernelType>
-bool compare_quad_and_line(
-    OperatorName op_name,
+void compare_quad_and_line(
     Complex k,
     ScalarKernelType &kernel,
     Triangle<3> &src_tri,
@@ -135,21 +161,22 @@ bool compare_quad_and_line(
     SrcLineIntegrator src_int_line (src_line_quad);
     ObsQuadrature obs_int_line (obs_tri_quad, src_int_line);
 
-    bool pass = false;
     if (singularity)
     {
         SrcSingularity src_int_quad (src_tri_quad, kernel);
         ObsQuadrature obs_int_quad (obs_tri_quad, src_int_quad);
-        pass = compare_ops(op_name, k, src_tri, obs_tri, obs_int_quad, obs_int_line, tol, print_anyway, message);
+
+        compare_ops(k, src_tri, obs_tri, obs_int_quad, obs_int_line, tol, print_anyway, message);
     }
     else
     {
         SrcQuadrature src_int_quad (src_tri_quad, kernel);
         ObsQuadrature obs_int_quad (obs_tri_quad, src_int_quad);
-        pass = compare_ops(op_name, k, src_tri, obs_tri, obs_int_quad, obs_int_line, tol, print_anyway, message);
+
+        compare_ops(k, src_tri, obs_tri, obs_int_quad, obs_int_line, tol, print_anyway, message);
     }
 
-    return pass;
+    return;
 }
 
 #endif

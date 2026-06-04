@@ -33,8 +33,6 @@ template <typename T> class MatrixBase;
 namespace bem::rwg
 {
 
-const Index EDGE_ELEM_RATIO = 2;
-
 /**
 * \addtogroup assm
 * @{

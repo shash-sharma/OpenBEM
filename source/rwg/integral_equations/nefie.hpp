@@ -155,7 +155,7 @@ public:
     MatrixType exc_matrix(
         const Float f,
         const Material& material,
-        ExcitationBase<3>& exc
+        ExcitationBase<NxRwg>& exc
         )
     {
         std::vector<Index> obs_elems_vec (base::elem_pairs_.cols());
@@ -165,7 +165,7 @@ public:
         obs_elems_vec.erase(std::unique(obs_elems_vec.begin(), obs_elems_vec.end()), obs_elems_vec.end());
 
         EigRowVec<Index> obs_elems = EigRowVec<Index>::Map(&obs_elems_vec[0], obs_elems_vec.size());
-        ExcitationAssembler<Rwg> exc_assembler (base::obs_mesh_, obs_elems);
+        ExcitationAssembler<NxRwg> exc_assembler (base::obs_mesh_, obs_elems);
 
         Complex k = material.k(f);
         MatrixType inc (base::obs_mesh_.num_edges(), exc.num_excitations());

@@ -48,17 +48,21 @@ class OperatorBase
         std::is_base_of<FunctionSpaceBase<
             TestSpace, TestSpace::dof, TestSpace::dim
             >, TestSpace>::value,
-        "OperatorAssemblerBase: `TestSpace` must derive from `FunctionSpaceBase`"
+        "OperatorBase: `TestSpace` must derive from `FunctionSpaceBase`"
         );
 
     static_assert(
         std::is_base_of<FunctionSpaceBase<
             ExpansionSpace, ExpansionSpace::dof, ExpansionSpace::dim
             >, ExpansionSpace>::value,
-        "OperatorAssemblerBase: `ExpansionSpace` must derive from `FunctionSpaceBase`"
+        "OperatorBase: `ExpansionSpace` must derive from `FunctionSpaceBase`"
         );
 
 public:
+
+    using TestSpaceType = TestSpace;
+    using ExpansionSpaceType = ExpansionSpace;
+
 
     /**
     * @brief Computes operator values for the given observation and source triangles.

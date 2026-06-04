@@ -31,7 +31,7 @@ namespace bem::rwg
 template <typename TestSpace>
 void ExcitationAssembler<TestSpace>::assemble(
     MatrixBase<Complex>& mat,
-    ExcitationBase<TestSpace::dof>& exc,
+    ExcitationBase<TestSpace>& exc,
     const Complex k
     )
 {

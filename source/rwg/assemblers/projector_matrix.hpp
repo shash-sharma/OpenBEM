@@ -36,7 +36,7 @@ namespace bem::rwg
 {
 
 // Forward declarations
-template <uint8_t src_num_dof> class ProjectorBase;
+template <typename ExpansionSpace> class ProjectorBase;
 
 /**
 * \addtogroup assm
@@ -86,7 +86,7 @@ public:
     */
     void assemble(
         MatrixBase<Complex>& mat,
-        ProjectorBase<ExpansionSpace::dof>& op,
+        ProjectorBase<ExpansionSpace>& op,
         const Complex k
         ) override;
 
