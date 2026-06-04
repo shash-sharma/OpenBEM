@@ -472,18 +472,16 @@ int main(int argc, char** argv)
     // RWG-based field, given the coefficients, at given points on the mesh. We'll do this for both
     // the TEFIE and NMFIE cases to compare. This requires the `rwg/function_space.hpp` header.
 
-    bem::EigMatNX<bem::Float, 3> j_surf_tefie = bem::rwg::Rwg::reconstruct_field(
+    bem::EigMatNX<bem::Float, 3> j_surf_tefie = bem::Rwg::reconstruct_field(
         structure.mesh(), // mesh with which the field is associated
         j_tefie, // RWG coefficients computed using the TEFIE
-        structure.mesh().elem_centroids(), // points at which to compute field values
-        false // whether the field was expanded using rotated RWGs; `false` means regular RWGs
+        structure.mesh().elem_centroids() // points at which to compute field values
         ).array().real(); // Eigen syntax to keep only the real part of the computed currents
 
-    bem::EigMatNX<bem::Float, 3> j_surf_nmfie = bem::rwg::Rwg::reconstruct_field(
+    bem::EigMatNX<bem::Float, 3> j_surf_nmfie = bem::Rwg::reconstruct_field(
         structure.mesh(), // mesh with which the field is associated
         j_nmfie, // RWG coefficients computed using the NMFIE
-        structure.mesh().elem_centroids(), // points at which to compute field values
-        false // whether the field was expanded using rotated RWGs; `false` means regular RWGs
+        structure.mesh().elem_centroids() // points at which to compute field values
         ).array().real(); // Eigen syntax to keep only the real part of the computed currents
 
     // Use OpenBEM's built-in Gmsh field writer to write the fields to disk.

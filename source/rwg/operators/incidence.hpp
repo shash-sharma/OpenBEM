@@ -20,6 +20,7 @@
 
 #include "types.hpp"
 #include "geometry/operations.hpp"
+#include "rwg/function_space.hpp"
 #include "rwg/operators/base.hpp"
 
 
@@ -44,7 +45,7 @@ namespace bem::rwg
 * \f$ i \f$ are considered normalized such that the output contains \f$ 1 \f$, \f$ -1 \f$, or \f$ 0 \f$.
 * Columns of the output correspond to source edges.
 */
-class DivRwgOp: public OperatorBase<1, 3>
+class DivergenceOp: public OperatorBase<Pulse, Rwg>
 {
 public:
 
@@ -69,6 +70,14 @@ public:
         result = src_tri.edge_polarities();
         return result;
     };
+
+
+    /**
+    * @brief Returns a unique pointer to a deep copy of this object.
+    * @return Unique pointer to the new object.
+    */
+    std::unique_ptr<OperatorBase<Pulse, Rwg>> clone() const override
+    { return std::make_unique<DivergenceOp> (*this); };
 
 };
 

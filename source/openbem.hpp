@@ -65,8 +65,6 @@
 #include "rwg/operators/double_layer.hpp"
 #include "rwg/operators/gram.hpp"
 #include "rwg/operators/incidence.hpp"
-#include "rwg/operators/generic.hpp"
-#include "rwg/operators/vector_ops.hpp"
 
 #include "rwg/projectors/base.hpp"
 #include "rwg/projectors/single_layer.hpp"

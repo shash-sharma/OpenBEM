@@ -51,7 +51,7 @@ EigMatNX<Complex, 3> NxRwgPlaneWave::compute(const Complex k, const Triangle<3>&
     EigMatNX<Complex, 3> result = EigMatNX<Complex, 3>::Zero(3, pos_.cols());
 
     for (rhs = 0; rhs < pos_.cols(); ++rhs)
-        result.col(rhs) = Rwg::test_field(obs_tri, eval_lambda, *tri_quad_, true);
+        result.col(rhs) = NxRwg::test_field(obs_tri, eval_lambda, *tri_quad_);
 
     return result;
 };

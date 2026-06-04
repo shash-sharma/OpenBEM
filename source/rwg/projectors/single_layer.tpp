@@ -41,7 +41,9 @@ EigMatXN<Complex, 3> VectorSingleLayerProj<SrcIntegratorType>::compute(
     transform_coordinates(obs_points_local, src_tri_local, obs_points, src_tri);
 
     src_integrator_.set_compute_terms(true, false);
-    const SrcResult src_result = src_integrator_.integrate(k, src_tri_local, obs_points_local);
+    const SrcResult src_result = src_integrator_.integrate(
+        k, src_tri_local, obs_points_local
+        );
 
     EigMatMN<Float, 3, 3> local_uvw = src_tri.local_coordinate_basis();
     EigRowVecN<Float, 3> norms = Rwg::normalization(src_tri);
@@ -50,8 +52,11 @@ EigMatXN<Complex, 3> VectorSingleLayerProj<SrcIntegratorType>::compute(
     // source triangle edges
     for (uint8_t jj = 0; jj < 3; ++jj)
     {
-        EigMatNX<Complex, 2> rwg_g = src_result.rs_g - src_tri_local.v((jj + 2) % 3) * src_result.g;
-        result.col(jj) = (local_uvw.leftCols(2) * rwg_g).reshaped(3 * obs_points.cols(), 1) *
+        EigMatNX<Complex, 2> rwg_g = src_result.rs_g - src_tri_local.v((jj + 2) % 3) *
+            src_result.g;
+        result.col(jj) = (
+            local_uvw.leftCols(2) * rwg_g
+            ).reshaped(3 * obs_points.cols(), 1) *
                             norms(jj);
     }
 
@@ -74,7 +79,9 @@ EigMatXN<Complex, 1> ScalarSingleLayerProj<SrcIntegratorType>::compute(
     transform_coordinates(obs_points_local, src_tri_local, obs_points, src_tri);
 
     src_integrator_.set_compute_terms(true, false);
-    const SrcResult src_result = src_integrator_.integrate(k, src_tri_local, obs_points_local);
+    const SrcResult src_result = src_integrator_.integrate(
+        k, src_tri_local, obs_points_local
+        );
 
     return src_result.g.transpose() * Pulse::normalization(src_tri);
 
@@ -95,7 +102,9 @@ EigMatXN<Complex, 1> GradScalarSingleLayerProj<SrcIntegratorType>::compute(
     transform_coordinates(obs_points_local, src_tri_local, obs_points, src_tri);
 
     src_integrator_.set_compute_terms(false, true);
-    const SrcResult src_result = src_integrator_.integrate(k, src_tri_local, obs_points_local);
+    const SrcResult src_result = src_integrator_.integrate(
+        k, src_tri_local, obs_points_local
+        );
 
     EigMatMN<Float, 3, 3> local_uvw = src_tri.local_coordinate_basis();
     EigMatXN<Complex, 1> result = (

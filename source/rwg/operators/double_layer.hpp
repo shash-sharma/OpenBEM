@@ -23,9 +23,8 @@
 #include "types.hpp"
 #include "constants.hpp"
 #include "geometry/primitives/triangle.hpp"
-
+#include "rwg/function_space.hpp"
 #include "rwg/operators/base.hpp"
-
 #include "rwg/integrators/obs/base.hpp"
 #include "rwg/integrators/obs/strategic.hpp"
 
@@ -54,7 +53,7 @@ namespace bem::rwg
 * correspond to source edges.
 */
 template <typename ObsIntegratorType = ObsStrategic<>>
-class VectorDoubleLayerPvOp: public OperatorBase<3, 3>
+class VectorDoubleLayerPvOp: public OperatorBase<Rwg, Rwg>
 {
 
     static_assert(
@@ -105,6 +104,14 @@ public:
         ) override;
 
 
+    /**
+    * @brief Returns a unique pointer to a deep copy of this object.
+    * @return Unique pointer to the new object.
+    */
+    std::unique_ptr<OperatorBase<Rwg, Rwg>> clone() const override
+    { return std::make_unique<VectorDoubleLayerPvOp<ObsIntegratorType>> (*this); };
+
+
 protected:
 
     ObsIntegratorType obs_integrator_;
@@ -128,7 +135,7 @@ protected:
 * correspond to source edges.
 */
 template <typename ObsIntegratorType = ObsStrategic<>>
-class RotVectorDoubleLayerPvOp: public OperatorBase<3, 3>
+class RotVectorDoubleLayerPvOp: public OperatorBase<NxRwg, Rwg>
 {
 
     static_assert(
@@ -177,6 +184,14 @@ public:
         const Triangle<3>& src_tri,
         const ObsResult& obs_result
         ) override;
+
+
+    /**
+    * @brief Returns a unique pointer to a deep copy of this object.
+    * @return Unique pointer to the new object.
+    */
+    std::unique_ptr<OperatorBase<NxRwg, Rwg>> clone() const override
+    { return std::make_unique<RotVectorDoubleLayerPvOp<ObsIntegratorType>> (*this); };
 
 
 protected:

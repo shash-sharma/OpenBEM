@@ -23,7 +23,7 @@
 
 #include "types.hpp"
 #include "quadrature/triangle/gauss.hpp"
-
+#include "rwg/function_space.hpp"
 #include "rwg/excitations/base.hpp"
 
 
@@ -43,11 +43,11 @@ namespace bem::rwg
 */
 
 /**
-* @brief Class for computing plane wave excitation vector coefficients for RWG-based BEM systems.
-* @tparam obs_num_dof - Number of degrees of freedom associated with each observation triangle.
+* @brief Class for computing plane wave excitation coefficients for RWG-based BEM systems.
+* @tparam TestSpace - Testing function space.
 */
-template <uint8_t obs_num_dof>
-class PlaneWaveBase: public ExcitationBase<obs_num_dof>
+template <typename TestSpace>
+class PlaneWaveBase: public ExcitationBase<TestSpace>
 {
 public:
 
@@ -137,11 +137,11 @@ protected:
 /**
 * @brief Class for computing plane wave excitation vector coefficients when tested with RWG functions.
 */
-class RwgPlaneWave: public PlaneWaveBase<3>
+class RwgPlaneWave: public PlaneWaveBase<Rwg>
 {
 public:
 
-    using PlaneWaveBase<3>::PlaneWaveBase;
+    using PlaneWaveBase<Rwg>::PlaneWaveBase;
 
     /**
     * @brief Computes the plane wave excitation coefficients when the field is tested with RWG functions.
@@ -159,11 +159,11 @@ public:
 /**
 * @brief Class for computing plane wave excitation vector coefficients when tested with rotated RWG functions.
 */
-class NxRwgPlaneWave: public PlaneWaveBase<3>
+class NxRwgPlaneWave: public PlaneWaveBase<NxRwg>
 {
 public:
 
-    using PlaneWaveBase<3>::PlaneWaveBase;
+    using PlaneWaveBase<NxRwg>::PlaneWaveBase;
 
     /**
     * @brief Computes the plane wave excitation coefficients when the field is tested with rotated RWG functions.

@@ -20,10 +20,9 @@
 
 #include "types.hpp"
 #include "geometry/primitives/triangle.hpp"
-
+#include "rwg/function_space.hpp"
 #include "rwg/integrators/src/base.hpp"
 #include "rwg/integrators/obs/quadrature.hpp"
-
 #include "rwg/projectors/base.hpp"
 
 
@@ -39,7 +38,7 @@ namespace bem::rwg
 * @brief Class for computing the vector double-layer potential projector.
 */
 template <typename SrcIntegratorType = SrcStrategic<>>
-class VectorDoubleLayerProj: public ProjectorBase<3>
+class VectorDoubleLayerProj: public ProjectorBase<Rwg>
 {
 
     static_assert(

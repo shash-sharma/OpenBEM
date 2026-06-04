@@ -62,7 +62,7 @@ public:
         const Material& material
         )
     {
-        DivRwgOp op_D;
+        DivergenceOp op_D;
         MatrixType D;
         assm_div_.assemble(D, op_D, 0);
         return D;
@@ -89,7 +89,7 @@ public:
 
 protected:
 
-    FaceEdgeOperatorAssembler assm_div_ = FaceEdgeOperatorAssembler(
+    OperatorAssembler<Pulse, Rwg> assm_div_ = OperatorAssembler<Pulse, Rwg> (
         base::obs_mesh_, base::src_mesh_, base::elem_pairs_
         );
 

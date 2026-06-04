@@ -85,7 +85,7 @@ void test_unit_cube_plane_wave(Complex k)
 
     EigenMatrix<Complex> rhs;
 
-    EdgeExcitationAssembler pw_mat (mesh);
+    ExcitationAssembler<Rwg> pw_mat (mesh);
     pw_mat.assemble(rhs, pw, k);
     // rhs.print();
 
@@ -147,7 +147,7 @@ void test_unit_cube_inf_gap()
 
     EigenMatrix<Complex> rhs;
 
-    EdgeExcitationAssembler pw_mat (mesh);
+    ExcitationAssembler<Rwg> pw_mat (mesh);
     pw_mat.assemble(rhs, inf_gap, 0);
 
     // rhs.print();

@@ -178,9 +178,6 @@ set(SRC_FILES
     ${SRC_DIR}/kernels/hgf.cpp
     ${SRC_DIR}/rwg/function_space.cpp
     ${SRC_DIR}/rwg/assemblers/index_generator.cpp
-    ${SRC_DIR}/rwg/assemblers/operator_matrix.cpp
-    ${SRC_DIR}/rwg/assemblers/excitation_matrix.cpp
-    ${SRC_DIR}/rwg/assemblers/projector_matrix.cpp
     ${SRC_DIR}/rwg/excitations/inf_gap.cpp
     ${SRC_DIR}/rwg/excitations/plane_wave.cpp
 )
@@ -267,9 +264,9 @@ if (BUILD_TESTS STREQUAL "yes")
     target_include_directories(test_ops_sphere_rcs PRIVATE ${INC_DIR})
     target_link_libraries(test_ops_sphere_rcs ${LINK_LIBS})
 
-    add_executable(test_vector_ops_sphere_rcs ${TEST_DIR}/test_vector_ops_sphere_rcs.cpp)
-    target_include_directories(test_vector_ops_sphere_rcs PRIVATE ${INC_DIR})
-    target_link_libraries(test_vector_ops_sphere_rcs ${LINK_LIBS})
+    # add_executable(test_vector_ops_sphere_rcs ${TEST_DIR}/test_vector_ops_sphere_rcs.cpp)
+    # target_include_directories(test_vector_ops_sphere_rcs PRIVATE ${INC_DIR})
+    # target_link_libraries(test_vector_ops_sphere_rcs ${LINK_LIBS})
 
     add_executable(test_lineint_sphere_rcs ${TEST_DIR}/test_lineint_sphere_rcs.cpp)
     target_include_directories(test_lineint_sphere_rcs PRIVATE ${INC_DIR})

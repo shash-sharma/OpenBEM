@@ -20,10 +20,9 @@
 
 #include "types.hpp"
 #include "constants.hpp"
-
 #include "geometry/primitives/triangle.hpp"
 #include "quadrature/triangle/gauss.hpp"
-
+#include "rwg/function_space.hpp"
 #include "rwg/operators/base.hpp"
 
 
@@ -52,21 +51,21 @@ namespace bem::rwg
 * to source edges.
 */
 template <typename TriangleQuadratureType = GaussTriangleQuadrature<3>>
-class RwgRwgOp: public OperatorBase<3, 3>
+class VectorIdentityOp: public OperatorBase<Rwg, Rwg>
 {
 
     static_assert(
         std::is_base_of<TriangleQuadratureBase<3>, TriangleQuadratureType>::value,
-        "RwgRwgOp: `TriangleQuadratureType` must derive from `TriangleQuadratureBase<3>`"
+        "VectorIdentityOp: `TriangleQuadratureType` must derive from `TriangleQuadratureBase<3>`"
         );
 
 public:
 
     /**
-    * @brief Constructs an `RwgRwgOp` object with a specified quadrature object for integration.
+    * @brief Constructs a `VectorIdentityOp` object with a specified quadrature object for integration.
     * @param[in] tri_quad - Triangle quadrature object to use for integration.
     */
-    RwgRwgOp(const TriangleQuadratureType tri_quad = GaussTriangleQuadrature<3>()):
+    VectorIdentityOp(const TriangleQuadratureType tri_quad = GaussTriangleQuadrature<3>()):
         tri_quad_(tri_quad) {};
 
 
@@ -82,6 +81,14 @@ public:
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
         ) override;
+
+
+    /**
+    * @brief Returns a unique pointer to a deep copy of this object.
+    * @return Unique pointer to the new object.
+    */
+    std::unique_ptr<OperatorBase<Rwg, Rwg>> clone() const override
+    { return std::make_unique<VectorIdentityOp<TriangleQuadratureType>> (*this); };
 
 
 private:
@@ -109,21 +116,21 @@ private:
 * to source edges.
 */
 template <typename TriangleQuadratureType = GaussTriangleQuadrature<3>>
-class RotRwgRwgOp: public OperatorBase<3, 3>
+class RotVectorIdentityOp: public OperatorBase<NxRwg, Rwg>
 {
 
     static_assert(
         std::is_base_of<TriangleQuadratureBase<3>, TriangleQuadratureType>::value,
-        "RotRwgRwgOp: `TriangleQuadratureType` must derive from `TriangleQuadratureBase<3>`"
+        "RotVectorIdentityOp: `TriangleQuadratureType` must derive from `TriangleQuadratureBase<3>`"
         );
 
 public:
 
     /**
-    * @brief Constructs a `RotRwgRwgOp` object with a specified quadrature object for integration.
+    * @brief Constructs a `RotVectorIdentityOp` object with a specified quadrature object for integration.
     * @param[in] tri_quad - Triangle quadrature object to use for integration.
     */
-    RotRwgRwgOp(const TriangleQuadratureType tri_quad = GaussTriangleQuadrature<3>()):
+    RotVectorIdentityOp(const TriangleQuadratureType tri_quad = GaussTriangleQuadrature<3>()):
         tri_quad_(tri_quad) {};
 
 
@@ -139,6 +146,14 @@ public:
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
         ) override;
+
+
+    /**
+    * @brief Returns a unique pointer to a deep copy of this object.
+    * @return Unique pointer to the new object.
+    */
+    std::unique_ptr<OperatorBase<NxRwg, Rwg>> clone() const override
+    { return std::make_unique<RotVectorIdentityOp<TriangleQuadratureType>> (*this); };
 
 
 private:

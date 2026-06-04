@@ -19,6 +19,7 @@
 #define BEM_RWG_EXC_BASE_H
 
 #include "types.hpp"
+#include "rwg/function_space.hpp"
 
 
 namespace bem
@@ -38,15 +39,23 @@ namespace bem::rwg
 
 /**
 * @brief Base class for generating excitation coefficients for RWG-based BEM systems.
-* @tparam obs_num_dof - Number of degrees of freedom associated with each observation triangle.
+* @tparam TestSpace - Testing function space.
 */
-template <uint8_t obs_num_dof>
+template <typename TestSpace>
 class ExcitationBase
 {
 
-    static_assert((obs_num_dof > 0), "`obs_num_dof` must be greater than 0.");
+    static_assert(
+        std::is_base_of<FunctionSpaceBase<
+            TestSpace, TestSpace::dof, TestSpace::dim
+            >, TestSpace>::value,
+        "ExcitationBase: `TestSpace` must derive from `FunctionSpaceBase`"
+        );
 
 public:
+
+    using TestSpaceType = TestSpace;
+
 
     /**
     * @brief Computes the excitation coefficients for each degree of freedom associated with
@@ -58,7 +67,7 @@ public:
     * than one excitation (i.e., more than one right-hand side). The number of excitations and various
     * other settings should be provided via the inheriting class's methods.
     */
-    virtual EigMatNX<Complex, obs_num_dof> compute(
+    virtual EigMatNX<Complex, TestSpace::dof> compute(
         const Complex k,
         const Triangle<3>& obs_tri
         ) = 0;

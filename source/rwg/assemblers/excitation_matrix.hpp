@@ -33,7 +33,7 @@ namespace bem::rwg
 {
 
 // Forward declarations
-template <uint8_t obs_num_dof> class ExcitationBase;
+template <typename TestSpace> class ExcitationBase;
 
 /**
 * \addtogroup assm
@@ -41,55 +41,53 @@ template <uint8_t obs_num_dof> class ExcitationBase;
 */
 
 /**
-* @brief Class for generating excitation matrices for RWG-based BEM systems with RWG testing functions.
+* @brief Class for generating excitation matrices for RWG-based systems.
+* @tparam TestSpace - Testing function space.
 */
-class EdgeExcitationAssembler: public ExcitationAssemblerBase<3>
+template <typename TestSpace>
+class ExcitationAssembler: public ExcitationAssemblerBase<TestSpace>
 {
 
-    using base = ExcitationAssemblerBase<3>;
-    using base::base;
+    using base = ExcitationAssemblerBase<TestSpace>;
 
 public:
+
+    /**
+    * @brief Constructs an `ExcitationAssembler` for a given mesh on given test elements.
+    * @param[in] mesh - Triangle mesh for which the excitation matrix is to be assembled.
+    * @param[in] elems - Triangle index pairs on which to test the incident field.
+    */
+    ExcitationAssembler(
+        const TriangleMesh<3>& mesh,
+        EigRowVec<Index> elems = EigRowVec<Index>::Zero(1, 0)
+        ):
+        mesh_(mesh),
+        elems_(elems)
+    {
+        if (elems_.cols() == 0)
+            elems_ = EigRowVec<Index>::LinSpaced(mesh_.num_elems(), 0, mesh_.num_elems() - 1);
+        return;
+    };
+
 
     /**
     * @brief Assembles the excitation matrix for a given excitation object and observation triangle mesh.
     * @param[out] mat - Matrix to store the assembled excitation coefficients, with columns corresponding
     * to each right-hand side, and rows corresponding to observation mesh edges.
-    * @param[in] exc - Excitation object that computes the coefficients to be assembled into `mat`.
+    * @param[in] exc - Excitation object that computes the coefficients to assemble into `mat`.
     * @param[in] k - Complex wavenumber.
     */
     void assemble(
         MatrixBase<Complex>& mat,
-        ExcitationBase<3>& exc,
+        ExcitationBase<TestSpace>& exc,
         const Complex k
         ) override;
 
-};
 
+protected:
 
-/**
-* @brief Class for generating excitation matrices for RWG-based BEM systems with pulse testing functions.
-*/
-class FaceExcitationAssembler: public ExcitationAssemblerBase<1>
-{
-
-    using base = ExcitationAssemblerBase<1>;
-    using base::base;
-
-public:
-
-    /**
-    * @brief Assembles the excitation matrix for a given excitation object and observation triangle mesh.
-    * @param[out] mat - Matrix to store the assembled excitation coefficients, with columns corresponding
-    * to each right-hand side, and rows corresponding to observation mesh faces.
-    * @param[in] exc - Excitation object that computes the coefficients to be assembled into `mat`.
-    * @param[in] k - Complex wavenumber.
-    */
-    void assemble(
-        MatrixBase<Complex>& mat,
-        ExcitationBase<1>& exc,
-        const Complex k
-        ) override;
+    const TriangleMesh<3>& mesh_;
+    EigRowVec<Index> elems_;
 
 };
 
@@ -99,8 +97,6 @@ public:
 
 }
 
-#ifndef BEM_LINKED
-#include "rwg/assemblers/excitation_matrix.cpp"
-#endif
+#include "rwg/assemblers/excitation_matrix.tpp"
 
 #endif

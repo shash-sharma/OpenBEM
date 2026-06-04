@@ -167,7 +167,7 @@ EigMatMN<Complex, 3, 3> RotVectorDoubleLayerPvOp<ObsIntegratorType>::assemble(
     }
 
     result.array() *= (
-        Rwg::normalization(obs_tri).transpose() * Rwg::normalization(src_tri)
+        NxRwg::normalization(obs_tri).transpose() * Rwg::normalization(src_tri)
         ).array();
 
     return result;

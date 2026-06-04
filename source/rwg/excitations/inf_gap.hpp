@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "types.hpp"
+#include "rwg/function_space.hpp"
 #include "rwg/excitations/base.hpp"
 
 
@@ -49,7 +50,7 @@ const Float INF_GAP_DEFAULT_TOL = 1.0e-6;
 /**
 * @brief Class for setting infinitesimal gap excitation coefficients for RWG-based BEM systems.
 */
-class InfinitesimalGap: public ExcitationBase<3>
+class InfinitesimalGap: public ExcitationBase<Rwg>
 {
 public:
 

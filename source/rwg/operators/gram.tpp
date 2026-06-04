@@ -28,7 +28,7 @@ namespace bem::rwg
 {
 
 template <typename TriangleQuadratureType>
-EigMatMN<Complex, 3, 3> RwgRwgOp<TriangleQuadratureType>::compute(
+EigMatMN<Complex, 3, 3> VectorIdentityOp<TriangleQuadratureType>::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
@@ -59,19 +59,13 @@ EigMatMN<Complex, 3, 3> RwgRwgOp<TriangleQuadratureType>::compute(
         Rwg::normalization(obs_tri).transpose() * Rwg::normalization(src_tri)
         ).array();
 
-    // if (src_tri.normal().dot(obs_tri.normal()) < 0)
-    //     result.array() *= -1;
-
-    // if (src_tri.normal().dot(obs_tri.normal()) < 0)
-    //     result.array() *= 0;
-
     return result;
 
 };
 
 
 template <typename TriangleQuadratureType>
-EigMatMN<Complex, 3, 3> RotRwgRwgOp<TriangleQuadratureType>::compute(
+EigMatMN<Complex, 3, 3> RotVectorIdentityOp<TriangleQuadratureType>::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
@@ -99,11 +93,8 @@ EigMatMN<Complex, 3, 3> RotRwgRwgOp<TriangleQuadratureType>::compute(
     }
 
     result.array() *= (
-        Rwg::normalization(obs_tri).transpose() * Rwg::normalization(src_tri)
+        NxRwg::normalization(obs_tri).transpose() * Rwg::normalization(src_tri)
         ).array();
-
-    // if (src_tri.normal().dot(obs_tri.normal()) < 0)
-    //     result.array() *= -1;
 
     return result;
 

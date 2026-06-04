@@ -36,7 +36,7 @@ namespace bem::rwg
 {
 
 // Forward declarations
-template <uint8_t src_num_dof> class ProjectorBase;
+template <typename ExpansionSpace> class ProjectorBase;
 
 /**
 * \addtogroup assm
@@ -44,59 +44,58 @@ template <uint8_t src_num_dof> class ProjectorBase;
 */
 
 /**
-* @brief Class for generating projector matrices for edge-based RWG source functions.
+* @brief Class for generating projector matrices for RWG-based systems.
+* @tparam ExpansionSpace - Expansion function space.
 * @tparam obs_dim - Dimension of the projected fields.
 */
-template <uint8_t obs_dim = 3>
-class EdgeProjectorAssembler: public ProjectorAssemblerBase<obs_dim, 3>
+template <typename ExpansionSpace, uint8_t obs_dim = 3>
+class ProjectorAssembler: public ProjectorAssemblerBase<ExpansionSpace, obs_dim>
 {
 
-    using base = ProjectorAssemblerBase<obs_dim, 3>;
-    using base::base;
+    using base = ProjectorAssemblerBase<ExpansionSpace, obs_dim>;
 
 public:
+
+    /**
+    * @brief Constructs a `ProjectorAssembler` for given observation points and source mesh.
+    * @param[in] obs_cloud - Observation point cloud on which to project fields.
+    * @param[in] mesh - Source triangle mesh for which the projector matrix is to be assembled.
+    * @param[in] elems - Source triangle indices for which the projector matrix is to be assembled.
+    */
+    ProjectorAssembler(
+        const PointCloud<3>& obs_cloud,
+        const TriangleMesh<3>& mesh,
+        EigRowVec<Index> elems = EigRowVec<Index>::Zero(1, 0)
+        ):
+            obs_cloud_(obs_cloud),
+            mesh_(mesh),
+            elems_(elems)
+    {
+        if (elems_.cols() == 0)
+            elems_ = EigRowVec<Index>::LinSpaced(mesh_.num_elems(), 0, mesh_.num_elems() - 1);
+        return;
+    };
+
 
     /**
     * @brief Assembles the projector matrix for edge-based RWG source functions.
     * @param[out] mat - Matrix to store the assembled projector coefficients, with columns corresponding
     * to source mesh edges, and rows corresponding to observation points.
-    * @param[in] op - Projector object that computes the coefficients to be assembled into `mat`.
+    * @param[in] op - Projector object that computes the coefficients to assemble into `mat`.
     * @param[in] k - Complex wavenumber.
     */
     void assemble(
         MatrixBase<Complex>& mat,
-        ProjectorBase<3>& op,
+        ProjectorBase<ExpansionSpace>& op,
         const Complex k
         ) override;
 
-};
 
+protected:
 
-/**
-* @brief Class for generating projector matrices for face-based pulse source functions.
-* @tparam obs_dim - Dimension of the projected fields.
-*/
-template <uint8_t obs_dim = 3>
-class FaceProjectorAssembler: public ProjectorAssemblerBase<obs_dim, 1>
-{
-
-    using base = ProjectorAssemblerBase<obs_dim, 1>;
-    using base::base;
-
-public:
-
-    /**
-    * @brief Assembles the projector matrix for face-based pulse source functions.
-    * @param[out] mat - Matrix to store the assembled projector coefficients, with columns corresponding
-    * to source mesh faces, and rows corresponding to observation points.
-    * @param[in] op - Projector object that computes the coefficients to be assembled into `mat`.
-    * @param[in] k - Complex wavenumber.
-    */
-    void assemble(
-        MatrixBase<Complex>& mat,
-        ProjectorBase<1>& op,
-        const Complex k
-        ) override;
+    const PointCloud<3>& obs_cloud_;
+    const TriangleMesh<3>& mesh_;
+    EigRowVec<Index> elems_;
 
 };
 
@@ -106,8 +105,6 @@ public:
 
 }
 
-#ifndef BEM_LINKED
-#include "rwg/assemblers/projector_matrix.cpp"
-#endif
+#include "rwg/assemblers/projector_matrix.tpp"
 
 #endif
