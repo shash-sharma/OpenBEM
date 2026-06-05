@@ -19,8 +19,10 @@
 #define BEM_RWG_OP_SET_ASSEMBLER_H
 
 #include <vector>
+#include <tuple>
 
 #include "types.hpp"
+#include "rwg/operators/operator_set.hpp"
 #include "rwg/assemblers/operator_matrix.hpp"
 
 
@@ -37,13 +39,18 @@ namespace bem::rwg
 * @tparam OperatorSet - Type for the set of operators to be assembled.
 * @tparam MatrixType - Assembled matrix type, must inherit from `MatrixBase<Complex>`.
 */
-template <typename OperatorSet, typename MatrixType>
+template <typename MatrixType, typename ObsIntegratorType, typename... Ops>
 class OperatorSetAssembler
 {
 
     static_assert(
         std::is_base_of<MatrixBase<Complex>, MatrixType>::value,
         "OperatorSetAssembler: `MatrixType` must derive from `MatrixBase<Complex>`"
+        );
+
+    static_assert(
+        std::is_base_of<ObsIntegratorBase, ObsIntegratorType>::value,
+        "OperatorSet: `ObsIntegratorType` must derive from `ObsIntegratorBase`"
         );
 
 public:
@@ -58,11 +65,14 @@ public:
     OperatorSetAssembler(
         const TriangleMesh<3>& obs_mesh,
         const TriangleMesh<3>& src_mesh,
-        const EigMatNX<Index, 2> elem_pairs = EigMatNX<Index, 2>::Zero(2, 0)
+        const EigMatNX<Index, 2> elem_pairs = EigMatNX<Index, 2>::Zero(2, 0),
+        const ObsIntegratorType obs_integrator = ObsStrategic<>()
         ):
             obs_mesh_(obs_mesh),
             src_mesh_(src_mesh),
-            elem_pairs_(elem_pairs)
+            elem_pairs_(elem_pairs),
+            obs_integrator_(obs_integrator),
+            ops_(Ops{}...)
     {
         if (elem_pairs_.cols() == 0)
             elem_pairs_ = IndexGenerator::elem_pairs(obs_mesh_, src_mesh_);
@@ -78,8 +88,9 @@ public:
     */
     OperatorSetAssembler(
         const TriangleMesh<3>& mesh,
-        const EigMatNX<Index, 2> elem_pairs = EigMatNX<Index, 2>::Zero(2, 0)
-        ): OperatorSetAssembler(mesh, mesh, elem_pairs) {};
+        const EigMatNX<Index, 2> elem_pairs = EigMatNX<Index, 2>::Zero(2, 0),
+        const ObsIntegratorType obs_integrator = ObsStrategic<>()
+        ): OperatorSetAssembler(mesh, mesh, elem_pairs, obs_integrator) {};
 
 
     /**
@@ -91,59 +102,79 @@ public:
     */
     void assemble(
         std::vector<MatrixType>& mats,
-        const OperatorSet& op_set,
+        // const OperatorSet& op_set,
         const Complex k
         )
     {
 
+
         mats.clear();
 
-        using Assemblers = std::tuple<
-            OperatorAssembler<
-                typename OperatorSet::ops::TestSpaceType,
-                typename OperatorSet::ops::ExpansionSpaceType
-                >...
-            >;
+        // using Assemblers = std::tuple<
+        //     OperatorAssembler<
+        //         ops_::TestSpaceType,
+        //         ops_::ExpansionSpaceType
+        //         > (obs_mesh_, src_mesh_, elem_pairs_)...
+        //     >;
 
-        std::apply(
-            [&] (auto&&... assm)
-            {([&]
-            {
+        // using Assemblers = std::tuple<
+        //     // EigMatMN<Complex, Ops::TestSpaceType::dof, Ops::ExpansionSpaceType::dof>...
+        //     OperatorAssembler<
+        //         typename Ops::TestSpaceType,
+        //         typename Ops::ExpansionSpaceType
+        //         > (obs_mesh_, src_mesh_, elem_pairs_)...
+        //     >;
 
-                mats.push_back(MatrixType ());
-                assm.prep_matrix(mats.back());
+        // std::apply(
+        //     [&] (auto&&... Op)
+        //     {([&]
+        //     {
 
-            }(), ...); },
-            Assemblers
-            );
+        //         OperatorAssembler<Op::TestSpaceType, Op::ExpansionSpaceType> assm (
+        //             obs_mesh_, src_mesh_, elem_pairs_
+        //             );
 
-#pragma omp parallel for firstprivate(op_set)
-        for (Index ii = 0; ii < elem_pairs_.cols(); ++ii)
+        //         mats.push_back(MatrixType());
+        //         assm.prep_matrix(mats.back());
+
+        //     }(), ...); },
+        //     Ops
+        //     // Assemblers
+        //     );
+
+#pragma omp parallel
         {
-            Triangle<3> obs_tri = obs_mesh_.elem_primitive(elem_pairs_(0, ii));
-            Triangle<3> src_tri = src_mesh_.elem_primitive(elem_pairs_(1, ii));
 
-            typename OperatorSet::OperatorValuesType op_vals = op_set.compute(k, obs_tri, src_tri);
+            OperatorSet<Ops...> op_set (obs_integrator_);
 
-            Index jj = 0;
-            std::apply(
-                [&] (auto&&... values)
-                {
-                    std::apply(
-                        [&] (auto&&... assm)
-                        {([&]
-                        {
+#pragma omp for
+            for (Index ii = 0; ii < elem_pairs_.cols(); ++ii)
+            {
+                //             Triangle<3> obs_tri = obs_mesh_.elem_primitive(elem_pairs_(0, ii));
+                //             Triangle<3> src_tri = src_mesh_.elem_primitive(elem_pairs_(1, ii));
 
-#pragma omp critical
-                            assm.fill_matrix(mats[jj++], elem_pairs_.col(ii), values);
+                //             typename OperatorSet::OperatorValuesType op_vals = op_set.compute(k, obs_tri, src_tri);
 
-                        }(), ...); },
-                        Assemblers
-                        );
-                },
-                op_vals
-                );
+                //             Index jj = 0;
+                //             std::apply(
+                //                 [&] (auto&&... values)
+                //                 {
+                //                     std::apply(
+                //                         [&] (auto&&... assm)
+                //                         {([&]
+                //                         {
 
+                // #pragma omp critical
+                //                             assm.fill_matrix(mats[jj++], elem_pairs_.col(ii), values);
+
+                //                         }(), ...); },
+                //                         Assemblers
+                //                         );
+                //                 },
+                //                 op_vals
+                //                 );
+
+            }
         }
 
         return;
@@ -156,6 +187,8 @@ protected:
     const TriangleMesh<3>& obs_mesh_;
     const TriangleMesh<3>& src_mesh_;
     EigMatNX<Index, 2> elem_pairs_;
+    ObsIntegratorType obs_integrator_;
+    std::tuple<Ops...> ops_;
 
 };
 

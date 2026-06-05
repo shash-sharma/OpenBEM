@@ -51,7 +51,6 @@ class OperatorSet
 public:
 
     static constexpr std::size_t num_ops = sizeof...(Ops);
-    static std::tuple<Ops...> ops = std::make_tuple ();
 
     using OperatorsType = std::tuple<Ops...>;
     using OperatorValuesType = std::tuple<
@@ -66,7 +65,8 @@ public:
     OperatorSet(
         const ObsIntegratorType obs_integrator = ObsStrategic<>()
         ):
-        obs_integrator_(obs_integrator) {};
+        obs_integrator_(obs_integrator),
+        ops_(Ops{}...){};
 
 
     /**
@@ -112,7 +112,7 @@ public:
                 op_vals
                 );
         },
-        ops
+        ops_
         );
 
         return op_vals;
@@ -123,7 +123,7 @@ public:
 protected:
 
     ObsIntegratorType obs_integrator_;
-    // std::tuple<Ops...> ops_;
+    std::tuple<Ops...> ops_;
 
 };
 
