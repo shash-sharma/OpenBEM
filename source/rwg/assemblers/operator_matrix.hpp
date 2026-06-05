@@ -168,13 +168,13 @@ void OperatorAssembler::assemble(
     for (Index ii = 0; ii < ops.size(); ++ii)
         prep_matrix(mats[ii], *ops[ii]);
 
-#pragma omp parallel
+#pragma omp parallel firstprivate(obs_integrator)
     {
 
         std::vector<std::unique_ptr<OperatorBase>> ops;
         (ops.push_back(std::make_unique<Ops>()), ...);
 
-#pragma omp for firstprivate(obs_integrator)
+#pragma omp for
         for (Index ii = 0; ii < elem_pairs_.cols(); ++ii)
         {
             Triangle<3> obs_tri = obs_mesh_.elem_primitive(elem_pairs_(0, ii));
@@ -187,14 +187,14 @@ void OperatorAssembler::assemble(
             obs_integrator.set_compute_terms(true, true, true, true);
             const ObsResult obs_result = obs_integrator.integrate(k, obs_tri_local, src_tri_local);
 
-            for (Index ii = 0; ii < ops.size(); ++ii)
+            for (Index jj = 0; jj < ops.size(); ++jj)
             {
-                EigMat<Complex> values = ops[ii]->assemble(
+                EigMat<Complex> values = ops[jj]->assemble(
                     k, obs_tri_local, src_tri_local.to_3d(), obs_result
                     );
 
 #pragma omp critical
-                fill_matrix(mats[ii], *ops[ii], elem_pairs_.col(ii), values);
+                fill_matrix(mats[jj], *ops[jj], elem_pairs_.col(ii), values);
             }
         }
 
