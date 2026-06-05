@@ -77,7 +77,7 @@ public:
     * @param[in] src_tri - Source triangle.
     * @return Operator values for each pair of observation and source triangle edges.
     */
-    EigMatMN<Complex, 3, 3> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
@@ -142,7 +142,7 @@ public:
     * @param[in] src_tri - Source triangle.
     * @return Operator values for each pair of observation and source triangle edges.
     */
-    EigMatMN<Complex, 3, 3> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri

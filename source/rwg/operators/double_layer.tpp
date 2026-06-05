@@ -30,7 +30,7 @@ namespace bem::rwg
 {
 
 template <typename ObsIntegratorType>
-EigMatMN<Complex, 3, 3> VectorDoubleLayerPvOp<ObsIntegratorType>::compute(
+EigMat<Complex> VectorDoubleLayerPvOp<ObsIntegratorType>::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
@@ -48,7 +48,7 @@ EigMatMN<Complex, 3, 3> VectorDoubleLayerPvOp<ObsIntegratorType>::compute(
 
 
 template <typename ObsIntegratorType>
-EigMatMN<Complex, 3, 3> VectorDoubleLayerPvOp<ObsIntegratorType>::assemble(
+EigMat<Complex> VectorDoubleLayerPvOp<ObsIntegratorType>::assemble(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,
@@ -95,7 +95,7 @@ EigMatMN<Complex, 3, 3> VectorDoubleLayerPvOp<ObsIntegratorType>::assemble(
 
 
 template <typename ObsIntegratorType>
-EigMatMN<Complex, 3, 3> RotVectorDoubleLayerPvOp<ObsIntegratorType>::compute(
+EigMat<Complex> RotVectorDoubleLayerPvOp<ObsIntegratorType>::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
@@ -113,7 +113,7 @@ EigMatMN<Complex, 3, 3> RotVectorDoubleLayerPvOp<ObsIntegratorType>::compute(
 
 
 template <typename ObsIntegratorType>
-EigMatMN<Complex, 3, 3> RotVectorDoubleLayerPvOp<ObsIntegratorType>::assemble(
+EigMat<Complex> RotVectorDoubleLayerPvOp<ObsIntegratorType>::assemble(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,

@@ -80,7 +80,7 @@ public:
     * source edges. The operators are stacked column by column; the first three columns correspond to the first
     * operator, the next three to the next operator, and so on.
     */
-    EigMatMN<Complex, 3, 12> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri

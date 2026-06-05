@@ -29,7 +29,7 @@ namespace bem::rwg
 {
 
 template <typename ObsIntegratorType>
-EigMatMN<Complex, 3, 3> GenericRwgOp<ObsIntegratorType>::compute(
+EigMat<Complex> GenericRwgOp<ObsIntegratorType>::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
@@ -89,7 +89,7 @@ EigMatMN<Complex, 3, 3> GenericRwgOp<ObsIntegratorType>::compute(
 
 
 template <typename ObsIntegratorType>
-EigMatMN<Complex, 1, 1> GenericPulseOp<ObsIntegratorType>::compute(
+EigMat<Complex> GenericPulseOp<ObsIntegratorType>::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri

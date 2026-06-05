@@ -58,7 +58,7 @@ public:
     * Rows of the output matrix correspond to observation degrees of freedom, and columns
     * correspond to source degrees of freedom.
     */
-    virtual EigMatMN<Complex, obs_num_dof, src_num_dof> compute(
+    virtual EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
@@ -73,12 +73,12 @@ public:
     * @param[in] obs_result - Integration result.
     * @return Operator values for each combination of degrees of freedom.
     */
-    virtual EigMatMN<Complex, obs_num_dof, src_num_dof> assemble(
+    virtual EigMat<Complex> assemble(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri,
         const ObsResult& obs_result
-        ) { return EigMatMN<Complex, obs_num_dof, src_num_dof>::Zero(); };
+        ) { return EigMat<Complex>::Zero(); };
 
 
     /**

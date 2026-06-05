@@ -29,7 +29,7 @@ namespace bem::rwg
 {
 
 template <typename ObsIntegratorType>
-EigMatMN<Complex, 3, 12> VectorRwgOps<ObsIntegratorType>::compute(
+EigMat<Complex> VectorRwgOps<ObsIntegratorType>::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
@@ -52,7 +52,9 @@ EigMatMN<Complex, 3, 12> VectorRwgOps<ObsIntegratorType>::compute(
 
     if (!helmholtz_kernel_)
     {
-        Complex h = scalar_single_layer_.assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result)[0] / k / k;
+        Complex h = scalar_single_layer_.assemble(
+            k, obs_tri_local, src_tri_local.to_3d(), obs_result
+            )(0, 0) / k / k;
         ops.middleCols(0, 3) -= h * obs_tri.edge_polarities().transpose() * src_tri.edge_polarities();
 
         EigMatMN<Complex, 3, 1> rot_h = rot_grad_scalar_single_layer_.assemble(

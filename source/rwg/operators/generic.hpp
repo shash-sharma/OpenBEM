@@ -154,7 +154,7 @@ public:
     * Rows of the output matrix correspond to observation edges, and columns correspond to
     * source edges.
     */
-    EigMatMN<Complex, 3, 3> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
@@ -215,7 +215,7 @@ public:
     * @param[in] src_tri - Source triangle.
     * @return Operator value.
     */
-    EigMatMN<Complex, 1, 1> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri

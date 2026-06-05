@@ -138,6 +138,7 @@ public:
             EigMatMN<Complex, obs_num_dof, src_num_dof> values = opc->compute(
                 k, obs_tri, src_tri
                 );
+            // EigMat<Complex> values = opc->compute(k, obs_tri, src_tri);
 
 #pragma omp critical
             fill_matrix(mat, elem_pairs_.col(ii), values);

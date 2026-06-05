@@ -81,7 +81,7 @@ public:
     * Rows of the output matrix correspond to observation degrees of freedom, and columns
     * correspond to source degrees of freedom.
     */
-    EigMatMN<Complex, 3, 3> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
@@ -96,7 +96,7 @@ public:
     * @param[in] obs_result - Integration result.
     * @return Operator values for each pair of observation and source triangle edges.
     */
-    EigMatMN<Complex, 3, 3> assemble(
+    EigMat<Complex> assemble(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri,
@@ -163,7 +163,7 @@ public:
     * Rows of the output matrix correspond to observation degrees of freedom, and columns
     * correspond to source degrees of freedom.
     */
-    EigMatMN<Complex, 3, 3> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
@@ -178,7 +178,7 @@ public:
     * @param[in] obs_result - Integration result.
     * @return Operator values for each pair of observation and source triangle edges.
     */
-    EigMatMN<Complex, 3, 3> assemble(
+    EigMat<Complex> assemble(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri,
@@ -242,7 +242,7 @@ public:
     * Rows of the output matrix correspond to observation degrees of freedom, and columns
     * correspond to source degrees of freedom.
     */
-    EigMatMN<Complex, 1, 1> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
@@ -257,7 +257,7 @@ public:
     * @param[in] obs_result - Integration result.
     * @return Operator value for the observation and source triangle faces.
     */
-    EigMatMN<Complex, 1, 1> assemble(
+    EigMat<Complex> assemble(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri,
@@ -324,7 +324,7 @@ public:
     * Rows of the output matrix correspond to observation degrees of freedom, and columns
     * correspond to source degrees of freedom.
     */
-    EigMatMN<Complex, 3, 1> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
@@ -339,7 +339,7 @@ public:
     * @param[in] obs_result - Integration result.
     * @return Operator values for each observation triangle edge and source triangle face.
     */
-    EigMatMN<Complex, 3, 1> assemble(
+    EigMat<Complex> assemble(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri,
@@ -407,7 +407,7 @@ public:
     * Rows of the output matrix correspond to observation degrees of freedom, and columns
     * correspond to source degrees of freedom.
     */
-    EigMatMN<Complex, 3, 3> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
@@ -476,7 +476,7 @@ public:
     * Rows of the output matrix correspond to observation degrees of freedom, and columns
     * correspond to source degrees of freedom.
     */
-    EigMatMN<Complex, 3, 3> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
