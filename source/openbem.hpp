@@ -65,6 +65,7 @@
 #include "rwg/operators/double_layer.hpp"
 #include "rwg/operators/gram.hpp"
 #include "rwg/operators/incidence.hpp"
+#include "rwg/operators/operator_set.hpp"
 
 #include "rwg/projectors/base.hpp"
 #include "rwg/projectors/single_layer.hpp"
@@ -76,6 +77,7 @@
 
 #include "rwg/assemblers/base.hpp"
 #include "rwg/assemblers/operator_matrix.hpp"
+#include "rwg/assemblers/operator_matrix_set.hpp"
 #include "rwg/assemblers/excitation_matrix.hpp"
 #include "rwg/assemblers/projector_matrix.hpp"
 

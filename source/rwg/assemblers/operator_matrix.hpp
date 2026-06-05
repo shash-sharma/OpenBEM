@@ -86,20 +86,6 @@ public:
 
 
     /**
-    * @brief Assembles the operator matrix for a given operator object.
-    * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
-    * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
-    * @param[in] op - Operator object that computes the coefficients to assemble into `mat`.
-    * @param[in] k - Complex wavenumber.
-    */
-    void assemble(
-        MatrixBase<Complex>& mat,
-        const OperatorBase<TestSpace, ExpansionSpace>& op,
-        const Complex k
-        ) override;
-
-
-    /**
     * @brief Prepares the matrix for assembly (e.g., resizing and preallocation).
     * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
     * to source edges, and rows corresponding to observation edges.
@@ -121,6 +107,20 @@ public:
         ) override;
 
 
+    /**
+    * @brief Assembles the operator matrix for a given operator object.
+    * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
+    * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
+    * @param[in] op - Operator object that computes the coefficients to assemble into `mat`.
+    * @param[in] k - Complex wavenumber.
+    */
+    void assemble(
+        MatrixBase<Complex>& mat,
+        const OperatorBase<TestSpace, ExpansionSpace>& op,
+        const Complex k
+        ) override;
+
+
 protected:
 
     const TriangleMesh<3>& obs_mesh_;
@@ -128,47 +128,6 @@ protected:
     EigMatNX<Index, 2> elem_pairs_;
 
 };
-
-
-
-
-
-// /**
-// * @brief Class for generating the full set of vector operator matrices for RWG observation and source functions.
-// */
-// class VectorOperatorsAssembler: public OperatorAssemblerBase<3, 12>
-// {
-
-//     using base = OperatorAssemblerBase<3, 12>;
-//     using base::base;
-
-// public:
-
-//     /**
-//     * @brief Prepares the matrix for assembly (e.g., resizing and preallocation).
-//     * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
-//     * to source edges, and rows corresponding to observation edges. The four vector operator matrices
-//     * are stacked along the horizontal direction.
-//     */
-//     void prep_matrix(MatrixBase<Complex>& mat) override;
-
-
-//     /**
-//     * @brief Fills operator values in the matrix for edge-based RWG observation and source functions.
-//     * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
-//     * to source edges, and rows corresponding to observation edges, for all operators stacked along
-//     * the vertical direction.
-//     * @param[in] elem_pair - Observation (first entry) and source (second entry) triangle index pair.
-//     * @param[in] values - Operator values for each pair of observation and source degrees of freedom,
-//     * for all operators stacked along the horizontal direction.
-//     */
-//     void fill_matrix(
-//         MatrixBase<Complex>& mat,
-//         ConstEigRef<EigColVecN<Index, 2>> elem_pair,
-//         ConstEigRef<EigMatMN<Complex, 3, 12>> values
-//         ) override;
-
-// };
 
 /**
 * @}

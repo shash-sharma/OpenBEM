@@ -30,41 +30,6 @@ namespace bem::rwg
 {
 
 template <typename TestSpace, typename ExpansionSpace>
-void OperatorAssembler<TestSpace, ExpansionSpace>::assemble(
-    MatrixBase<Complex>& mat,
-    const OperatorBase<TestSpace, ExpansionSpace>& op,
-    const Complex k
-    )
-{
-
-    prep_matrix(mat);
-
-#pragma omp parallel
-    {
-        std::unique_ptr<OperatorBase<TestSpace, ExpansionSpace>> opc = op.clone();
-
-#pragma omp for
-        for (Index ii = 0; ii < elem_pairs_.cols(); ++ii)
-        {
-            Triangle<3> obs_tri = obs_mesh_.elem_primitive(elem_pairs_(0, ii));
-            Triangle<3> src_tri = src_mesh_.elem_primitive(elem_pairs_(1, ii));
-
-            EigMatMN<Complex, TestSpace::dof, ExpansionSpace::dof> values = opc->compute(
-                k, obs_tri, src_tri
-                );
-
-#pragma omp critical
-            fill_matrix(mat, elem_pairs_.col(ii), values);
-        }
-    }
-
-    mat.assemble();
-    return;
-
-};
-
-
-template <typename TestSpace, typename ExpansionSpace>
 void OperatorAssembler<TestSpace, ExpansionSpace>::prep_matrix(MatrixBase<Complex>& mat)
 {
 
@@ -148,40 +113,39 @@ void OperatorAssembler<TestSpace, ExpansionSpace>::fill_matrix(
 };
 
 
+template <typename TestSpace, typename ExpansionSpace>
+void OperatorAssembler<TestSpace, ExpansionSpace>::assemble(
+    MatrixBase<Complex>& mat,
+    const OperatorBase<TestSpace, ExpansionSpace>& op,
+    const Complex k
+    )
+{
 
+    prep_matrix(mat);
 
-// template <>
-// void VectorOperatorsAssembler::prep_matrix(MatrixBase<Complex>& mat)
-// {
-//     mat.resize(obs_mesh_.num_edges(), src_mesh_.num_edges() * 4);
-//     mat.preallocate(elem_pairs_.cols() * 4 * EDGE_ELEM_RATIO * EDGE_ELEM_RATIO);
-//     return;
-// };
+#pragma omp parallel
+    {
+        std::unique_ptr<OperatorBase<TestSpace, ExpansionSpace>> opc = op.clone();
 
+#pragma omp for
+        for (Index ii = 0; ii < elem_pairs_.cols(); ++ii)
+        {
+            Triangle<3> obs_tri = obs_mesh_.elem_primitive(elem_pairs_(0, ii));
+            Triangle<3> src_tri = src_mesh_.elem_primitive(elem_pairs_(1, ii));
 
-// template <>
-// void VectorOperatorsAssembler::fill_matrix(
-//     MatrixBase<Complex>& mat,
-//     ConstEigRef<EigColVecN<Index, 2>> elem_pair,
-//     ConstEigRef<EigMatMN<Complex, 3, 12>> values
-//     )
-// {
-//     for (uint8_t op = 0; op < 4; ++op)
-//     {
-//         Index offset = src_mesh_.num_edges() * op;
+            EigMatMN<Complex, TestSpace::dof, ExpansionSpace::dof> values = opc->compute(
+                k, obs_tri, src_tri
+                );
 
-//         for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
-//         {
-//             Index col = src_mesh_.elem_edges()(src_edge, elem_pair[1]) + offset;
-//             for (uint8_t obs_edge = 0; obs_edge < 3; ++obs_edge)
-//             {
-//                 Index row = obs_mesh_.elem_edges()(obs_edge, elem_pair[0]);
-//                 mat.add_value(row, col, values(obs_edge, src_edge + 3 * op));
-//             }
-//         }
-//     }
-//     return;
-// };
+#pragma omp critical
+            fill_matrix(mat, elem_pairs_.col(ii), values);
+        }
+    }
+
+    mat.assemble();
+    return;
+
+};
 
 }
 

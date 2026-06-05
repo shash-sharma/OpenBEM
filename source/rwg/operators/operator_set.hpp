@@ -18,20 +18,13 @@
 #ifndef BEM_RWG_OPS_OPSET_H
 #define BEM_RWG_OPS_OPSET_H
 
-#include <stdexcept>
 #include <tuple>
-#include <array>
 
 #include "types.hpp"
 
 #include "geometry/primitives/triangle.hpp"
-
 #include "rwg/integrators/obs/base.hpp"
 #include "rwg/integrators/obs/strategic.hpp"
-#include "rwg/operators/base.hpp"
-#include "rwg/operators/single_layer.hpp"
-#include "rwg/operators/double_layer.hpp"
-#include "rwg/operators/gram.hpp"
 
 
 namespace bem::rwg
@@ -43,19 +36,28 @@ namespace bem::rwg
 */
 
 /**
-* @brief Class for computing the full set of vector RWG operators.
+* @brief Class for computing a given set of operators.
 * @tparam ObsIntegratorType - Type of the observation triangle integrator, must derive from `ObsIntegratorBase`.
 */
-template <typename... Ops, typename ObsIntegratorType = ObsStrategic<>>
+template <typename ObsIntegratorType, typename... Ops>
 class OperatorSet
 {
 
     static_assert(
         std::is_base_of<ObsIntegratorBase, ObsIntegratorType>::value,
-        "VectorRwgOps: `ObsIntegratorType` must derive from `ObsIntegratorBase`"
+        "OperatorSet: `ObsIntegratorType` must derive from `ObsIntegratorBase`"
         );
 
 public:
+
+    static constexpr std::size_t num_ops = sizeof...(Ops);
+    static std::tuple<Ops...> ops = std::make_tuple ();
+
+    using OperatorsType = std::tuple<Ops...>;
+    using OperatorValuesType = std::tuple<
+        EigMatMN<Complex, Ops::TestSpaceType::dof, Ops::ExpansionSpaceType::dof>...
+        >;
+
 
     /**
     * @brief Constructs an `OperatorSet` object.
@@ -73,14 +75,8 @@ public:
     * @param[in] obs_tri - Observation triangle.
     * @param[in] src_tri - Source triangle.
     * @return Operator values for each pair of observation and source degrees of freedom, for each operator.
-    * @details Rows of the output matrix correspond to observation degrees of freedom, and columns
-    * correspond to source degrees of freedom. The operators are stacked column by column; the first
-    * three columns correspond to the first operator, the next three to the next operator, and so
-    * on, because an operator is assumed to have at most 3 observation and 3 source degrees of
-    * freedom. If it has fewer degrees of freedom, the remaining entries of its 3x3 block will be
-    * zeros.
     */
-    EigMatMN<Complex, 3, 3 * num_ops> compute(
+    OperatorValuesType compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
@@ -89,61 +85,45 @@ public:
 
         Triangle<3> obs_tri_local;
         Triangle<2> src_tri_local;
-        transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
+        OperatorBase<Rwg, Rwg>::transform_coordinates(
+            obs_tri_local, src_tri_local, obs_tri, src_tri
+            );
 
         obs_integrator_.set_compute_terms(true, true, true, true);
         const ObsResult obs_result = obs_integrator_.integrate(
             k, obs_tri_local, src_tri_local
             );
 
-        std::array<Index, num_ops> idxs;
-        std::iota(idxs.begin(), idxs.end(), 0);
-
-        EigMatMN<Complex, 3, 3 * num_ops> result;
+        OperatorValuesType op_vals;
 
         std::apply(
         [&] (auto&&... op)
         {
             std::apply(
-                [&] (auto&&... idx)
+                [&] (auto&&... op_val)
                 {([&]
                 {
 
-                    result.block(
-                        0, 3 * idx, op::TestSpaceType::dof, op::ExpansionSpaceType::dof
-                        ) = op.assemble(
-                            k, obs_tri_local, src_tri_local.to_3d(), obs_result
-                            );
+                    op_val = op.assemble(
+                        k, obs_tri_local, src_tri_local.to_3d(), obs_result
+                        );
 
                 }(), ...); },
-                idxs
+                op_vals
                 );
         },
-        ops_
+        ops
         );
 
-        return result;
+        return op_vals;
 
     };
-
-
-    // ops_(std::move(ops)...)
-    // constexpr size_t num_ops =
-    // sizeof...(Ops);
 
 
 protected:
 
     ObsIntegratorType obs_integrator_;
-    std::tuple<Ops...> ops_;
-    static constexpr size_t num_ops = std::tuple_size<decltype(ops_)>::value>;
-
-    VectorSingleLayerOp<ObsIntegratorType> vector_single_layer_;
-    RotVectorSingleLayerOp<ObsIntegratorType> rot_vector_single_layer_;
-    VectorDoubleLayerPvOp<ObsIntegratorType> vector_double_layer_pv_;
-    RotVectorDoubleLayerPvOp<ObsIntegratorType> rot_vector_double_layer_pv_;
-    RotGradScalarSingleLayerOp<ObsIntegratorType> rot_grad_scalar_single_layer_;
-    ScalarSingleLayerOp<ObsIntegratorType> scalar_single_layer_;
+    // std::tuple<Ops...> ops_;
 
 };
 
@@ -153,6 +133,6 @@ protected:
 
 }
 
-#include "rwg/operators/vector_ops.tpp"
+// #include "rwg/operators/vector_ops.tpp"
 
 #endif
