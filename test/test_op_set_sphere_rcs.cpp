@@ -38,7 +38,6 @@
 #include "rwg/operators/single_layer.hpp"
 #include "rwg/operators/double_layer.hpp"
 #include "rwg/operators/incidence.hpp"
-#include "rwg/operators/operator_set.hpp"
 
 #include "rwg/excitations/plane_wave.hpp"
 
