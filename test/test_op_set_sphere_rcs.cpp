@@ -73,123 +73,114 @@ void test_cfie_pec()
     Float lambda = std::real(two_pi / k);
     Float dist = 1e2 * lambda;
 
-    OperatorSet<
+
+    OperatorAssembler assm (mesh);
+    std::vector<EigenMatrix<Complex>> mats;
+
+    assm.assemble<
+        EigenMatrix<Complex>,
         ObsStrategic<>,
         VectorIdentityOp<>,
         VectorSingleLayerOp<>,
         RotVectorDoubleLayerPvOp<>
-        > ops;
+        > (mats, k);
+
+    EigenMatrix<Complex>& T = mats[1];
+    T.scale(-J * omega * mu);
+
+    EigenMatrix<Complex>& K = mats[2];
+
+    EigenMatrix<Complex>& I = mats[0];
+    I.scale(half);
+
+    EigenMatrix<Complex> A;
+    A.set_axpby(T, K);
+    A.add_ax(I);
 
 
+    EigColVecN<Float, 3> dir, pol_e, pol_h, pos;
+    EigRowVecN<Complex, 1> amp;
+    dir << 0, 0, 1;
+    pol_e << 1, 0, 0;
+    pol_h << 0, 1, 0;
+    pos << 0, 0, -dist;
+    amp << 1;
 
-    // VectorOperatorsAssembler assembler (mesh, mesh);
+    RwgPlaneWave pwe (dir, pol_e, pos, amp);
+    NxRwgPlaneWave pwh (dir, pol_h, pos, amp / std::sqrt(mu / eps));
+    ExcitationAssembler pw_assembler (mesh);
 
-    // EigenMatrix<Complex> mats;
-    // assembler.assemble(mats, ops, k);
+    EigenMatrix<Complex> Einc;
+    pw_assembler.assemble(Einc, pwe, k);
 
-    // RwgRwgOp op_I;
-    // EdgeOperatorAssembler I_assembler (mesh, mesh);
+    EigenMatrix<Complex> Hinc;
+    pw_assembler.assemble(Hinc, pwh, k);
 
-
-    // EigenMatrix<Complex> T;
-    // mats.get_block(T, 0, 0, mesh.num_edges(), mesh.num_edges());
-    // T.scale(-J * omega * mu);
-
-    // EigenMatrix<Complex> K;
-    // mats.get_block(K, 0, mesh.num_edges() * 3, mesh.num_edges(), mesh.num_edges());
-
-    // EigenMatrix<Complex> I;
-    // I_assembler.assemble(I, op_I, k);
-    // I.scale(half);
-
-    // EigenMatrix<Complex> A;
-    // A.set_axpby(T, K);
-    // A.add_ax(I);
+    EigenMatrix<Complex> b;
+    b.set_axpby(Einc, Hinc);
 
 
-    // EigColVecN<Float, 3> dir, pol_e, pol_h, pos;
-    // EigRowVecN<Complex, 1> amp;
-    // dir << 0, 0, 1;
-    // pol_e << 1, 0, 0;
-    // pol_h << 0, 1, 0;
-    // pos << 0, 0, -dist;
-    // amp << 1;
-
-    // RwgPlaneWave pwe (dir, pol_e, pos, amp);
-    // NxRwgPlaneWave pwh (dir, pol_h, pos, amp / std::sqrt(mu / eps));
-    // EdgeExcitationAssembler pw_assembler (mesh);
-
-    // EigenMatrix<Complex> Einc;
-    // pw_assembler.assemble(Einc, pwe, k);
-
-    // EigenMatrix<Complex> Hinc;
-    // pw_assembler.assemble(Hinc, pwh, k);
-
-    // EigenMatrix<Complex> b;
-    // b.set_axpby(Einc, Hinc);
+    EigenMatrix<Complex> x;
+    A.factorize();
+    A.mat_solve(x, b);
 
 
-    // EigenMatrix<Complex> x;
-    // A.factorize();
-    // A.mat_solve(x, b);
+    EigColVecN<Float, 3> start, stop;
+    EigColVecN<Index, 3> num_pts;
+    start << dist, 0, 0;
+    stop << dist, 0, pi;
+    num_pts << 1, 1, 100;
+    EigColVecN<Float, 3> center;
+    center << 0, 0, 0;
+
+    PointCloud<3> cloud;
+    cloud.set_polar_data(start, stop, center, num_pts);
 
 
-    // EigColVecN<Float, 3> start, stop;
-    // EigColVecN<Index, 3> num_pts;
-    // start << dist, 0, 0;
-    // stop << dist, 0, pi;
-    // num_pts << 1, 1, 100;
-    // EigColVecN<Float, 3> center;
-    // center << 0, 0, 0;
+    VectorHypersingularProj op_T_proj;
+    ProjectorAssembler T_proj_assembler (cloud, mesh);
 
-    // PointCloud<3> cloud;
-    // cloud.set_polar_data(start, stop, center, num_pts);
+    EigenMatrix<Complex> T_proj;
+    T_proj_assembler.assemble(T_proj, op_T_proj, k);
+    T_proj.scale(-J * omega * mu);
 
 
-    // VectorHypersingularProj op_T_proj;
-    // EdgeProjectorAssembler<3> T_proj_assembler (cloud, mesh);
+    EigenMatrix<Complex> Escat;
+    Escat.set_matmul(T_proj, x);
 
-    // EigenMatrix<Complex> T_proj;
-    // T_proj_assembler.assemble(T_proj, op_T_proj, k);
-    // T_proj.scale(-J * omega * mu);
+    EigenMatrix<Float> Escatmag;
+    Escatmag.raw_matrix() = Escat.raw_matrix().reshaped(3, 100).colwise().norm();
 
+    EigenMatrix<Float> rcs;
+    rcs.raw_matrix() = Eigen::pow(Escatmag.raw_matrix().array(), 2) * four_pi * std::pow(dist, 2);
 
-    // EigenMatrix<Complex> Escat;
-    // Escat.set_matmul(T_proj, x);
+    std::ifstream in_stream (path + "/ref/sphere_pec_ref.json");
+    json sphere_ref = json::parse(in_stream);
 
-    // EigenMatrix<Float> Escatmag;
-    // Escatmag.raw_matrix() = Escat.raw_matrix().reshaped(3, 100).colwise().norm();
+    EigMat<Float> rcs_ref = sphere_ref["rcs"].template get<EigMat<Float>> ();
+    EigMat<Float> Escatmag_ref = sphere_ref["escat_mag"].template get<EigMat<Float>> ();
 
-    // EigenMatrix<Float> rcs;
-    // rcs.raw_matrix() = Eigen::pow(Escatmag.raw_matrix().array(), 2) * four_pi * std::pow(dist, 2);
+    json out;
+    out["escat_mag"] = Escatmag.raw_matrix();
+    out["rcs"] = rcs.raw_matrix();
 
-    // std::ifstream in_stream (path + "/ref/sphere_pec_ref.json");
-    // json sphere_ref = json::parse(in_stream);
+    std::ofstream out_stream (path + "/dump/sphere_efie_pec.json");
+    out_stream << std::setw(4) << out << std::endl;
 
-    // EigMat<Float> rcs_ref = sphere_ref["rcs"].template get<EigMat<Float>> ();
-    // EigMat<Float> Escatmag_ref = sphere_ref["escat_mag"].template get<EigMat<Float>> ();
+    Float rcs_err = (
+        Eigen::abs((rcs_ref - rcs.raw_matrix()).array()) / Eigen::abs(rcs_ref.array())
+        ).maxCoeff();
+    Float escat_err = (
+        Eigen::abs((Escatmag_ref - Escatmag.raw_matrix()).array()) / Eigen::abs(Escatmag_ref.array())
+        ).maxCoeff();
 
-    // json out;
-    // out["escat_mag"] = Escatmag.raw_matrix();
-    // out["rcs"] = rcs.raw_matrix();
-
-    // std::ofstream out_stream (path + "/dump/sphere_efie_pec.json");
-    // out_stream << std::setw(4) << out << std::endl;
-
-    // Float rcs_err = (
-    //     Eigen::abs((rcs_ref - rcs.raw_matrix()).array()) / Eigen::abs(rcs_ref.array())
-    //     ).maxCoeff();
-    // Float escat_err = (
-    //     Eigen::abs((Escatmag_ref - Escatmag.raw_matrix()).array()) / Eigen::abs(Escatmag_ref.array())
-    //     ).maxCoeff();
-
-    // if (rcs_err > 2.2e-2 || escat_err > 1.2e-2)
-    // {
-    //     std::cout << "====== test_cfie_pec ======" << std::endl;
-    //     std::cout << "Fail:" << std::endl;
-    //     std::cout << "--- RCS error " << rcs_err * 100 << " %" << std::endl;
-    //     std::cout << "--- Escat_mag error " << escat_err * 100 << " %" << std::endl;
-    // }
+    if (rcs_err > 2.2e-2 || escat_err > 1.2e-2)
+    {
+        std::cout << "====== test_cfie_pec ======" << std::endl;
+        std::cout << "Fail:" << std::endl;
+        std::cout << "--- RCS error " << rcs_err * 100 << " %" << std::endl;
+        std::cout << "--- Escat_mag error " << escat_err * 100 << " %" << std::endl;
+    }
 
     return;
 

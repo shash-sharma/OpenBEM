@@ -37,31 +37,23 @@ namespace bem::rwg
 
 /**
 * @brief Base class for RWG-based BEM operators.
-* @tparam TestSpace - Testing function space.
-* @tparam ExpansionSpace - Expansion function space.
 */
-template <typename TestSpace, typename ExpansionSpace>
 class OperatorBase
 {
-
-    static_assert(
-        std::is_base_of<FunctionSpaceBase<
-            TestSpace, TestSpace::dof, TestSpace::dim
-            >, TestSpace>::value,
-        "OperatorBase: `TestSpace` must derive from `FunctionSpaceBase`"
-        );
-
-    static_assert(
-        std::is_base_of<FunctionSpaceBase<
-            ExpansionSpace, ExpansionSpace::dof, ExpansionSpace::dim
-            >, ExpansionSpace>::value,
-        "OperatorBase: `ExpansionSpace` must derive from `FunctionSpaceBase`"
-        );
-
 public:
 
-    using TestSpaceType = TestSpace;
-    using ExpansionSpaceType = ExpansionSpace;
+    /**
+    * @brief Returns the number of degrees of freedom per triangle for the testing function space.
+    * @return Number of observation degrees of freedom per triangle.
+    */
+    virtual uint8_t obs_dof() const = 0;
+
+
+    /**
+    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
+    * @return Number of source degrees of freedom per triangle.
+    */
+    virtual uint8_t src_dof() const = 0;
 
 
     /**
@@ -74,7 +66,7 @@ public:
     * Rows of the output matrix correspond to observation degrees of freedom, and columns
     * correspond to source degrees of freedom.
     */
-    virtual EigMatMN<Complex, TestSpace::dof, ExpansionSpace::dof> compute(
+    virtual EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
@@ -89,12 +81,12 @@ public:
     * @param[in] obs_result - Integration result.
     * @return Operator values for each combination of degrees of freedom.
     */
-    virtual EigMatMN<Complex, TestSpace::dof, ExpansionSpace::dof> assemble(
+    virtual EigMat<Complex> assemble(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri,
         const ObsResult& obs_result
-        ) { return EigMatMN<Complex, TestSpace::dof, ExpansionSpace::dof>::Zero(); };
+        ) { return EigMat<Complex>::Zero(); };
 
 
     /**
@@ -136,7 +128,7 @@ public:
     * @brief Returns a unique pointer to a newly constructed object of the derived type.
     * @return Unique pointer to the new object.
     */
-    virtual std::unique_ptr<OperatorBase<TestSpace, ExpansionSpace>> clone() const
+    virtual std::unique_ptr<OperatorBase> clone() const
     { throw std::runtime_error("OperatorBase::clone(): Not implemented."); };
 
 

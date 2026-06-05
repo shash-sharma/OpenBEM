@@ -51,7 +51,7 @@ namespace bem::rwg
 * to source edges.
 */
 template <typename TriangleQuadratureType = GaussTriangleQuadrature<3>>
-class VectorIdentityOp: public OperatorBase<Rwg, Rwg>
+class VectorIdentityOp: public OperatorBase
 {
 
     static_assert(
@@ -70,13 +70,27 @@ public:
 
 
     /**
+    * @brief Returns the number of degrees of freedom per triangle for the testing function space.
+    * @return Number of observation degrees of freedom per triangle.
+    */
+    uint8_t obs_dof() const override { return 3; };
+
+
+    /**
+    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
+    * @return Number of source degrees of freedom per triangle.
+    */
+    uint8_t src_dof() const override { return 3; };
+
+
+    /**
     * @brief Computes the RWG identity operator.
     * @param[in] k - Complex wavenumber.
     * @param[in] obs_tri - Observation triangle.
     * @param[in] src_tri - Source triangle.
     * @return Operator values for each pair of observation and source triangle edges.
     */
-    EigMatMN<Complex, 3, 3> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
@@ -87,7 +101,7 @@ public:
     * @brief Returns a unique pointer to a deep copy of this object.
     * @return Unique pointer to the new object.
     */
-    std::unique_ptr<OperatorBase<Rwg, Rwg>> clone() const override
+    std::unique_ptr<OperatorBase> clone() const override
     { return std::make_unique<VectorIdentityOp<TriangleQuadratureType>> (*this); };
 
 
@@ -116,7 +130,7 @@ private:
 * to source edges.
 */
 template <typename TriangleQuadratureType = GaussTriangleQuadrature<3>>
-class RotVectorIdentityOp: public OperatorBase<NxRwg, Rwg>
+class RotVectorIdentityOp: public OperatorBase
 {
 
     static_assert(
@@ -135,13 +149,27 @@ public:
 
 
     /**
+    * @brief Returns the number of degrees of freedom per triangle for the testing function space.
+    * @return Number of observation degrees of freedom per triangle.
+    */
+    uint8_t obs_dof() const override { return 3; };
+
+
+    /**
+    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
+    * @return Number of source degrees of freedom per triangle.
+    */
+    uint8_t src_dof() const override { return 3; };
+
+
+    /**
     * @brief Computes the rotationally-tested RWG identity operator.
     * @param[in] k - Complex wavenumber.
     * @param[in] obs_tri - Observation triangle.
     * @param[in] src_tri - Source triangle.
     * @return Operator values for each pair of observation and source triangle edges.
     */
-    EigMatMN<Complex, 3, 3> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
@@ -152,7 +180,7 @@ public:
     * @brief Returns a unique pointer to a deep copy of this object.
     * @return Unique pointer to the new object.
     */
-    std::unique_ptr<OperatorBase<NxRwg, Rwg>> clone() const override
+    std::unique_ptr<OperatorBase> clone() const override
     { return std::make_unique<RotVectorIdentityOp<TriangleQuadratureType>> (*this); };
 
 

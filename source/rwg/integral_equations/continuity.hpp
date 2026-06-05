@@ -64,7 +64,7 @@ public:
     {
         DivergenceOp op_D;
         MatrixType D;
-        assm_div_.assemble(D, op_D, 0);
+        assembler_.assemble(D, op_D, 0);
         return D;
     }
 
@@ -89,9 +89,7 @@ public:
 
 protected:
 
-    OperatorAssembler<Pulse, Rwg> assm_div_ = OperatorAssembler<Pulse, Rwg> (
-        base::obs_mesh_, base::src_mesh_, base::elem_pairs_
-        );
+    OperatorAssembler assembler_ = OperatorAssembler (base::obs_mesh_, base::src_mesh_, base::elem_pairs_);
 
 };
 

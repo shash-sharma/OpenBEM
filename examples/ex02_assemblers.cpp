@@ -131,13 +131,7 @@ int main(int argc, char** argv)
 
     // For each operator, we define an `OperatorAssembler` to assemble the matrix.
 
-    bem::rwg::OperatorAssembler<bem::Rwg, bem::Rwg> assembler_t (structure.mesh());
-    bem::rwg::OperatorAssembler<bem::NxRwg, bem::Rwg> assembler_r (structure.mesh());
-
-    // The template arguments indicate the testing and expansion function spaces, respectively.  The
-    // single-layer and identity operator are tangentially tested, while the double-layer one is
-    // rotationally tested. Note that the assemblers do the same thing in both cases, since they are
-    // both edge-based vector function spaces.
+    bem::rwg::OperatorAssembler assembler (structure.mesh());
 
     // The assembler takes the mesh as its constructor argument. Once created, we can perform the
     // actual matrix assembly for both operators using the assember's `assemble()` method.
@@ -148,9 +142,9 @@ int main(int argc, char** argv)
     // access to OpenMP threads.
 
     MatrixType L, K, I;
-    assembler_t.assemble(L, L_operator, k);
-    assembler_r.assemble(K, Kpv_operator, k);
-    assembler_t.assemble(I, I_operator, k);
+    assembler.assemble(L, L_operator, k);
+    assembler.assemble(K, Kpv_operator, k);
+    assembler.assemble(I, I_operator, k);
 
     // For the TEFIE, the L operator must be scaled appropriately.
 
@@ -193,23 +187,19 @@ int main(int argc, char** argv)
     bem::rwg::RwgPlaneWave pw_e (dir, pol_e, pos, amp_e);
     bem::rwg::NxRwgPlaneWave pw_h (dir, pol_h, pos, amp_h);
 
-    // Now we'll use an `ExcitationAssembler` which works similarly to the
-    // `OperatorAssembler` above. This requires the header
-    // `rwg/assemblers/excitation_matrix.hpp`.
+    // Now we'll use an `ExcitationAssembler` which works similarly to the `OperatorAssembler`
+    // above. This requires the header `rwg/assemblers/excitation_matrix.hpp`.
 
-    bem::rwg::ExcitationAssembler<bem::Rwg> exc_assembler_e (structure.mesh());
-    bem::rwg::ExcitationAssembler<bem::NxRwg> exc_assembler_h (structure.mesh());
-
-    // The template argument indicates the testing function space.
+    bem::rwg::ExcitationAssembler exc_assembler (structure.mesh());
 
     // Now we'll use the assembler and its `assemble()` method, providing each plane wave object, to
     // obtain the excitation vectors for the TEFIE and the NMFIE.
 
     MatrixType inc_e;
-    exc_assembler_e.assemble(inc_e, pw_e, k);
+    exc_assembler.assemble(inc_e, pw_e, k);
 
     MatrixType inc_h;
-    exc_assembler_h.assemble(inc_h, pw_h, k);
+    exc_assembler.assemble(inc_h, pw_h, k);
 
     // Since we're solving the CFIE, we need to also combine the excitation matrices.
 
@@ -268,9 +258,8 @@ int main(int argc, char** argv)
     // using the `ProjectorAssembler` class, which works in much the same way as the assembler
     // classes we've already seen. This requires the header `rwg/assemblers/projector_matrix.hpp`.
 
-    bem::rwg::ProjectorAssembler<bem::Rwg, 3> proj_assembler (projection_points, structure.mesh());
+    bem::rwg::ProjectorAssembler<3> proj_assembler (projection_points, structure.mesh());
 
-    // The template argument `Rwg` indicates that the expansion function space is the RWG space.
     // The template argument `3` indicates the dimension of the projected field, which is 3 in this
     // case since it's a vector field.
 

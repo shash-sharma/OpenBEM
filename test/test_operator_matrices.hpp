@@ -103,10 +103,7 @@ void test_unit_cube(OpType& op, Complex k)
     EigenMatrix<Complex, EigenMatrixType::EIGEN_DENSE> mat_dense;
     EigenMatrix<Complex, EigenMatrixType::EIGEN_SPARSE> mat_sparse;
 
-    OperatorAssembler<
-        typename OpType::TestSpaceType,
-        typename OpType::ExpansionSpaceType
-        > assembler (mesh);
+    OperatorAssembler assembler (mesh);
 
     assembler.assemble(mat_dense, op, k);
     assembler.assemble(mat_sparse, op, k);

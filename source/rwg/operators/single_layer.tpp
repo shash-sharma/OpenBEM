@@ -29,7 +29,7 @@ namespace bem::rwg
 {
 
 template <typename ObsIntegratorType>
-EigMatMN<Complex, 3, 3> VectorSingleLayerOp<ObsIntegratorType>::compute(
+EigMat<Complex> VectorSingleLayerOp<ObsIntegratorType>::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
@@ -47,7 +47,7 @@ EigMatMN<Complex, 3, 3> VectorSingleLayerOp<ObsIntegratorType>::compute(
 
 
 template <typename ObsIntegratorType>
-EigMatMN<Complex, 3, 3> VectorSingleLayerOp<ObsIntegratorType>::assemble(
+EigMat<Complex> VectorSingleLayerOp<ObsIntegratorType>::assemble(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,
@@ -86,7 +86,7 @@ EigMatMN<Complex, 3, 3> VectorSingleLayerOp<ObsIntegratorType>::assemble(
 
 
 template <typename ObsIntegratorType>
-EigMatMN<Complex, 3, 3> RotVectorSingleLayerOp<ObsIntegratorType>::compute(
+EigMat<Complex> RotVectorSingleLayerOp<ObsIntegratorType>::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
@@ -104,7 +104,7 @@ EigMatMN<Complex, 3, 3> RotVectorSingleLayerOp<ObsIntegratorType>::compute(
 
 
 template <typename ObsIntegratorType>
-EigMatMN<Complex, 3, 3> RotVectorSingleLayerOp<ObsIntegratorType>::assemble(
+EigMat<Complex> RotVectorSingleLayerOp<ObsIntegratorType>::assemble(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,
@@ -151,7 +151,7 @@ EigMatMN<Complex, 3, 3> RotVectorSingleLayerOp<ObsIntegratorType>::assemble(
 
 
 template <typename ObsIntegratorType>
-EigMatMN<Complex, 1, 1> ScalarSingleLayerOp<ObsIntegratorType>::compute(
+EigMat<Complex> ScalarSingleLayerOp<ObsIntegratorType>::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
@@ -169,7 +169,7 @@ EigMatMN<Complex, 1, 1> ScalarSingleLayerOp<ObsIntegratorType>::compute(
 
 
 template <typename ObsIntegratorType>
-EigMatMN<Complex, 1, 1> ScalarSingleLayerOp<ObsIntegratorType>::assemble(
+EigMat<Complex> ScalarSingleLayerOp<ObsIntegratorType>::assemble(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,
@@ -186,7 +186,7 @@ EigMatMN<Complex, 1, 1> ScalarSingleLayerOp<ObsIntegratorType>::assemble(
 
 
 template <typename ObsIntegratorType>
-EigMatMN<Complex, 3, 1> RotGradScalarSingleLayerOp<ObsIntegratorType>::compute(
+EigMat<Complex> RotGradScalarSingleLayerOp<ObsIntegratorType>::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
@@ -204,7 +204,7 @@ EigMatMN<Complex, 3, 1> RotGradScalarSingleLayerOp<ObsIntegratorType>::compute(
 
 
 template <typename ObsIntegratorType>
-EigMatMN<Complex, 3, 1> RotGradScalarSingleLayerOp<ObsIntegratorType>::assemble(
+EigMat<Complex> RotGradScalarSingleLayerOp<ObsIntegratorType>::assemble(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,
@@ -249,21 +249,21 @@ EigMatMN<Complex, 3, 1> RotGradScalarSingleLayerOp<ObsIntegratorType>::assemble(
 
 
 template <typename ObsIntegratorType>
-EigMatMN<Complex, 3, 3> VectorHypersingularOp<ObsIntegratorType>::compute(
+EigMat<Complex> VectorHypersingularOp<ObsIntegratorType>::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
     )
 {
     EigMatMN<Complex, 3, 3> result = op_g_.compute(k, obs_tri, src_tri);
-    Complex hessg_term = op_hessg_.compute(k, obs_tri, src_tri)[0] / k / k;
+    Complex hessg_term = op_hessg_.compute(k, obs_tri, src_tri)(0, 0) / k / k;
     result -= hessg_term * obs_tri.edge_polarities().transpose() * src_tri.edge_polarities();
     return result;
 };
 
 
 template <typename ObsIntegratorType>
-EigMatMN<Complex, 3, 3> RotVectorHypersingularOp<ObsIntegratorType>::compute(
+EigMat<Complex> RotVectorHypersingularOp<ObsIntegratorType>::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri

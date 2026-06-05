@@ -50,7 +50,7 @@ const Float INF_GAP_DEFAULT_TOL = 1.0e-6;
 /**
 * @brief Class for setting infinitesimal gap excitation coefficients for RWG-based BEM systems.
 */
-class InfinitesimalGap: public ExcitationBase<Rwg>
+class InfinitesimalGap: public ExcitationBase
 {
 public:
 
@@ -92,6 +92,13 @@ public:
 
 
     /**
+    * @brief Returns the number of degrees of freedom per triangle for the testing function space.
+    * @return Number of observation degrees of freedom per triangle.
+    */
+    uint8_t obs_dof() const override { return 3; };
+
+
+    /**
     * @brief Returns the number of excitations (right-hand sides) to be generated.
     * @return Number of excitations (right-hand sides).
     */
@@ -113,7 +120,7 @@ public:
     * half-edge so that there is only one triangle associated with the half-RWG, then the physical
     * interpretation of such an excitation is left up to the user.
     */
-    EigMatNX<Complex, 3> compute(const Complex k, const Triangle<3>& obs_tri) override;
+    EigMat<Complex> compute(const Complex k, const Triangle<3>& obs_tri) override;
 
 
 private:

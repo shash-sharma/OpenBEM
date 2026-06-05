@@ -33,7 +33,7 @@ namespace bem::rwg
 {
 
 // Forward declarations
-template <typename TestSpace> class ExcitationBase;
+class ExcitationBase;
 
 /**
 * \addtogroup assm
@@ -42,13 +42,11 @@ template <typename TestSpace> class ExcitationBase;
 
 /**
 * @brief Class for generating excitation matrices for RWG-based systems.
-* @tparam TestSpace - Testing function space.
 */
-template <typename TestSpace>
-class ExcitationAssembler: public ExcitationAssemblerBase<TestSpace>
+class ExcitationAssembler: public ExcitationAssemblerBase
 {
 
-    using base = ExcitationAssemblerBase<TestSpace>;
+    using base = ExcitationAssemblerBase;
 
 public:
 
@@ -79,7 +77,7 @@ public:
     */
     void assemble(
         MatrixBase<Complex>& mat,
-        ExcitationBase<TestSpace>& exc,
+        ExcitationBase& exc,
         const Complex k
         ) override;
 
@@ -97,6 +95,8 @@ protected:
 
 }
 
-#include "rwg/assemblers/excitation_matrix.tpp"
+#ifndef BEM_LINKED
+#include "rwg/assemblers/excitation_matrix.cpp"
+#endif
 
 #endif

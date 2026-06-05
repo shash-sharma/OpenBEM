@@ -149,9 +149,9 @@ protected:
         Complex eps_eff = base::structure_.background_material().eps_eff(f);
 
         ScalarSingleLayerOp op_Lp;
-        OperatorAssembler<Pulse, Pulse> assm_face (obs_mesh, src_mesh);
+        OperatorAssembler assm (obs_mesh, src_mesh);
         MatrixType Lp;
-        assm_face.assemble(Lp, op_Lp, k);
+        assm.assemble(Lp, op_Lp, k);
         Lp.scale(-one / eps_eff / (J * two_pi * f));
 
         return Lp;
@@ -165,9 +165,9 @@ protected:
     virtual MatrixType divergence_matrix() const
     {
         DivergenceOp op_D;
-        OperatorAssembler<Pulse, Rwg> assm_div (base::structure_.mesh(), base::structure_.mesh());
+        OperatorAssembler assm (base::structure_.mesh(), base::structure_.mesh());
         MatrixType D;
-        assm_div.assemble(D, op_D, 0);
+        assm.assemble(D, op_D, 0);
         return D;
     };
 
@@ -210,7 +210,9 @@ public:
     */
     MatrixType voltage_matrix(const Float f) const
     {
-        TefieLumpedElement<MatrixType> tefie_elem (base::structure_, base::terminal_polygons_, base::ports_, base::impedances_);
+        TefieLumpedElement<MatrixType> tefie_elem (
+            base::structure_, base::terminal_polygons_, base::ports_, base::impedances_
+            );
         return tefie_elem.voltage_matrix(f);
     };
 
@@ -222,7 +224,9 @@ public:
     */
     MatrixType current_matrix(const Float f) const
     {
-        TefieLumpedElement<MatrixType> tefie_elem (base::structure_, base::terminal_polygons_, base::ports_, base::impedances_);
+        TefieLumpedElement<MatrixType> tefie_elem (
+            base::structure_, base::terminal_polygons_, base::ports_, base::impedances_
+            );
         return tefie_elem.current_matrix(f);
     };
 
@@ -246,7 +250,7 @@ protected:
         Complex eps_eff = base::structure_.background_material().eps_eff(f);
 
         RotGradScalarSingleLayerOp op_Lp;
-        OperatorAssembler<NxRwg, Pulse> assm (obs_mesh, src_mesh);
+        OperatorAssembler assm (obs_mesh, src_mesh);
         MatrixType Lp;
         assm.assemble(Lp, op_Lp, k);
         Lp.scale(-one / eps_eff / (J * two_pi * f));

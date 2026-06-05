@@ -34,22 +34,16 @@ namespace bem::rwg
 
 /**
 * @brief Base class for RWG-based BEM projectors.
-* @tparam ExpansionSpace - Expansion function space.
 */
-template <typename ExpansionSpace>
 class ProjectorBase
 {
-
-    static_assert(
-        std::is_base_of<FunctionSpaceBase<
-            ExpansionSpace, ExpansionSpace::dof, ExpansionSpace::dim
-            >, ExpansionSpace>::value,
-        "ProjectorBase: `ExpansionSpace` must derive from `FunctionSpaceBase`"
-        );
-
 public:
 
-    using ExpansionSpaceType = ExpansionSpace;
+    /**
+    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
+    * @return Number of source degrees of freedom per triangle.
+    */
+    virtual uint8_t src_dof() const = 0;
 
 
     /**
@@ -65,7 +59,7 @@ public:
     * where \f$ (F_{xi}, F_{yi}) \f$ are the components of a two-dimensional vector field \f$ \vec{F} \f$
     * defined at the observation point \f$ (x_i, y_i) \f$.
     */
-    virtual EigMatXN<Complex, ExpansionSpace::dof> compute(
+    virtual EigMat<Complex> compute(
         const Complex k,
         ConstEigRef<EigMatNX<Float, 3>> obs_points,
         const Triangle<3>& src_tri

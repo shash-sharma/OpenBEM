@@ -15,9 +15,6 @@
 * Classes for assembling excitation vectors and matrices for RWG-based BEM systems.
 */
 
-#ifndef BEM_RWG_EXC_ASSEMBLER_I
-#define BEM_RWG_EXC_ASSEMBLER_I
-
 #include "rwg/assemblers/excitation_matrix.hpp"
 
 #include "types.hpp"
@@ -28,15 +25,14 @@
 namespace bem::rwg
 {
 
-template <typename TestSpace>
-void ExcitationAssembler<TestSpace>::assemble(
+void ExcitationAssembler::assemble(
     MatrixBase<Complex>& mat,
-    ExcitationBase<TestSpace>& exc,
+    ExcitationBase& exc,
     const Complex k
     )
 {
 
-    if constexpr (TestSpace::dof == 3)
+    if (exc.obs_dof() == 3)
     {
 
         Index obs_num_edges = mesh_.num_edges();
@@ -63,7 +59,7 @@ void ExcitationAssembler<TestSpace>::assemble(
 
     }
 
-    else if constexpr (TestSpace::dof == 1)
+    else if (exc.obs_dof() == 1)
     {
 
         Index obs_num_faces = mesh_.num_elems();
@@ -92,4 +88,3 @@ void ExcitationAssembler<TestSpace>::assemble(
 
 }
 
-#endif

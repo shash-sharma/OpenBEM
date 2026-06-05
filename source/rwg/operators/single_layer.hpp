@@ -52,7 +52,7 @@ namespace bem::rwg
 * correspond to source edges.
 */
 template <typename ObsIntegratorType = ObsStrategic<>>
-class VectorSingleLayerOp: public OperatorBase<Rwg, Rwg>
+class VectorSingleLayerOp: public OperatorBase
 {
 
     static_assert(
@@ -71,6 +71,20 @@ public:
 
 
     /**
+    * @brief Returns the number of degrees of freedom per triangle for the testing function space.
+    * @return Number of observation degrees of freedom per triangle.
+    */
+    uint8_t obs_dof() const override { return 3; };
+
+
+    /**
+    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
+    * @return Number of source degrees of freedom per triangle.
+    */
+    uint8_t src_dof() const override { return 3; };
+
+
+    /**
     * @brief Computes operator values for the given observation and source triangles.
     * @param[in] k - Complex wavenumber.
     * @param[in] obs_tri - Observation triangle.
@@ -80,7 +94,7 @@ public:
     * Rows of the output matrix correspond to observation degrees of freedom, and columns
     * correspond to source degrees of freedom.
     */
-    EigMatMN<Complex, 3, 3> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
@@ -95,7 +109,7 @@ public:
     * @param[in] obs_result - Integration result.
     * @return Operator values for each pair of observation and source triangle edges.
     */
-    EigMatMN<Complex, 3, 3> assemble(
+    EigMat<Complex> assemble(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri,
@@ -107,7 +121,7 @@ public:
     * @brief Returns a unique pointer to a deep copy of this object.
     * @return Unique pointer to the new object.
     */
-    std::unique_ptr<OperatorBase<Rwg, Rwg>> clone() const override
+    std::unique_ptr<OperatorBase> clone() const override
     { return std::make_unique<VectorSingleLayerOp<ObsIntegratorType>> (*this); };
 
 
@@ -134,7 +148,7 @@ protected:
 * and columns correspond to source edges.
 */
 template <typename ObsIntegratorType = ObsStrategic<>>
-class RotVectorSingleLayerOp: public OperatorBase<NxRwg, Rwg>
+class RotVectorSingleLayerOp: public OperatorBase
 {
 
     static_assert(
@@ -153,6 +167,20 @@ public:
 
 
     /**
+    * @brief Returns the number of degrees of freedom per triangle for the testing function space.
+    * @return Number of observation degrees of freedom per triangle.
+    */
+    uint8_t obs_dof() const override { return 3; };
+
+
+    /**
+    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
+    * @return Number of source degrees of freedom per triangle.
+    */
+    uint8_t src_dof() const override { return 3; };
+
+
+    /**
     * @brief Computes operator values for the given observation and source triangles.
     * @param[in] k - Complex wavenumber.
     * @param[in] obs_tri - Observation triangle.
@@ -162,7 +190,7 @@ public:
     * Rows of the output matrix correspond to observation degrees of freedom, and columns
     * correspond to source degrees of freedom.
     */
-    EigMatMN<Complex, 3, 3> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
@@ -177,7 +205,7 @@ public:
     * @param[in] obs_result - Integration result.
     * @return Operator values for each pair of observation and source triangle edges.
     */
-    EigMatMN<Complex, 3, 3> assemble(
+    EigMat<Complex> assemble(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri,
@@ -189,7 +217,7 @@ public:
     * @brief Returns a unique pointer to a deep copy of this object.
     * @return Unique pointer to the new object.
     */
-    std::unique_ptr<OperatorBase<NxRwg, Rwg>> clone() const override
+    std::unique_ptr<OperatorBase> clone() const override
     { return std::make_unique<RotVectorSingleLayerOp<ObsIntegratorType>> (*this); };
 
 
@@ -213,7 +241,7 @@ protected:
 * function that is a non-zero constant inside the associated triangle, and zero outside.
 */
 template <typename ObsIntegratorType = ObsStrategic<>>
-class ScalarSingleLayerOp: public OperatorBase<Pulse, Pulse>
+class ScalarSingleLayerOp: public OperatorBase
 {
 
     static_assert(
@@ -232,6 +260,20 @@ public:
 
 
     /**
+    * @brief Returns the number of degrees of freedom per triangle for the testing function space.
+    * @return Number of observation degrees of freedom per triangle.
+    */
+    uint8_t obs_dof() const override { return 1; };
+
+
+    /**
+    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
+    * @return Number of source degrees of freedom per triangle.
+    */
+    uint8_t src_dof() const override { return 1; };
+
+
+    /**
     * @brief Computes operator values for the given observation and source triangles.
     * @param[in] k - Complex wavenumber.
     * @param[in] obs_tri - Observation triangle.
@@ -241,7 +283,7 @@ public:
     * Rows of the output matrix correspond to observation degrees of freedom, and columns
     * correspond to source degrees of freedom.
     */
-    EigMatMN<Complex, 1, 1> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
@@ -256,7 +298,7 @@ public:
     * @param[in] obs_result - Integration result.
     * @return Operator value for the observation and source triangle faces.
     */
-    EigMatMN<Complex, 1, 1> assemble(
+    EigMat<Complex> assemble(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri,
@@ -268,7 +310,7 @@ public:
     * @brief Returns a unique pointer to a deep copy of this object.
     * @return Unique pointer to the new object.
     */
-    std::unique_ptr<OperatorBase<Pulse, Pulse>> clone() const override
+    std::unique_ptr<OperatorBase> clone() const override
     { return std::make_unique<ScalarSingleLayerOp<ObsIntegratorType>> (*this); };
 
 
@@ -295,7 +337,7 @@ protected:
 * associated with `obs_tri`. Rows of the output matrix correspond to observation edges.
 */
 template <typename ObsIntegratorType = ObsStrategic<>>
-class RotGradScalarSingleLayerOp: public OperatorBase<NxRwg, Pulse>
+class RotGradScalarSingleLayerOp: public OperatorBase
 {
 
     static_assert(
@@ -314,6 +356,20 @@ public:
 
 
     /**
+    * @brief Returns the number of degrees of freedom per triangle for the testing function space.
+    * @return Number of observation degrees of freedom per triangle.
+    */
+    uint8_t obs_dof() const override { return 3; };
+
+
+    /**
+    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
+    * @return Number of source degrees of freedom per triangle.
+    */
+    uint8_t src_dof() const override { return 1; };
+
+
+    /**
     * @brief Computes operator values for the given observation and source triangles.
     * @param[in] k - Complex wavenumber.
     * @param[in] obs_tri - Observation triangle.
@@ -323,7 +379,7 @@ public:
     * Rows of the output matrix correspond to observation degrees of freedom, and columns
     * correspond to source degrees of freedom.
     */
-    EigMatMN<Complex, 3, 1> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
@@ -338,7 +394,7 @@ public:
     * @param[in] obs_result - Integration result.
     * @return Operator values for each observation triangle edge and source triangle face.
     */
-    EigMatMN<Complex, 3, 1> assemble(
+    EigMat<Complex> assemble(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri,
@@ -350,7 +406,7 @@ public:
     * @brief Returns a unique pointer to a deep copy of this object.
     * @return Unique pointer to the new object.
     */
-    std::unique_ptr<OperatorBase<NxRwg, Pulse>> clone() const override
+    std::unique_ptr<OperatorBase> clone() const override
     { return std::make_unique<RotGradScalarSingleLayerOp<ObsIntegratorType>> (*this); };
 
 
@@ -378,7 +434,7 @@ protected:
 * edges, and columns correspond to source edges.
 */
 template <typename ObsIntegratorType = ObsStrategic<>>
-class VectorHypersingularOp: public OperatorBase<Rwg, Rwg>
+class VectorHypersingularOp: public OperatorBase
 {
 
     static_assert(
@@ -397,6 +453,20 @@ public:
 
 
     /**
+    * @brief Returns the number of degrees of freedom per triangle for the testing function space.
+    * @return Number of observation degrees of freedom per triangle.
+    */
+    uint8_t obs_dof() const override { return 3; };
+
+
+    /**
+    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
+    * @return Number of source degrees of freedom per triangle.
+    */
+    uint8_t src_dof() const override { return 3; };
+
+
+    /**
     * @brief Computes operator values for the given observation and source triangles.
     * @param[in] k - Complex wavenumber.
     * @param[in] obs_tri - Observation triangle.
@@ -406,7 +476,7 @@ public:
     * Rows of the output matrix correspond to observation degrees of freedom, and columns
     * correspond to source degrees of freedom.
     */
-    EigMatMN<Complex, 3, 3> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
@@ -417,7 +487,7 @@ public:
     * @brief Returns a unique pointer to a deep copy of this object.
     * @return Unique pointer to the new object.
     */
-    std::unique_ptr<OperatorBase<Rwg, Rwg>> clone() const override
+    std::unique_ptr<OperatorBase> clone() const override
     { return std::make_unique<VectorHypersingularOp<ObsIntegratorType>> (*this); };
 
 
@@ -447,7 +517,7 @@ protected:
 * and columns correspond to source edges.
 */
 template <typename ObsIntegratorType = ObsStrategic<>>
-class RotVectorHypersingularOp: public OperatorBase<NxRwg, Rwg>
+class RotVectorHypersingularOp: public OperatorBase
 {
 
     static_assert(
@@ -466,6 +536,20 @@ public:
 
 
     /**
+    * @brief Returns the number of degrees of freedom per triangle for the testing function space.
+    * @return Number of observation degrees of freedom per triangle.
+    */
+    uint8_t obs_dof() const override { return 3; };
+
+
+    /**
+    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
+    * @return Number of source degrees of freedom per triangle.
+    */
+    uint8_t src_dof() const override { return 3; };
+
+
+    /**
     * @brief Computes operator values for the given observation and source triangles.
     * @param[in] k - Complex wavenumber.
     * @param[in] obs_tri - Observation triangle.
@@ -475,7 +559,7 @@ public:
     * Rows of the output matrix correspond to observation degrees of freedom, and columns
     * correspond to source degrees of freedom.
     */
-    EigMatMN<Complex, 3, 3> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
@@ -486,7 +570,7 @@ public:
     * @brief Returns a unique pointer to a deep copy of this object.
     * @return Unique pointer to the new object.
     */
-    std::unique_ptr<OperatorBase<NxRwg, Rwg>> clone() const override
+    std::unique_ptr<OperatorBase> clone() const override
     { return std::make_unique<RotVectorHypersingularOp<ObsIntegratorType>> (*this); };
 
 
