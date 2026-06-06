@@ -79,22 +79,18 @@ void test_cfie_pec()
     assm.assemble<
         EigenMatrix<Complex>,
         ObsStrategic<>,
-        VectorIdentityOp<>,
-        VectorSingleLayerOp<>,
-        RotVectorDoubleLayerPvOp<>
+        VectorHypersingularOp<>,
+        RotVectorDoubleLayerPvOp<>,
+        VectorIdentityOp<>
         > (mats, k);
 
-    EigenMatrix<Complex>& T = mats[1];
-    T.scale(-J * omega * mu);
-
-    EigenMatrix<Complex>& K = mats[2];
-
-    EigenMatrix<Complex>& I = mats[0];
-    I.scale(half);
+    EigenMatrix<Complex>& T = mats[0];
+    EigenMatrix<Complex>& K = mats[1];
+    EigenMatrix<Complex>& I = mats[2];
 
     EigenMatrix<Complex> A;
-    A.set_axpby(T, K);
-    A.add_ax(I);
+    A.set_axpby(T, K, -J * omega * mu);
+    A.add_ax(I, half);
 
 
     EigColVecN<Float, 3> dir, pol_e, pol_h, pos;

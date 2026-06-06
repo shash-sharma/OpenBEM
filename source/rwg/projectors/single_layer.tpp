@@ -56,8 +56,7 @@ EigMat<Complex> VectorSingleLayerProj<SrcIntegratorType>::compute(
             src_result.g;
         result.col(jj) = (
             local_uvw.leftCols(2) * rwg_g
-            ).reshaped(3 * obs_points.cols(), 1) *
-                            norms(jj);
+            ).reshaped(3 * obs_points.cols(), 1) * norms(jj);
     }
 
     return result;

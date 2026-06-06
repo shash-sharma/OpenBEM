@@ -98,6 +98,22 @@ public:
 
 
     /**
+    * @brief Assembles the computed integrals into the final operator values.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] obs_tri - Observation triangle in the source's local coordinate system.
+    * @param[in] src_tri - Source triangle in its local coordinate system.
+    * @param[in] obs_result - Integration result.
+    * @return Operator values for each observation triangle edge and source triangle face.
+    */
+    EigMat<Complex> assemble(
+        const Complex k,
+        const Triangle<3>& obs_tri,
+        const Triangle<3>& src_tri,
+        const ObsResult& obs_result
+        ) override { return compute(k, obs_tri, src_tri); };
+
+
+    /**
     * @brief Returns a unique pointer to a deep copy of this object.
     * @return Unique pointer to the new object.
     */
@@ -174,6 +190,22 @@ public:
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
         ) override;
+
+
+    /**
+    * @brief Assembles the computed integrals into the final operator values.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] obs_tri - Observation triangle in the source's local coordinate system.
+    * @param[in] src_tri - Source triangle in its local coordinate system.
+    * @param[in] obs_result - Integration result.
+    * @return Operator values for each observation triangle edge and source triangle face.
+    */
+    EigMat<Complex> assemble(
+        const Complex k,
+        const Triangle<3>& obs_tri,
+        const Triangle<3>& src_tri,
+        const ObsResult& obs_result
+        ) override { return compute(k, obs_tri, src_tri); };
 
 
     /**

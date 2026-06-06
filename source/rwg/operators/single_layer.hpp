@@ -449,7 +449,9 @@ public:
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
     VectorHypersingularOp(const ObsIntegratorType obs_integrator = ObsStrategic<>()):
-        op_g_(obs_integrator), op_hessg_(obs_integrator) {};
+        obs_integrator_(obs_integrator),
+        op_g_(obs_integrator),
+        op_hessg_(obs_integrator) {};
 
 
     /**
@@ -484,6 +486,22 @@ public:
 
 
     /**
+    * @brief Assembles the computed integrals into the final operator values.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] obs_tri - Observation triangle in the source's local coordinate system.
+    * @param[in] src_tri - Source triangle in its local coordinate system.
+    * @param[in] obs_result - Integration result.
+    * @return Operator values for each observation triangle edge and source triangle face.
+    */
+    EigMat<Complex> assemble(
+        const Complex k,
+        const Triangle<3>& obs_tri,
+        const Triangle<3>& src_tri,
+        const ObsResult& obs_result
+        ) override;
+
+
+    /**
     * @brief Returns a unique pointer to a deep copy of this object.
     * @return Unique pointer to the new object.
     */
@@ -493,6 +511,7 @@ public:
 
 protected:
 
+    ObsIntegratorType obs_integrator_;
     VectorSingleLayerOp<ObsIntegratorType> op_g_;
     ScalarSingleLayerOp<ObsIntegratorType> op_hessg_;
 
@@ -532,7 +551,9 @@ public:
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
     RotVectorHypersingularOp(const ObsIntegratorType obs_integrator = ObsStrategic<>()):
-        op_g_(obs_integrator), op_hessg_(obs_integrator) {};
+        obs_integrator_(obs_integrator),
+        op_g_(obs_integrator),
+        op_hessg_(obs_integrator) {};
 
 
     /**
@@ -567,6 +588,22 @@ public:
 
 
     /**
+    * @brief Assembles the computed integrals into the final operator values.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] obs_tri - Observation triangle in the source's local coordinate system.
+    * @param[in] src_tri - Source triangle in its local coordinate system.
+    * @param[in] obs_result - Integration result.
+    * @return Operator values for each observation triangle edge and source triangle face.
+    */
+    EigMat<Complex> assemble(
+        const Complex k,
+        const Triangle<3>& obs_tri,
+        const Triangle<3>& src_tri,
+        const ObsResult& obs_result
+        ) override;
+
+
+    /**
     * @brief Returns a unique pointer to a deep copy of this object.
     * @return Unique pointer to the new object.
     */
@@ -576,6 +613,7 @@ public:
 
 protected:
 
+    ObsIntegratorType obs_integrator_;
     RotVectorSingleLayerOp<ObsIntegratorType> op_g_;
     RotGradScalarSingleLayerOp<ObsIntegratorType> op_hessg_;
 

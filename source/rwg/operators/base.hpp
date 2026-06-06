@@ -86,7 +86,7 @@ public:
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri,
         const ObsResult& obs_result
-        ) { return EigMat<Complex>::Zero(); };
+        ) = 0;
 
 
     /**

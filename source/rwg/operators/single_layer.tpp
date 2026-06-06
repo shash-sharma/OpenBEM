@@ -255,8 +255,27 @@ EigMat<Complex> VectorHypersingularOp<ObsIntegratorType>::compute(
     const Triangle<3>& src_tri
     )
 {
-    EigMatMN<Complex, 3, 3> result = op_g_.compute(k, obs_tri, src_tri);
-    Complex hessg_term = op_hessg_.compute(k, obs_tri, src_tri)(0, 0) / k / k;
+    Triangle<3> obs_tri_local;
+    Triangle<2> src_tri_local;
+    transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
+
+    obs_integrator_.set_compute_terms(true, true, false, false);
+    const ObsResult obs_result = obs_integrator_.integrate(k, obs_tri_local, src_tri_local);
+
+    return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
+};
+
+
+template <typename ObsIntegratorType>
+EigMat<Complex> VectorHypersingularOp<ObsIntegratorType>::assemble(
+    const Complex k,
+    const Triangle<3>& obs_tri,
+    const Triangle<3>& src_tri,
+    const ObsResult& obs_result
+    )
+{
+    EigMatMN<Complex, 3, 3> result = op_g_.assemble(k, obs_tri, src_tri, obs_result);
+    Complex hessg_term = op_hessg_.assemble(k, obs_tri, src_tri, obs_result)(0, 0) / k / k;
     result -= hessg_term * obs_tri.edge_polarities().transpose() * src_tri.edge_polarities();
     return result;
 };
@@ -269,8 +288,27 @@ EigMat<Complex> RotVectorHypersingularOp<ObsIntegratorType>::compute(
     const Triangle<3>& src_tri
     )
 {
-    EigMatMN<Complex, 3, 3> result = op_g_.compute(k, obs_tri, src_tri);
-    EigMatMN<Complex, 3, 1> hessg_term = op_hessg_.compute(k, obs_tri, src_tri) / k / k;
+    Triangle<3> obs_tri_local;
+    Triangle<2> src_tri_local;
+    transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
+
+    obs_integrator_.set_compute_terms(false, true, true, false);
+    const ObsResult obs_result = obs_integrator_.integrate(k, obs_tri_local, src_tri_local);
+
+    return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
+};
+
+
+template <typename ObsIntegratorType>
+EigMat<Complex> RotVectorHypersingularOp<ObsIntegratorType>::assemble(
+    const Complex k,
+    const Triangle<3>& obs_tri,
+    const Triangle<3>& src_tri,
+    const ObsResult& obs_result
+    )
+{
+    EigMatMN<Complex, 3, 3> result = op_g_.assemble(k, obs_tri, src_tri, obs_result);
+    EigMatMN<Complex, 3, 1> hessg_term = op_hessg_.assemble(k, obs_tri, src_tri, obs_result) / k / k;
     result += hessg_term * src_tri.edge_polarities();
     return result;
 };
