@@ -24,8 +24,8 @@
 #include "matrix/base.hpp"
 #include "matrix/eigen_matrix.hpp"
 
-#include "rwg/assemblers/index_generator.hpp"
-#include "rwg/assemblers/operator_matrix.hpp"
+#include "rwg/assemblers/indexing.hpp"
+#include "rwg/assemblers/operator_assembler.hpp"
 
 
 namespace bem::rwg

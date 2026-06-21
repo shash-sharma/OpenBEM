@@ -15,7 +15,7 @@
 * Classes for assembling RWG-based BEM operator matrices.
 */
 
-#include "rwg/assemblers/operator_matrix.hpp"
+#include "rwg/assemblers/operator_assembler.hpp"
 
 #include "types.hpp"
 #include "matrix/base.hpp"

@@ -42,9 +42,9 @@
 #include "rwg/projectors/single_layer.hpp"
 #include "rwg/projectors/double_layer.hpp"
 
-#include "rwg/assemblers/operator_matrix.hpp"
-#include "rwg/assemblers/excitation_matrix.hpp"
-#include "rwg/assemblers/projector_matrix.hpp"
+#include "rwg/assemblers/operator_assembler.hpp"
+#include "rwg/assemblers/excitation_assembler.hpp"
+#include "rwg/assemblers/projector_assembler.hpp"
 
 #include "rwg/integral_equations/tefie.hpp"
 
@@ -129,7 +129,8 @@ int main(int argc, char** argv)
     // of having to write loops over triangles manually, OpenBEM provides assembler classes to do
     // this automatically.
 
-    // For each operator, we define an `OperatorAssembler` to assemble the matrix.
+    // For each operator, we define an `OperatorAssembler` to assemble the matrix. This requires the
+    // header `rwg/assemblers/operator_assembler.hpp`.
 
     bem::rwg::OperatorAssembler assembler (structure.mesh());
 
@@ -188,7 +189,7 @@ int main(int argc, char** argv)
     bem::rwg::NxRwgPlaneWave pw_h (dir, pol_h, pos, amp_h);
 
     // Now we'll use an `ExcitationAssembler` which works similarly to the `OperatorAssembler`
-    // above. This requires the header `rwg/assemblers/excitation_matrix.hpp`.
+    // above. This requires the header `rwg/assemblers/excitation_assembler.hpp`.
 
     bem::rwg::ExcitationAssembler exc_assembler (structure.mesh());
 
@@ -256,7 +257,8 @@ int main(int argc, char** argv)
 
     // Next, similar to the RWG operators, define an assembler to assemble the projector matrix,
     // using the `ProjectorAssembler` class, which works in much the same way as the assembler
-    // classes we've already seen. This requires the header `rwg/assemblers/projector_matrix.hpp`.
+    // classes we've already seen. This requires the header
+    // `rwg/assemblers/projector_assembler.hpp`.
 
     bem::rwg::ProjectorAssembler<3> proj_assembler (projection_points, structure.mesh());
 

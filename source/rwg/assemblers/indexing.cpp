@@ -12,10 +12,10 @@
 
 /**
 * @file
-* Utility functions for assemblers.
+* Index sets and generators for assemblers.
 */
 
-#include "rwg/assemblers/index_generator.hpp"
+#include "rwg/assemblers/indexing.hpp"
 
 #include <vector>
 #include <set>
@@ -47,7 +47,15 @@ EigMatNX<Index, 2> IndexGenerator::elem_pairs(
 
 EigMatNX<Index, 2> IndexGenerator::elem_pairs(const TriangleMesh<3>& mesh)
 {
-    return elem_pairs(mesh, mesh);
+    Index num_pairs = mesh.num_elems() * mesh.num_elems();
+    EigMatNX<Index, 2> pairs = EigMatNX<Index, 2>::Zero(2, num_pairs);
+
+    for (Index ii = 0; ii < num_pairs; ++ii)
+    {
+        pairs(0, ii) = ii / mesh.num_elems();
+        pairs(1, ii) = ii % mesh.num_elems();
+    }
+    return pairs;
 };
 
 

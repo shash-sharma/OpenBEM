@@ -20,7 +20,7 @@
 
 #include "types.hpp"
 
-#include "rwg/assemblers/excitation_matrix.hpp"
+#include "rwg/assemblers/excitation_assembler.hpp"
 #include "rwg/excitations/plane_wave.hpp"
 #include "rwg/excitations/inf_gap.hpp"
 

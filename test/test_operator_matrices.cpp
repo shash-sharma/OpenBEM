@@ -23,7 +23,7 @@
 #include "types.hpp"
 #include "quadrature/line/gauss.hpp"
 
-#include "rwg/assemblers/operator_matrix.hpp"
+#include "rwg/assemblers/operator_assembler.hpp"
 
 #include "rwg/integrators/src/strategic.hpp"
 #include "rwg/integrators/obs/quadrature.hpp"

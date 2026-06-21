@@ -75,9 +75,11 @@
 #include "rwg/excitations/inf_gap.hpp"
 
 #include "rwg/assemblers/base.hpp"
-#include "rwg/assemblers/operator_matrix.hpp"
-#include "rwg/assemblers/excitation_matrix.hpp"
-#include "rwg/assemblers/projector_matrix.hpp"
+#include "rwg/assemblers/indexing.hpp"
+#include "rwg/assemblers/operator_assembler.hpp"
+#include "rwg/assemblers/block_assembler.hpp"
+#include "rwg/assemblers/excitation_assembler.hpp"
+#include "rwg/assemblers/projector_assembler.hpp"
 
 #include "rwg/lumped_elements/base.hpp"
 #include "rwg/lumped_elements/efie.hpp"

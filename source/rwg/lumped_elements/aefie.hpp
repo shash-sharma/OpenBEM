@@ -29,7 +29,7 @@
 
 #include "rwg/operators/single_layer.hpp"
 #include "rwg/operators/incidence.hpp"
-#include "rwg/assemblers/operator_matrix.hpp"
+#include "rwg/assemblers/operator_assembler.hpp"
 #include "rwg/lumped_elements/base.hpp"
 
 

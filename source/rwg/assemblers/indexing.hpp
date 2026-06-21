@@ -12,11 +12,11 @@
 
 /**
 * @file
-* Index generators for assemblers.
+* Index sets and generators for assemblers.
 */
 
-#ifndef ASSEMBLERS_INDGEN_H
-#define ASSEMBLERS_INDGEN_H
+#ifndef ASSEMBLERS_IND_H
+#define ASSEMBLERS_IND_H
 
 #include <vector>
 
@@ -30,12 +30,86 @@ namespace bem
 template <uint8_t dim> class TriangleMesh;
 
 /**
-* \defgroup assmutil Utility
 * \ingroup assm
-* @brief Utility and helper functions for assemblers.
 * @{
 */
 
+/**
+* @brief Data structure of index sets defining a block of a matrix.
+*/
+struct IndexSet
+{
+public:
+
+    /**
+    * @brief Constructs an `IndexSet` object with row and column index lists.
+    * @param[in] rows - List of row indices.
+    * @param[in] cols - List of column indices.
+    */
+    IndexSet(
+        ConstEigRef<EigRowVec<Index>> rows,
+        ConstEigRef<EigRowVec<Index>> cols
+        ): rows_(rows), cols_(cols) {};
+
+
+    /**
+    * @brief Constructs an `IndexSet` object for a contiguous block.
+    * @param[in] row_start - Starting row index.
+    * @param[in] col_start - Starting column index.
+    * @param[in] num_rows - Number of rows in the block.
+    * @param[in] num_cols - Number of columns in the block.
+    */
+    IndexSet(
+        Index row_start,
+        Index col_start,
+        Index num_rows,
+        Index num_cols
+        ):
+        IndexSet(
+            EigRowVec<Index>::LinSpaced(num_rows, row_start, row_start + num_rows - 1),
+            EigRowVec<Index>::LinSpaced(num_cols, col_start, col_start + num_cols - 1)
+            ) {};
+
+
+    /**
+    * @brief Returns a read-only reference to the row indices.
+    * @return Read-only reference to row indices.
+    */
+    const EigRowVec<Index>& rows() const { return rows_; };
+
+
+    /**
+    * @brief Returns a read-only reference to the column indices.
+    * @return Read-only reference to column indices.
+    */
+    const EigRowVec<Index>& cols() const { return cols_; };
+
+
+    /**
+    * @brief Returns the number of rows.
+    * @return Number of rows.
+    */
+    Index num_rows() const { return rows_.size(); };
+
+
+    /**
+    * @brief Returns the number of columns.
+    * @return Number of columns.
+    */
+    Index num_cols() const { return cols_.size(); };
+
+
+protected:
+
+    const EigRowVec<Index> rows_;
+    const EigRowVec<Index> cols_;
+
+};
+
+
+/**
+* @brief Class to generate index sets and maps across element types.
+*/
 class IndexGenerator
 {
 public:
@@ -55,11 +129,11 @@ public:
 
 
     /**
-     * @brief Generates all possible pairs of triangle indices for a given triangle mesh.
-     * @param[in] mesh - Triangle mesh.
-     * @return All possible triangle index pairs, with observation indices in the first row,
-     * and source indices in the second row.
-     */
+    * @brief Generates all possible pairs of triangle indices for a given triangle mesh.
+    * @param[in] mesh - Triangle mesh.
+    * @return All possible triangle index pairs, with observation indices in the first row,
+    * and source indices in the second row.
+    */
     static EigMatNX<Index, 2> elem_pairs(const TriangleMesh<3>& mesh);
 
 
@@ -182,7 +256,7 @@ public:
 }
 
 #ifndef BEM_LINKED
-#include "rwg/assemblers/index_generator.cpp"
+#include "rwg/assemblers/indexing.cpp"
 #endif
 
 #endif
