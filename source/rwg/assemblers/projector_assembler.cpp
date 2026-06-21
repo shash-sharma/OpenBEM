@@ -15,7 +15,7 @@
 * Classes for assembling RWG-based BEM projector matrices.
 */
 
-#include "rwg/assemblers/projector_matrix.hpp"
+#include "rwg/assemblers/projector_assembler.hpp"
 
 #include "types.hpp"
 #include "geometry/primitives/triangle.hpp"

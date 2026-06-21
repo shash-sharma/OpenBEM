@@ -53,7 +53,7 @@ void test_cfie_pec_lineint()
 
     // Assembly
 
-    OperatorAssembler assembler (mesh, mesh);
+    OperatorAssembler assembler (mesh);
 
     EigenMatrix<Complex> T;
     assembler.assemble(T, op_T, k);

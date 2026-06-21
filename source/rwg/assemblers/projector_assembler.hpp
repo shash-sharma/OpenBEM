@@ -21,6 +21,8 @@
 #include <vector>
 
 #include "types.hpp"
+#include "geometry/mesh/triangle_mesh.hpp"
+#include "geometry/point_cloud.hpp"
 #include "rwg/assemblers/base.hpp"
 
 
@@ -105,7 +107,7 @@ protected:
 }
 
 #ifndef BEM_LINKED
-#include "rwg/assemblers/projector_matrix.cpp"
+#include "rwg/assemblers/projector_assembler.cpp"
 #endif
 
 #endif

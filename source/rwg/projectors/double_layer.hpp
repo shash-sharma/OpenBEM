@@ -58,10 +58,10 @@ public:
 
 
     /**
-    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
-    * @return Number of source degrees of freedom per triangle.
+    * @brief Returns the degrees of freedom for the expansion function space.
+    * @return Source degrees of freedom.
     */
-    uint8_t src_dof() const override { return 3; };
+    OperatorDof src_dof() const override { return OperatorDof::EDGE; };
 
 
     /**

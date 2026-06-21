@@ -19,6 +19,7 @@
 #define BEM_RWG_EXC_ASSEMBLER_H
 
 #include "types.hpp"
+#include "geometry/mesh/triangle_mesh.hpp"
 #include "rwg/assemblers/base.hpp"
 
 
@@ -96,7 +97,7 @@ protected:
 }
 
 #ifndef BEM_LINKED
-#include "rwg/assemblers/excitation_matrix.cpp"
+#include "rwg/assemblers/excitation_assembler.cpp"
 #endif
 
 #endif

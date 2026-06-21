@@ -15,9 +15,10 @@
 * Classes for assembling excitation vectors and matrices for RWG-based BEM systems.
 */
 
-#include "rwg/assemblers/excitation_matrix.hpp"
+#include "rwg/assemblers/excitation_assembler.hpp"
 
 #include "types.hpp"
+#include "geometry/mesh/triangle_mesh.hpp"
 #include "geometry/primitives/triangle.hpp"
 #include "matrix/base.hpp"
 

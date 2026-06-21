@@ -26,7 +26,7 @@
 #include "rwg/integrators/src/quadrature.hpp"
 
 #include "matrix/eigen_matrix.hpp"
-#include "rwg/assemblers/projector_matrix.hpp"
+#include "rwg/assemblers/projector_assembler.hpp"
 
 #include "rwg/projectors/base.hpp"
 #include "rwg/projectors/single_layer.hpp"

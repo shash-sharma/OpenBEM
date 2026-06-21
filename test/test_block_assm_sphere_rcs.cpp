@@ -14,37 +14,7 @@
 
 #include "io.hpp"
 
-#include "types.hpp"
-#include "constants.hpp"
-
-#include "matrix/eigen_matrix.hpp"
-
-#include "geometry/point_cloud.hpp"
-#include "geometry/structure.hpp"
-#include "geometry/mesh/triangle_mesh.hpp"
-#include "geometry/mesh/mesh_transfer.hpp"
-
-#include "quadrature/triangle/gauss.hpp"
-#include "quadrature/line/gauss.hpp"
-
-#include "rwg/assemblers/operator_assembler.hpp"
-#include "rwg/assemblers/excitation_assembler.hpp"
-#include "rwg/assemblers/projector_assembler.hpp"
-
-#include "rwg/integrators/src/strategic.hpp"
-#include "rwg/integrators/obs/quadrature.hpp"
-
-#include "rwg/operators/gram.hpp"
-#include "rwg/operators/single_layer.hpp"
-#include "rwg/operators/double_layer.hpp"
-#include "rwg/operators/incidence.hpp"
-
-#include "rwg/excitations/plane_wave.hpp"
-
-#include "rwg/projectors/single_layer.hpp"
-#include "rwg/projectors/double_layer.hpp"
-
-#include "rwg/function_space.hpp"
+#include "openbem.hpp"
 
 
 using namespace bem;
@@ -72,53 +42,66 @@ void test_cfie_pec()
     Float lambda = std::real(two_pi / k);
     Float dist = 1e2 * lambda;
 
+    // Operators
 
-    OperatorAssembler assm (mesh);
-    std::vector<EigenMatrix<Complex>> mats;
+    VectorHypersingularOp op_T;
+    RotVectorDoubleLayerPvOp op_Kr_pv;
+    VectorIdentityOp op_I;
 
-    assm.assemble<
-        EigenMatrix<Complex>,
-        ObsStrategic<>,
-        VectorHypersingularOp<>,
-        RotVectorDoubleLayerPvOp<>,
-        VectorIdentityOp<>
-        > (mats, k);
+    // Assembly
 
-    EigenMatrix<Complex>& T = mats[0];
-    EigenMatrix<Complex>& K = mats[1];
-    EigenMatrix<Complex>& I = mats[2];
+    BlockAssembler assembler (
+        mesh,
+        IndexSet(
+            EigRowVec<Index>::LinSpaced(mesh.num_edges(), 0, mesh.num_edges() - 1),
+            EigRowVec<Index>::LinSpaced(mesh.num_edges(), 0, mesh.num_edges() - 1)
+            )
+        );
+
+    EigenMatrix<Complex> T;
+    assembler.assemble(T, op_T, k);
+    T.scale(-J * omega * mu);
+
+    EigenMatrix<Complex> Kr, I;
+    assembler.assemble(Kr, op_Kr_pv, k);
+    assembler.assemble(I, op_I, k);
+    Kr.add_ax(I, 0.5);
 
     EigenMatrix<Complex> A;
-    A.set_axpby(T, K, -J * omega * mu);
-    A.add_ax(I, half);
+    A.set_axpby(T, Kr);
 
+    // Excitations
 
     EigColVecN<Float, 3> dir, pol_e, pol_h, pos;
-    EigRowVecN<Complex, 1> amp;
+    EigRowVecN<Complex, 1> amp_e, amp_h;
     dir << 0, 0, 1;
     pol_e << 1, 0, 0;
     pol_h << 0, 1, 0;
     pos << 0, 0, -dist;
-    amp << 1;
+    amp_e << 1;
+    amp_h << 1 / eta0;
 
-    RwgPlaneWave pwe (dir, pol_e, pos, amp);
-    NxRwgPlaneWave pwh (dir, pol_h, pos, amp / std::sqrt(mu / eps));
+    RwgPlaneWave pw_e (dir, pol_e, pos, amp_e);
+    NxRwgPlaneWave pw_h (dir, pol_h, pos, amp_h);
+
     ExcitationAssembler pw_assembler (mesh);
 
     EigenMatrix<Complex> Einc;
-    pw_assembler.assemble(Einc, pwe, k);
+    pw_assembler.assemble(Einc, pw_e, k);
 
     EigenMatrix<Complex> Hinc;
-    pw_assembler.assemble(Hinc, pwh, k);
+    pw_assembler.assemble(Hinc, pw_h, k);
 
     EigenMatrix<Complex> b;
     b.set_axpby(Einc, Hinc);
 
+    // Solve
 
     EigenMatrix<Complex> x;
     A.factorize();
     A.mat_solve(x, b);
 
+    // Projection
 
     EigColVecN<Float, 3> start, stop;
     EigColVecN<Index, 3> num_pts;
@@ -131,14 +114,12 @@ void test_cfie_pec()
     PointCloud<3> cloud;
     cloud.set_polar_data(start, stop, center, num_pts);
 
-
-    VectorHypersingularProj op_T_proj;
-    ProjectorAssembler T_proj_assembler (cloud, mesh);
+    VectorHypersingularProj<> op_T_proj;
+    ProjectorAssembler<3> T_proj_assembler (cloud, mesh);
 
     EigenMatrix<Complex> T_proj;
     T_proj_assembler.assemble(T_proj, op_T_proj, k);
     T_proj.scale(-J * omega * mu);
-
 
     EigenMatrix<Complex> Escat;
     Escat.set_matmul(T_proj, x);
@@ -159,7 +140,7 @@ void test_cfie_pec()
     out["escat_mag"] = Escatmag.raw_matrix();
     out["rcs"] = rcs.raw_matrix();
 
-    std::ofstream out_stream (path + "/dump/sphere_efie_pec.json");
+    std::ofstream out_stream (path + "/dump/sphere_cfie_pec_block_assm.json");
     out_stream << std::setw(4) << out << std::endl;
 
     Float rcs_err = (
@@ -171,7 +152,7 @@ void test_cfie_pec()
 
     if (rcs_err > 2.2e-2 || escat_err > 1.2e-2)
     {
-        std::cout << "====== test_cfie_pec ======" << std::endl;
+        std::cout << "====== test_cfie_pec_block_assm ======" << std::endl;
         std::cout << "Fail:" << std::endl;
         std::cout << "--- RCS error " << rcs_err * 100 << " %" << std::endl;
         std::cout << "--- Escat_mag error " << escat_err * 100 << " %" << std::endl;
@@ -186,7 +167,7 @@ int main(int argc, char** argv)
 {
 
     std::cout << "\n====================================================" << std::endl;
-    std::cout << "test_op_set_sphere_rcs.cpp" << std::endl;
+    std::cout << "test_block_assm_sphere_rcs.cpp" << std::endl;
     std::cout << "====================================================\n" << std::endl;
 
     test_cfie_pec();
@@ -194,5 +175,3 @@ int main(int argc, char** argv)
     return 0;
 
 }
-
-

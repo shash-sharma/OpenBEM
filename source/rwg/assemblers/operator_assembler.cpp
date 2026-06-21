@@ -15,7 +15,7 @@
 * Classes for assembling RWG-based BEM operator matrices.
 */
 
-#include "rwg/assemblers/operator_matrix.hpp"
+#include "rwg/assemblers/operator_assembler.hpp"
 
 #include "types.hpp"
 #include "matrix/base.hpp"
@@ -66,25 +66,25 @@ void OperatorAssembler::prep_matrix(
     )
 {
 
-    if (op.obs_dof() == 3 && op.src_dof() == 3)
+    if (op.obs_dof() == OperatorDof::EDGE && op.src_dof() == OperatorDof::EDGE)
     {
         mat.resize(obs_mesh_.num_edges(), src_mesh_.num_edges());
         mat.preallocate(elem_pairs_.cols() * EDGE_ELEM_RATIO * EDGE_ELEM_RATIO);
     }
 
-    else if (op.obs_dof() == 1 && op.src_dof() == 3)
+    else if (op.obs_dof() == OperatorDof::FACE && op.src_dof() == OperatorDof::EDGE)
     {
         mat.resize(obs_mesh_.num_elems(), src_mesh_.num_edges());
         mat.preallocate(elem_pairs_.cols() * EDGE_ELEM_RATIO);
     }
 
-    else if (op.obs_dof() == 3 && op.src_dof() == 1)
+    else if (op.obs_dof() == OperatorDof::EDGE && op.src_dof() == OperatorDof::FACE)
     {
         mat.resize(obs_mesh_.num_edges(), src_mesh_.num_elems());
         mat.preallocate(elem_pairs_.cols() * EDGE_ELEM_RATIO);
     }
 
-    else if (op.obs_dof() == 1 && op.src_dof() == 1)
+    else if (op.obs_dof() == OperatorDof::FACE && op.src_dof() == OperatorDof::FACE)
     {
         mat.resize(obs_mesh_.num_elems(), src_mesh_.num_elems());
         mat.preallocate(elem_pairs_.cols());
@@ -103,7 +103,7 @@ void OperatorAssembler::fill_matrix(
     )
 {
 
-    if (op.obs_dof() == 3 && op.src_dof() == 3)
+    if (op.obs_dof() == OperatorDof::EDGE && op.src_dof() == OperatorDof::EDGE)
     {
         for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
         {
@@ -116,7 +116,7 @@ void OperatorAssembler::fill_matrix(
         }
     }
 
-    else if (op.obs_dof() == 1 && op.src_dof() == 3)
+    else if (op.obs_dof() == OperatorDof::FACE && op.src_dof() == OperatorDof::EDGE)
     {
         Index row = elem_pair[0];
         for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
@@ -126,7 +126,7 @@ void OperatorAssembler::fill_matrix(
         }
     }
 
-    else if (op.obs_dof() == 3 && op.src_dof() == 1)
+    else if (op.obs_dof() == OperatorDof::EDGE && op.src_dof() == OperatorDof::FACE)
     {
         Index col = elem_pair[1];
         for (uint8_t obs_edge = 0; obs_edge < 3; ++obs_edge)
@@ -136,7 +136,7 @@ void OperatorAssembler::fill_matrix(
         }
     }
 
-    else if (op.obs_dof() == 1 && op.src_dof() == 1)
+    else if (op.obs_dof() == OperatorDof::FACE && op.src_dof() == OperatorDof::FACE)
     {
         mat.set_value(elem_pair[0], elem_pair[1], values(0, 0));
     }

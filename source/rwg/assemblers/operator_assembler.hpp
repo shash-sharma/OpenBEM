@@ -22,17 +22,14 @@
 #include <vector>
 
 #include "types.hpp"
+#include "matrix/base.hpp"
+#include "geometry/mesh/triangle_mesh.hpp"
+#include "geometry/primitives/triangle.hpp"
 #include "rwg/integrators/obs/base.hpp"
 #include "rwg/integrators/obs/strategic.hpp"
 #include "rwg/function_space.hpp"
 #include "rwg/assemblers/base.hpp"
-
-
-namespace bem
-{
-// Forward declarations
-template <typename T> class MatrixBase;
-}
+#include "rwg/assemblers/indexing.hpp"
 
 
 namespace bem::rwg
@@ -88,32 +85,6 @@ public:
 
 
     /**
-    * @brief Prepares the matrix for assembly (e.g., resizing and preallocation).
-    * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
-    * to source edges, and rows corresponding to observation edges.
-    */
-    void prep_matrix(
-        MatrixBase<Complex>& mat,
-        const OperatorBase& op
-        ) override;
-
-
-    /**
-    * @brief Fills operator values in the matrix for edge-based RWG observation and source functions.
-    * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
-    * to source edges, and rows corresponding to observation edges.
-    * @param[in] elem_pair - Observation (first entry) and source (second entry) triangle index pair.
-    * @param[in] values - Operator values for each pair of observation and source degrees of freedom.
-    */
-    void fill_matrix(
-        MatrixBase<Complex>& mat,
-        const OperatorBase& op,
-        ConstEigRef<EigColVecN<Index, 2>> elem_pair,
-        ConstEigRef<EigMat<Complex>> values
-        ) override;
-
-
-    /**
     * @brief Assembles the operator matrix for a given operator object.
     * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
     * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
@@ -139,6 +110,31 @@ public:
         std::vector<MatrixType>& mats,
         const Complex k,
         const ObsIntegratorType obs_integrator = ObsStrategic<>()
+        );
+
+
+    /**
+    * @brief Prepares the matrix for assembly (e.g., resizing and preallocation).
+    * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
+    * to source edges, and rows corresponding to observation edges.
+    */
+    void prep_matrix(
+        MatrixBase<Complex>& mat,
+        const OperatorBase& op
+        );
+
+
+    /**
+    * @brief Fills operator values in the matrix.
+    * @param[out] mat - Matrix to store the assembled operator coefficients.
+    * @param[in] elem_pair - Observation (first entry) and source (second entry) triangle index pair.
+    * @param[in] values - Operator values for each pair of observation and source degrees of freedom.
+    */
+    void fill_matrix(
+        MatrixBase<Complex>& mat,
+        const OperatorBase& op,
+        ConstEigRef<EigColVecN<Index, 2>> elem_pair,
+        ConstEigRef<EigMat<Complex>> values
         );
 
 
@@ -214,7 +210,7 @@ void OperatorAssembler::assemble(
 }
 
 #ifndef BEM_LINKED
-#include "rwg/assemblers/operator_matrix.cpp"
+#include "rwg/assemblers/operator_assembler.cpp"
 #endif
 
 #endif

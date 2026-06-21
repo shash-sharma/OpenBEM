@@ -353,7 +353,10 @@ bool GeometryOps<dim>::point_in_polygon(
     )
 {
 
-    Float mean_edge_length = (polygon.rightCols(polygon.cols() - 1) + polygon.leftCols(polygon.cols() - 1)).colwise().norm().mean();
+    Float mean_edge_length = (
+        polygon.rightCols(polygon.cols() - 1) + polygon.leftCols(polygon.cols() - 1)
+        ).colwise().norm().mean();
+
     Float abs_tol = tol * mean_edge_length;
 
     if (polygon.cols() < 3)

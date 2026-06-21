@@ -7,6 +7,7 @@
 - Changelog.
 - `IndexGenerator` helper class.
 - `BoundingBox` geometry class.
+- `IndexSet` and `BlockAssembler` for blocked operator assembly.
 
 ### Changed
 
@@ -17,6 +18,7 @@
 - Line integration speed improvements and fixed a bug in the directed angle computation.
 - Simplified `TriangleMesh` interface and added a map from edges to associated elements.
 - Refactored operator and assembler classes and added support for multiple operator generation.
+- Changed assembler file names for consistency with class names.
 
 ### Fixed
 

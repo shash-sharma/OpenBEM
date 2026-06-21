@@ -19,13 +19,8 @@
 #define BEM_RWG_ASSEMBLER_BASE_H
 
 #include "types.hpp"
-#include "geometry/point_cloud.hpp"
-#include "geometry/mesh/triangle_mesh.hpp"
-#include "geometry/primitives/triangle.hpp"
 #include "matrix/base.hpp"
-#include "rwg/function_space.hpp"
 #include "rwg/operators/base.hpp"
-#include "rwg/assemblers/index_generator.hpp"
 #include "rwg/excitations/base.hpp"
 #include "rwg/projectors/base.hpp"
 
@@ -59,34 +54,6 @@ public:
         const OperatorBase& op,
         const Complex k
         ) = 0;
-
-
-    /**
-    * @brief Prepares the matrix for assembly (e.g., resizing and preallocation).
-    * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
-    * @param[in] op - Operator object that computes the coefficients to assemble into `mat`.
-    * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
-    */
-    virtual void prep_matrix(
-        MatrixBase<Complex>& mat,
-        const OperatorBase& op
-        ) {};
-
-
-    /**
-    * @brief Fills operator values in the matrix based on source and observation meshes and degrees of freedom.
-    * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
-    * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
-    * @param[in] op - Operator object that computes the coefficients to assemble into `mat`.
-    * @param[in] elem_pair - Observation (first entry) and source (second entry) triangle index pair.
-    * @param[in] values - Operator values for each pair of observation and source degrees of freedom.
-    */
-    virtual void fill_matrix(
-        MatrixBase<Complex>& mat,
-        const OperatorBase& op,
-        ConstEigRef<EigColVecN<Index, 2>> elem_pair,
-        ConstEigRef<EigMat<Complex>> values
-        ) {};
 
 
     /**

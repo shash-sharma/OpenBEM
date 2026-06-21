@@ -354,7 +354,7 @@ protected:
     * @param[in] single_element - If true, only the mesh element closest to the terminal polygon centroid is kept (optional).
     * @details
     * A triangle is considered part of a terminal if it is coplanar with the terminal polygon, and
-    * any of its vertices lie on or within the terminal boundary.
+    * its centroid lies on or within the terminal boundary.
     */
     void set_terminals_from_polygons(const std::vector<EigMatNX<Float, 3>>& terminal_polygons, const bool single_element = false)
     {
@@ -372,7 +372,10 @@ protected:
 
                 for (Index kk = 0; kk < structure_.components()[jj].mesh_view().elem_inds().size(); ++kk)
                 {
-                    Triangle<3> tri = structure_.mesh().elem_primitive(structure_.components()[jj].mesh_view().elem_inds()[kk]);
+                    Triangle<3> tri = structure_.mesh().elem_primitive(
+                        structure_.components()[jj].mesh_view().elem_inds()[kk]
+                        );
+
                     Triangle<3> poly_tri (terminal_polygons[ii].leftCols(3));
 
                     if (!GeometryOps<3>::check_coplanar_triangles(tri, poly_tri))
@@ -396,10 +399,15 @@ protected:
             {
                 Float offset = 1e30;
                 Index term_elem;
-                EigColVecN<Float, 3> term_centroid = terminal_polygons[ii].rowwise().sum() / terminal_polygons[ii].cols();
+                EigColVecN<Float, 3> term_centroid =
+                    terminal_polygons[ii].rowwise().sum() / terminal_polygons[ii].cols();
+
                 for (Index jj = 0; jj < term_elems.size(); ++jj)
                 {
-                    Float dist = (structure_.mesh().elem_primitive(term_elems[jj]).centroid() - term_centroid).norm();
+                    Float dist = (
+                        structure_.mesh().elem_primitive(term_elems[jj]).centroid() - term_centroid
+                        ).norm();
+
                     if (dist < offset)
                     {
                         offset = dist;

@@ -238,7 +238,10 @@ public:
     {
         if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
         {
-            triplets_.reserve(std::accumulate(nnz.begin(), nnz.end(), 0));
+            const Index total = std::accumulate(nnz.begin(), nnz.end(), 0);
+            rows_cache_.reserve(total);
+            cols_cache_.reserve(total);
+            vals_cache_.reserve(total);
             assembled_ = false;
         }
         return;
@@ -255,7 +258,9 @@ public:
     {
         if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
         {
-            triplets_.reserve(num_entries);
+            rows_cache_.reserve(num_entries);
+            cols_cache_.reserve(num_entries);
+            vals_cache_.reserve(num_entries);
             assembled_ = false;
         }
         return;
@@ -289,16 +294,29 @@ public:
             if (assembled_)
                 return;
 
-            triplets_.shrink_to_fit();
+            std::vector<Eigen::Triplet<T>> triplets;
+            
+            if (!vals_cache_.empty())
+            {
+                const Index size = vals_cache_.size();
+                triplets.reserve(size);
+                for (Index ii = 0; ii < size; ++ii)
+                    triplets.emplace_back(Eigen::Triplet<T> (rows_cache_[ii], cols_cache_[ii], vals_cache_[ii]));
+                rows_cache_.clear();
+                cols_cache_.clear();
+                vals_cache_.clear();
+            }
+
+            triplets.shrink_to_fit();
             if (insert_mode_on_)
                 matrix_.setFromTriplets(
-                    triplets_.begin(),
-                    triplets_.end(),
+                    triplets.begin(),
+                    triplets.end(),
                     [] (const T&, const T &b) { return b; }
                     );
             else
-                matrix_.setFromTriplets(triplets_.begin(), triplets_.end());
-            triplets_.clear();
+                matrix_.setFromTriplets(triplets.begin(), triplets.end());
+
             assembled_ = true;
         }
 
@@ -335,7 +353,9 @@ public:
 
         else if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
         {
-            triplets_.emplace_back(Eigen::Triplet<T> (row, col, a));
+            rows_cache_.emplace_back(row);
+            cols_cache_.emplace_back(col);
+            vals_cache_.emplace_back(a);
             insert_mode_on_ = true;
             assembled_ = false;
         }
@@ -357,7 +377,9 @@ public:
 
         else if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
         {
-            triplets_.emplace_back(Eigen::Triplet<T> (row, col, a));
+            rows_cache_.emplace_back(row);
+            cols_cache_.emplace_back(col);
+            vals_cache_.emplace_back(a);
             insert_mode_on_ = false;
             assembled_ = false;
         }
@@ -694,10 +716,8 @@ public:
 
             for (Index kk = 0; kk < xc.raw_matrix().outerSize(); ++kk)
                 for (typename MatrixType::InnerIterator it (xc.raw_matrix(), kk); it; ++it)
-                    x_triplets.emplace_back(
-                        Eigen::Triplet<T> (
-                            row_start + it.row(), col_start + it.col(), it.value() * a
-                            )
+                    x_triplets.push_back(
+                        Eigen::Triplet<T> (row_start + it.row(), col_start + it.col(), it.value() * a)
                         );
 
             matrix_.insertFromTriplets(
@@ -744,10 +764,8 @@ public:
 
             for (Index kk = 0; kk < xc.raw_matrix().outerSize(); ++kk)
                 for (typename MatrixType::InnerIterator it (xc.raw_matrix(), kk); it; ++it)
-                    x_triplets.emplace_back(
-                        Eigen::Triplet<T> (
-                            row_start + it.row(), col_start + it.col(), it.value() * a
-                            )
+                    x_triplets.push_back(
+                        Eigen::Triplet<T> (row_start + it.row(), col_start + it.col(), it.value() * a)
                         );
 
             matrix_.insertFromTriplets(x_triplets.begin(), x_triplets.end());
@@ -1287,7 +1305,10 @@ protected:
 
     MatrixType matrix_;
 
-    std::vector<Eigen::Triplet<T>> triplets_;
+    std::vector<Index> rows_cache_;
+    std::vector<Index> cols_cache_;
+    std::vector<T> vals_cache_;
+
     bool insert_mode_on_ = true;
     bool assembled_ = false;
 

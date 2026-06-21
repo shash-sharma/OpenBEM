@@ -27,9 +27,9 @@
 #include "quadrature/triangle/gauss.hpp"
 #include "quadrature/line/gauss.hpp"
 
-#include "rwg/assemblers/operator_matrix.hpp"
-#include "rwg/assemblers/excitation_matrix.hpp"
-#include "rwg/assemblers/projector_matrix.hpp"
+#include "rwg/assemblers/operator_assembler.hpp"
+#include "rwg/assemblers/excitation_assembler.hpp"
+#include "rwg/assemblers/projector_assembler.hpp"
 
 #include "rwg/integrators/src/strategic.hpp"
 #include "rwg/integrators/obs/quadrature.hpp"
@@ -74,7 +74,7 @@ void test_efie_pec()
 
 
     VectorHypersingularOp op_T;
-    OperatorAssembler assembler (mesh, mesh);
+    OperatorAssembler assembler (mesh);
 
     EigenMatrix<Complex> T;
     assembler.assemble(T, op_T, k);
@@ -185,7 +185,7 @@ void test_nmfie_pec()
 
     RotVectorDoubleLayerPvOp op_Kr_pv;
     VectorIdentityOp op_I;
-    OperatorAssembler assembler (mesh, mesh);
+    OperatorAssembler assembler (mesh);
 
     EigenMatrix<Complex> Kr, I;
     assembler.assemble(Kr, op_Kr_pv, k);

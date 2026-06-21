@@ -27,7 +27,7 @@
 
 #include "rwg/integral_equations/base.hpp"
 #include "rwg/operators/incidence.hpp"
-#include "rwg/assemblers/operator_matrix.hpp"
+#include "rwg/assemblers/operator_assembler.hpp"
 
 
 namespace bem::rwg
