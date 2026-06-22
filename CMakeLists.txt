@@ -276,6 +276,10 @@ if (BUILD_TESTS STREQUAL "yes")
     target_include_directories(test_lineint_sphere_rcs PRIVATE ${INC_DIR})
     target_link_libraries(test_lineint_sphere_rcs ${LINK_LIBS})
 
+    add_executable(test_block_assm_sphere_rcs ${TEST_DIR}/test_block_assm_sphere_rcs.cpp)
+    target_include_directories(test_block_assm_sphere_rcs PRIVATE ${INC_DIR})
+    target_link_libraries(test_block_assm_sphere_rcs ${LINK_LIBS})
+
     add_executable(test_compile ${TEST_DIR}/test_compile.cpp)
     target_include_directories(test_compile PRIVATE ${INC_DIR})
     target_link_libraries(test_compile ${LINK_LIBS})

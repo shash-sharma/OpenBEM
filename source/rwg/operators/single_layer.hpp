@@ -71,17 +71,17 @@ public:
 
 
     /**
-    * @brief Returns the number of degrees of freedom per triangle for the testing function space.
-    * @return Number of observation degrees of freedom per triangle.
+    * @brief Returns the degrees of freedom for the testing function space.
+    * @return Observation degrees of freedom.
     */
-    uint8_t obs_dof() const override { return 3; };
+    OperatorDof obs_dof() const override { return OperatorDof::EDGE; };
 
 
     /**
-    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
-    * @return Number of source degrees of freedom per triangle.
+    * @brief Returns the degrees of freedom for the expansion function space.
+    * @return Source degrees of freedom.
     */
-    uint8_t src_dof() const override { return 3; };
+    OperatorDof src_dof() const override { return OperatorDof::EDGE; };
 
 
     /**
@@ -167,17 +167,17 @@ public:
 
 
     /**
-    * @brief Returns the number of degrees of freedom per triangle for the testing function space.
-    * @return Number of observation degrees of freedom per triangle.
+    * @brief Returns the degrees of freedom for the testing function space.
+    * @return Observation degrees of freedom.
     */
-    uint8_t obs_dof() const override { return 3; };
+    OperatorDof obs_dof() const override { return OperatorDof::EDGE; };
 
 
     /**
-    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
-    * @return Number of source degrees of freedom per triangle.
+    * @brief Returns the degrees of freedom for the expansion function space.
+    * @return Source degrees of freedom.
     */
-    uint8_t src_dof() const override { return 3; };
+    OperatorDof src_dof() const override { return OperatorDof::EDGE; };
 
 
     /**
@@ -260,17 +260,17 @@ public:
 
 
     /**
-    * @brief Returns the number of degrees of freedom per triangle for the testing function space.
-    * @return Number of observation degrees of freedom per triangle.
+    * @brief Returns the degrees of freedom for the testing function space.
+    * @return Observation degrees of freedom.
     */
-    uint8_t obs_dof() const override { return 1; };
+    OperatorDof obs_dof() const override { return OperatorDof::FACE; };
 
 
     /**
-    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
-    * @return Number of source degrees of freedom per triangle.
+    * @brief Returns the degrees of freedom for the expansion function space.
+    * @return Source degrees of freedom.
     */
-    uint8_t src_dof() const override { return 1; };
+    OperatorDof src_dof() const override { return OperatorDof::FACE; };
 
 
     /**
@@ -356,17 +356,17 @@ public:
 
 
     /**
-    * @brief Returns the number of degrees of freedom per triangle for the testing function space.
-    * @return Number of observation degrees of freedom per triangle.
+    * @brief Returns the degrees of freedom for the testing function space.
+    * @return Observation degrees of freedom.
     */
-    uint8_t obs_dof() const override { return 3; };
+    OperatorDof obs_dof() const override { return OperatorDof::EDGE; };
 
 
     /**
-    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
-    * @return Number of source degrees of freedom per triangle.
+    * @brief Returns the degrees of freedom for the expansion function space.
+    * @return Source degrees of freedom.
     */
-    uint8_t src_dof() const override { return 1; };
+    OperatorDof src_dof() const override { return OperatorDof::FACE; };
 
 
     /**
@@ -455,17 +455,17 @@ public:
 
 
     /**
-    * @brief Returns the number of degrees of freedom per triangle for the testing function space.
-    * @return Number of observation degrees of freedom per triangle.
+    * @brief Returns the degrees of freedom for the testing function space.
+    * @return Observation degrees of freedom.
     */
-    uint8_t obs_dof() const override { return 3; };
+    OperatorDof obs_dof() const override { return OperatorDof::EDGE; };
 
 
     /**
-    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
-    * @return Number of source degrees of freedom per triangle.
+    * @brief Returns the degrees of freedom for the expansion function space.
+    * @return Source degrees of freedom.
     */
-    uint8_t src_dof() const override { return 3; };
+    OperatorDof src_dof() const override { return OperatorDof::EDGE; };
 
 
     /**
@@ -557,17 +557,17 @@ public:
 
 
     /**
-    * @brief Returns the number of degrees of freedom per triangle for the testing function space.
-    * @return Number of observation degrees of freedom per triangle.
+    * @brief Returns the degrees of freedom for the testing function space.
+    * @return Observation degrees of freedom.
     */
-    uint8_t obs_dof() const override { return 3; };
+    OperatorDof obs_dof() const override { return OperatorDof::EDGE; };
 
 
     /**
-    * @brief Returns the number of degrees of freedom per triangle for the expansion function space.
-    * @return Number of source degrees of freedom per triangle.
+    * @brief Returns the degrees of freedom for the expansion function space.
+    * @return Source degrees of freedom.
     */
-    uint8_t src_dof() const override { return 3; };
+    OperatorDof src_dof() const override { return OperatorDof::EDGE; };
 
 
     /**

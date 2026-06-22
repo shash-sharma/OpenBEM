@@ -21,6 +21,8 @@
 #include <vector>
 
 #include "types.hpp"
+#include "geometry/mesh/triangle_mesh.hpp"
+#include "rwg/function_space.hpp"
 
 
 namespace bem
@@ -48,8 +50,10 @@ public:
     */
     IndexSet(
         ConstEigRef<EigRowVec<Index>> rows,
-        ConstEigRef<EigRowVec<Index>> cols
-        ): rows_(rows), cols_(cols) {};
+        ConstEigRef<EigRowVec<Index>> cols,
+        const OperatorDof row_dof,
+        const OperatorDof col_dof
+        ): rows_(rows), cols_(cols), row_dof_(row_dof), col_dof_(col_dof) {};
 
 
     /**
@@ -60,14 +64,18 @@ public:
     * @param[in] num_cols - Number of columns in the block.
     */
     IndexSet(
-        Index row_start,
-        Index col_start,
-        Index num_rows,
-        Index num_cols
+        const Index row_start,
+        const Index col_start,
+        const Index num_rows,
+        const Index num_cols,
+        const OperatorDof row_dof,
+        const OperatorDof col_dof
         ):
         IndexSet(
             EigRowVec<Index>::LinSpaced(num_rows, row_start, row_start + num_rows - 1),
-            EigRowVec<Index>::LinSpaced(num_cols, col_start, col_start + num_cols - 1)
+            EigRowVec<Index>::LinSpaced(num_cols, col_start, col_start + num_cols - 1),
+            row_dof,
+            col_dof
             ) {};
 
 
@@ -99,10 +107,26 @@ public:
     Index num_cols() const { return cols_.size(); };
 
 
+    /**
+    * @brief Returns the degrees of freedom associated with the rows.
+    * @return Row degrees of freedom.
+    */
+    OperatorDof row_dof() const { return row_dof_; };
+
+
+    /**
+    * @brief Returns the degrees of freedom associated with the columns.
+    * @return Column degrees of freedom.
+    */
+    OperatorDof col_dof() const { return col_dof_; };
+
+
 protected:
 
     const EigRowVec<Index> rows_;
     const EigRowVec<Index> cols_;
+    const OperatorDof row_dof_;
+    const OperatorDof col_dof_;
 
 };
 
@@ -129,15 +153,6 @@ public:
 
 
     /**
-    * @brief Generates all possible pairs of triangle indices for a given triangle mesh.
-    * @param[in] mesh - Triangle mesh.
-    * @return All possible triangle index pairs, with observation indices in the first row,
-    * and source indices in the second row.
-    */
-    static EigMatNX<Index, 2> elem_pairs(const TriangleMesh<3>& mesh);
-
-
-    /**
     * @brief Makes all possible pairs of triangle indices for given observation and source triangle indices.
     * @param[in] obs_elems - Observation triangle indices.
     * @param[in] src_elems - Source triangle indices.
@@ -151,33 +166,31 @@ public:
 
 
     /**
-    * @brief Makes all possible pairs of given triangle indices.
-    * @param[in] elems - Triangle indices.
-    * @return Triangle index pairs, with observation indices in the first row,
-    * and source indices in the second row.
-    */
-    static EigMatNX<Index, 2> elem_pairs(ConstEigRef<EigRowVec<Index>> elems);
-
-
-    /**
-    * @brief Makes self-pairs of given triangle indices.
-    * @param[in] elems - Triangle indices.
-    * @return Triangle index pairs, with observation indices in the first row,
-    * and source indices in the second row.
-    */
-    static EigMatNX<Index, 2> elem_pairs_self(ConstEigRef<EigRowVec<Index>> elems);
-
-
-    /**
-    * @brief Returns all unique element indices associated with given edge indices.
+    * @brief Returns all unique element pairs associated with a given index set.
     * @param[in] mesh - Triangle mesh.
-    * @param[in] edges - Edge indices.
-    * @return Triangle indices.
+    * @param[in] index_set - Index set defining degrees of freedom.
+    * @return Triangle index pairs.
     */
-    static EigRowVec<Index> elems_from_edges(
+    static EigMatNX<Index, 2> elem_pairs(
         const TriangleMesh<3>& mesh,
-        ConstEigRef<EigRowVec<Index>> edges
+        const IndexSet& index_set
         );
+
+
+    /**
+    * @brief Returns unique pairs from given pairs.
+    * @param[in] pairs - Index pairs.
+    * @return Unique index pairs.
+    */
+    static EigMatNX<Index, 2> unique_pairs(
+        ConstEigRef<EigMatNX<Index, 2>> pairs
+        );
+
+
+
+
+
+
 
 
     /**
@@ -238,13 +251,17 @@ public:
         );
 
 
+protected:
+
     /**
-    * @brief Returns unique pairs from given pairs.
-    * @param[in] pairs - Index pairs.
-    * @return Unique index pairs.
+    * @brief Returns all unique element indices associated with given edge indices.
+    * @param[in] mesh - Triangle mesh.
+    * @param[in] edges - Edge indices.
+    * @return Triangle indices.
     */
-    static EigMatNX<Index, 2> unique_pairs(
-        ConstEigRef<EigMatNX<Index, 2>> pairs
+    static EigRowVec<Index> elems_from_edges(
+        const TriangleMesh<3>& mesh,
+        ConstEigRef<EigRowVec<Index>> edges
         );
 
 };

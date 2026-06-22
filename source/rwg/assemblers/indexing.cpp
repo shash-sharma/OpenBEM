@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <set>
+#include <stdexcept>
 
 #include "types.hpp"
 #include "geometry/mesh/triangle_mesh.hpp"
@@ -45,20 +46,6 @@ EigMatNX<Index, 2> IndexGenerator::elem_pairs(
 };
 
 
-EigMatNX<Index, 2> IndexGenerator::elem_pairs(const TriangleMesh<3>& mesh)
-{
-    Index num_pairs = mesh.num_elems() * mesh.num_elems();
-    EigMatNX<Index, 2> pairs = EigMatNX<Index, 2>::Zero(2, num_pairs);
-
-    for (Index ii = 0; ii < num_pairs; ++ii)
-    {
-        pairs(0, ii) = ii / mesh.num_elems();
-        pairs(1, ii) = ii % mesh.num_elems();
-    }
-    return pairs;
-};
-
-
 EigMatNX<Index, 2> IndexGenerator::elem_pairs(
     ConstEigRef<EigRowVec<Index>> obs_elems,
     ConstEigRef<EigRowVec<Index>> src_elems
@@ -80,22 +67,65 @@ EigMatNX<Index, 2> IndexGenerator::elem_pairs(
 };
 
 
-EigMatNX<Index, 2> IndexGenerator::elem_pairs(ConstEigRef<EigRowVec<Index>> elems)
+EigMatNX<Index, 2> IndexGenerator::elem_pairs(
+    const TriangleMesh<3>& mesh,
+    const IndexSet& index_set
+    )
 {
-    return elem_pairs(elems, elems);
-};
+
+    if (index_set.row_dof() == OperatorDof::EDGE && index_set.col_dof() == OperatorDof::EDGE)
+    {
+        EigRowVec<Index> obs_elems = elems_from_edges(mesh, index_set.rows());
+        EigRowVec<Index> src_elems = elems_from_edges(mesh, index_set.cols());
+        return elem_pairs(obs_elems, src_elems);
+    }
+
+    else if (index_set.row_dof() == OperatorDof::FACE && index_set.col_dof() == OperatorDof::EDGE)
+    {
+        EigRowVec<Index> src_elems = elems_from_edges(mesh, index_set.cols());
+        return elem_pairs(index_set.rows(), src_elems);
+    }
+
+    else if (index_set.row_dof() == OperatorDof::EDGE && index_set.col_dof() == OperatorDof::FACE)
+    {
+        EigRowVec<Index> obs_elems = elems_from_edges(mesh, index_set.rows());
+        return elem_pairs(obs_elems, index_set.cols());
+    }
+
+    else if (index_set.row_dof() == OperatorDof::FACE && index_set.col_dof() == OperatorDof::FACE)
+    {
+        return elem_pairs(index_set.rows(), index_set.cols());
+    }
+
+    else
+    {
+        throw std::invalid_argument(
+            "IndexGenerator::elem_pairs(): `index_set` has invalid row or column dofs."
+            );
+    }
+
+}
 
 
-EigMatNX<Index, 2> IndexGenerator::elem_pairs_self(ConstEigRef<EigRowVec<Index>> elems)
+EigMatNX<Index, 2> IndexGenerator::unique_pairs(
+    ConstEigRef<EigMatNX<Index, 2>> pairs
+    )
 {
-    Index num_pairs = elems.size();
-    EigMatNX<Index, 2> pairs = EigMatNX<Index, 2>::Zero(2, num_pairs);
+    std::set<std::pair<Index, Index>> set_pairs;
+    for (Index ii = 0; ii < pairs.cols(); ++ii)
+        set_pairs.insert(std::make_pair(pairs(0, ii), pairs(1, ii)));
 
-    for (Index ii = 0; ii < elems.size(); ++ii)
-        for (uint8_t jj = 0; jj < 2; ++jj)
-            pairs(jj, ii) = elems[ii];
+    EigMatNX<Index, 2> unique_pairs (2, set_pairs.size());
+    Index ii = 0;
 
-    return pairs;
+    for (auto it = set_pairs.begin(); it != set_pairs.end(); ++it)
+    {
+        unique_pairs(0, ii) = it->first;
+        unique_pairs(1, ii) = it->second;
+        ii++;
+    }
+
+    return unique_pairs;
 };
 
 
@@ -119,6 +149,12 @@ EigRowVec<Index> IndexGenerator::elems_from_edges(
 
     return elems;
 }
+
+
+
+
+
+
 
 
 EigMatNX<Index, 2> IndexGenerator::elem_pairs_from_edges(
@@ -161,28 +197,6 @@ EigMatNX<Index, 2> IndexGenerator::elem_pairs_from_edges_elems(
 {
     EigRowVec<Index> obs_elems = elems_from_edges(mesh, obs_edges);
     return elem_pairs(obs_elems, src_elems);
-};
-
-
-EigMatNX<Index, 2> IndexGenerator::unique_pairs(
-    ConstEigRef<EigMatNX<Index, 2>> pairs
-    )
-{
-    std::set<std::pair<Index, Index>> set_pairs;
-    for (Index ii = 0; ii < pairs.cols(); ++ii)
-        set_pairs.insert(std::make_pair(pairs(0, ii), pairs(1, ii)));
-
-    EigMatNX<Index, 2> unique_pairs (2, set_pairs.size());
-    Index ii = 0;
-
-    for (auto it = set_pairs.begin(); it != set_pairs.end(); ++it)
-    {
-        unique_pairs(0, ii) = it->first;
-        unique_pairs(1, ii) = it->second;
-        ii++;
-    }
-
-    return unique_pairs;
 };
 
 }

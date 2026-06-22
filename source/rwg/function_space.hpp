@@ -39,6 +39,32 @@ template <uint8_t dim> class TriangleMesh;
 */
 
 /**
+* @brief Enumeration of function space degrees of freedom.
+*/
+class OperatorDof
+{
+public:
+
+    enum Value: uint8_t
+        {
+            EDGE = 3,
+            FACE = 1
+        };
+
+    constexpr OperatorDof(Value value): value_(value) {};
+
+    constexpr operator uint8_t() const { return value_; };
+
+    OperatorDof(uint8_t) = delete;
+
+protected:
+
+    Value value_;
+
+};
+
+
+/**
 * @brief Base class for function spaces.
 */
 template <typename Derived, uint8_t num_dof, uint8_t num_dim>

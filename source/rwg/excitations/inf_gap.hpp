@@ -92,10 +92,10 @@ public:
 
 
     /**
-    * @brief Returns the number of degrees of freedom per triangle for the testing function space.
-    * @return Number of observation degrees of freedom per triangle.
+    * @brief Returns the degrees of freedom for the testing function space.
+    * @return Observation degrees of freedom.
     */
-    uint8_t obs_dof() const override { return 3; };
+    OperatorDof obs_dof() const override { return OperatorDof::EDGE; };
 
 
     /**

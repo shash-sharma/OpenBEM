@@ -113,8 +113,6 @@ public:
         );
 
 
-protected:
-
     /**
     * @brief Prepares the matrix for assembly (e.g., resizing and preallocation).
     * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
@@ -140,6 +138,8 @@ protected:
         ConstEigRef<EigMat<Complex>> values
         );
 
+
+protected:
 
     const TriangleMesh<3>& obs_mesh_;
     const TriangleMesh<3>& src_mesh_;
