@@ -82,7 +82,5 @@
 #include "rwg/assemblers/projector_assembler.hpp"
 
 #include "rwg/lumped_elements/base.hpp"
-#include "rwg/lumped_elements/efie.hpp"
-#include "rwg/lumped_elements/aefie.hpp"
 
 #endif

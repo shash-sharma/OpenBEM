@@ -69,30 +69,32 @@ EigMatNX<Index, 2> IndexGenerator::elem_pairs(
 
 EigMatNX<Index, 2> IndexGenerator::elem_pairs(
     const TriangleMesh<3>& mesh,
-    const IndexSet& index_set
+    const IndexSet& index_set,
+    const OperatorDof row_dof,
+    const OperatorDof col_dof
     )
 {
 
-    if (index_set.row_dof() == OperatorDof::EDGE && index_set.col_dof() == OperatorDof::EDGE)
+    if (row_dof == OperatorDof::EDGE && col_dof == OperatorDof::EDGE)
     {
         EigRowVec<Index> obs_elems = elems_from_edges(mesh, index_set.rows());
         EigRowVec<Index> src_elems = elems_from_edges(mesh, index_set.cols());
         return elem_pairs(obs_elems, src_elems);
     }
 
-    else if (index_set.row_dof() == OperatorDof::FACE && index_set.col_dof() == OperatorDof::EDGE)
+    else if (row_dof == OperatorDof::FACE && col_dof == OperatorDof::EDGE)
     {
         EigRowVec<Index> src_elems = elems_from_edges(mesh, index_set.cols());
         return elem_pairs(index_set.rows(), src_elems);
     }
 
-    else if (index_set.row_dof() == OperatorDof::EDGE && index_set.col_dof() == OperatorDof::FACE)
+    else if (row_dof == OperatorDof::EDGE && col_dof == OperatorDof::FACE)
     {
         EigRowVec<Index> obs_elems = elems_from_edges(mesh, index_set.rows());
         return elem_pairs(obs_elems, index_set.cols());
     }
 
-    else if (index_set.row_dof() == OperatorDof::FACE && index_set.col_dof() == OperatorDof::FACE)
+    else if (row_dof == OperatorDof::FACE && col_dof == OperatorDof::FACE)
     {
         return elem_pairs(index_set.rows(), index_set.cols());
     }

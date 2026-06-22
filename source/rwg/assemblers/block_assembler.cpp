@@ -26,7 +26,9 @@ void BlockAssembler::assemble(
     )
 {
 
-    EigMatNX<Index, 2> elem_pairs = IndexGenerator::elem_pairs(mesh_, index_set_);
+    EigMatNX<Index, 2> elem_pairs = IndexGenerator::elem_pairs(
+        mesh_, index_set_, op.obs_dof(), op.src_dof()
+        );
 
     std::unique_ptr<MatrixBase<Complex>> temp = mat.clone();
 
@@ -61,7 +63,9 @@ void BlockAssembler::get_block(
     )
 {
 
-    EigMatNX<Index, 2> elem_pairs = IndexGenerator::elem_pairs(mesh_, index_set_);
+    EigMatNX<Index, 2> elem_pairs = IndexGenerator::elem_pairs(
+        mesh_, index_set_, op.obs_dof(), op.src_dof()
+        );
 
     EigenMatrix<Complex, EigenMatrixType::EIGEN_SPARSE> temp;
 

@@ -54,9 +54,7 @@ void test_cfie_pec()
         mesh,
         IndexSet(
             EigRowVec<Index>::LinSpaced(mesh.num_edges(), 0, mesh.num_edges() - 1),
-            EigRowVec<Index>::LinSpaced(mesh.num_edges(), 0, mesh.num_edges() - 1),
-            OperatorDof::EDGE,
-            OperatorDof::EDGE
+            EigRowVec<Index>::LinSpaced(mesh.num_edges(), 0, mesh.num_edges() - 1)
             )
         );
 

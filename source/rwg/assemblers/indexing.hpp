@@ -28,9 +28,6 @@
 namespace bem
 {
 
-// Forward declarations
-template <uint8_t dim> class TriangleMesh;
-
 /**
 * \ingroup assm
 * @{
@@ -50,10 +47,8 @@ public:
     */
     IndexSet(
         ConstEigRef<EigRowVec<Index>> rows,
-        ConstEigRef<EigRowVec<Index>> cols,
-        const OperatorDof row_dof,
-        const OperatorDof col_dof
-        ): rows_(rows), cols_(cols), row_dof_(row_dof), col_dof_(col_dof) {};
+        ConstEigRef<EigRowVec<Index>> cols
+        ): rows_(rows), cols_(cols) {};
 
 
     /**
@@ -67,15 +62,11 @@ public:
         const Index row_start,
         const Index col_start,
         const Index num_rows,
-        const Index num_cols,
-        const OperatorDof row_dof,
-        const OperatorDof col_dof
+        const Index num_cols
         ):
         IndexSet(
             EigRowVec<Index>::LinSpaced(num_rows, row_start, row_start + num_rows - 1),
-            EigRowVec<Index>::LinSpaced(num_cols, col_start, col_start + num_cols - 1),
-            row_dof,
-            col_dof
+            EigRowVec<Index>::LinSpaced(num_cols, col_start, col_start + num_cols - 1)
             ) {};
 
 
@@ -107,26 +98,10 @@ public:
     Index num_cols() const { return cols_.size(); };
 
 
-    /**
-    * @brief Returns the degrees of freedom associated with the rows.
-    * @return Row degrees of freedom.
-    */
-    OperatorDof row_dof() const { return row_dof_; };
-
-
-    /**
-    * @brief Returns the degrees of freedom associated with the columns.
-    * @return Column degrees of freedom.
-    */
-    OperatorDof col_dof() const { return col_dof_; };
-
-
 protected:
 
     const EigRowVec<Index> rows_;
     const EigRowVec<Index> cols_;
-    const OperatorDof row_dof_;
-    const OperatorDof col_dof_;
 
 };
 
@@ -169,11 +144,15 @@ public:
     * @brief Returns all unique element pairs associated with a given index set.
     * @param[in] mesh - Triangle mesh.
     * @param[in] index_set - Index set defining degrees of freedom.
+    * @param[in] row_dof - Degrees of freedom associated with rows.
+    * @param[in] col_dof - Degrees of freedom associated with columns.
     * @return Triangle index pairs.
     */
     static EigMatNX<Index, 2> elem_pairs(
         const TriangleMesh<3>& mesh,
-        const IndexSet& index_set
+        const IndexSet& index_set,
+        const OperatorDof row_dof,
+        const OperatorDof col_dof
         );
 
 
