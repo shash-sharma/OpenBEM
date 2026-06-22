@@ -125,9 +125,8 @@ public:
 
 
     /**
-    * @brief Fills operator values in the matrix for edge-based RWG observation and source functions.
-    * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
-    * to source edges, and rows corresponding to observation edges.
+    * @brief Fills operator values in the matrix.
+    * @param[out] mat - Matrix to store the assembled operator coefficients.
     * @param[in] elem_pair - Observation (first entry) and source (second entry) triangle index pair.
     * @param[in] values - Operator values for each pair of observation and source degrees of freedom.
     */

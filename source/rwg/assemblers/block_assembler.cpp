@@ -6,6 +6,7 @@
 #include "rwg/assemblers/block_assembler.hpp"
 
 #include <memory>
+#include <unordered_map>
 
 #include "types.hpp"
 #include "geometry/mesh/triangle_mesh.hpp"
@@ -37,10 +38,10 @@ void BlockAssembler::assemble(
 
     mat.resize(temp->num_rows(), temp->num_cols());
 
-#pragma omp parallel for
-    for (Index ri = 0; ri < index_set_.num_rows(); ++ri)
+#pragma omp parallel for collapse(2)
+    for (Index ci = 0; ci < index_set_.num_cols(); ++ci)
     {
-        for (Index ci = 0; ci < index_set_.num_cols(); ++ci)
+        for (Index ri = 0; ri < index_set_.num_rows(); ++ri)
         {
             Index row = index_set_.rows()[ri];
             Index col = index_set_.cols()[ci];
@@ -74,10 +75,10 @@ void BlockAssembler::get_block(
 
     mat.resize(index_set_.num_rows(), index_set_.num_cols());
 
-#pragma omp parallel for
-    for (Index ri = 0; ri < index_set_.num_rows(); ++ri)
+#pragma omp parallel for collapse(2)
+    for (Index ci = 0; ci < index_set_.num_cols(); ++ci)
     {
-        for (Index ci = 0; ci < index_set_.num_cols(); ++ci)
+        for (Index ri = 0; ri < index_set_.num_rows(); ++ri)
         {
             Index row = index_set_.rows()[ri];
             Index col = index_set_.cols()[ci];

@@ -89,6 +89,22 @@ public:
         );
 
 
+    /**
+    * @brief Fills operator values in the matrix.
+    * @param[out] mat - Matrix to store the assembled operator coefficients.
+    * @param[in] elem_pair - Observation (first entry) and source (second entry) triangle index pair.
+    * @param[in] values - Operator values for each pair of observation and source degrees of freedom.
+    */
+    void fill_matrix(
+        MatrixBase<Complex>& mat,
+        const OperatorBase& op,
+        ConstEigRef<EigColVecN<Index, 2>> elem_pair,
+        ConstEigRef<EigMat<Complex>> values,
+        const std::unordered_map<Index, Index> rows_map,
+        const std::unordered_map<Index, Index> cols_map
+        );
+
+
 protected:
 
     const TriangleMesh<3>& mesh_;
