@@ -7,7 +7,6 @@
 #define BEM_BLOCK_ASSEMBLER_H
 
 #include <vector>
-#include <unordered_map>
 
 #include "types.hpp"
 #include "geometry/mesh/triangle_mesh.hpp"
@@ -62,19 +61,6 @@ public:
 
 
     /**
-    * @brief Computes and retrieves a block of operator matrix values for a given operator object.
-    * @param[out] mat - Block of values for requested row and column indices.
-    * @param[in] op - Operator object that computes the coefficients to be assembled into `mat`.
-    * @param[in] k - Complex wavenumber.
-    */
-    void get_block(
-        EigMat<Complex>& mat,
-        const OperatorBase& op,
-        const Complex k
-        );
-
-
-    /**
     * @brief Assembles operator matrices for given operator objects.
     * @param[out] mats - Matrices to store the assembled operator coefficients, with columns corresponding
     * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
@@ -86,6 +72,19 @@ public:
         std::vector<MatrixType>& mats,
         const Complex k,
         const ObsIntegratorType obs_integrator = ObsStrategic<>()
+        );
+
+
+    /**
+    * @brief Computes and retrieves a block of operator matrix values for a given operator object.
+    * @param[out] mat - Block of values for requested row and column indices.
+    * @param[in] op - Operator object that computes the coefficients to be assembled into `mat`.
+    * @param[in] k - Complex wavenumber.
+    */
+    void get_block(
+        EigMat<Complex>& mat,
+        const OperatorBase& op,
+        const Complex k
         );
 
 
