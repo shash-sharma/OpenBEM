@@ -335,7 +335,7 @@ public:
 
         else if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
         {
-            triplets_.push_back(Eigen::Triplet<T> (row, col, a));
+            triplets_.emplace_back(Eigen::Triplet<T> (row, col, a));
             insert_mode_on_ = true;
             assembled_ = false;
         }
@@ -357,7 +357,7 @@ public:
 
         else if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
         {
-            triplets_.push_back(Eigen::Triplet<T> (row, col, a));
+            triplets_.emplace_back(Eigen::Triplet<T> (row, col, a));
             insert_mode_on_ = false;
             assembled_ = false;
         }
@@ -694,8 +694,10 @@ public:
 
             for (Index kk = 0; kk < xc.raw_matrix().outerSize(); ++kk)
                 for (typename MatrixType::InnerIterator it (xc.raw_matrix(), kk); it; ++it)
-                    x_triplets.push_back(
-                        Eigen::Triplet<T> (row_start + it.row(), col_start + it.col(), it.value() * a)
+                    x_triplets.emplace_back(
+                        Eigen::Triplet<T> (
+                            row_start + it.row(), col_start + it.col(), it.value() * a
+                            )
                         );
 
             matrix_.insertFromTriplets(
@@ -742,8 +744,10 @@ public:
 
             for (Index kk = 0; kk < xc.raw_matrix().outerSize(); ++kk)
                 for (typename MatrixType::InnerIterator it (xc.raw_matrix(), kk); it; ++it)
-                    x_triplets.push_back(
-                        Eigen::Triplet<T> (row_start + it.row(), col_start + it.col(), it.value() * a)
+                    x_triplets.emplace_back(
+                        Eigen::Triplet<T> (
+                            row_start + it.row(), col_start + it.col(), it.value() * a
+                            )
                         );
 
             matrix_.insertFromTriplets(x_triplets.begin(), x_triplets.end());
