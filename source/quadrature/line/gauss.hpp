@@ -15,8 +15,8 @@
 * Gaussian quadrature over a line segment.
 */
 
-#ifndef GAUSS_LINE_QUAD_H
-#define GAUSS_LINE_QUAD_H
+#ifndef BEM_GAUSS_LINE_QUAD_H
+#define BEM_GAUSS_LINE_QUAD_H
 
 #include <vector>
 #include <string>
@@ -24,7 +24,6 @@
 
 #include "types.hpp"
 #include "constants.hpp"
-#include "quadrature/utility.hpp"
 #include "quadrature/line/base.hpp"
 
 
@@ -44,7 +43,7 @@ template <uint8_t dim>
 class GaussLineQuadrature: public LineQuadratureBase<dim>
 {
 
-    using base = LineQuadratureBase<dim>;
+    using base = QuadratureBase<dim>;
 
 public:
 
@@ -52,15 +51,15 @@ public:
     * @brief Constructs a `GaussLineQuadrature` object with a specified quadrature order.
     * @param[in] order - Quadrature order (optional).
     * @details
-    * Important: this constructor loads tabulated quadrature data from a json file, and stores the
-    * tabulated quadrature data for all possible orders up to `LINE_MAX_ORDER`. Therefore, it is
-    * strongly recommended that objects of this class should be reused within loops, rather than
-    * creating a new object at each iteration of a long loop.
+    * Important: this constructor loads tabulated quadrature data from a json file, and stores
+    * it for all possible orders up to `LINE_MAX_ORDER`. Therefore, it is strongly recommended
+    * that objects of this class should be reused within loops, rather than creating a new
+    * object at each iteration of a loop.
     */
     GaussLineQuadrature(const uint8_t order = LINE_DEFAULT_ORDER)
     {
         EigColVec<Index> orders = EigColVec<Index>::LinSpaced(LINE_MAX_ORDER, 1, LINE_MAX_ORDER);
-        rules_ = load_rules<1> (rule_file_, orders);
+        rules_ = QuadratureBase<1>::load_rules(rule_file_, orders);
         set_order(order);
         return;
     };
@@ -74,12 +73,13 @@ public:
 
 
     /**
-    * @brief Computes and stores the points on which to evaluate the integrand, and the corresponding weights.
+    * @brief Computes quadrature evaluation points and corresponding weights.
     * @param[in] p1 - First point of the line segment.
     * @param[in] p2 - Second point of the line segment.
-    * @param[in] eval - Function or class with `operator()` that evaluates the integrand (optional, unused).
+    * @param[in] eval - Function functor to evaluate the integrand (optional, unused).
+    * @return Quadrature points and weights.
     */
-    void compute_points_weights(
+    QuadratureData<dim> compute(
         ConstEigRef<EigColVecN<Float, dim>> p1,
         ConstEigRef<EigColVecN<Float, dim>> p2,
         std::function<EigRowVec<Complex> (ConstEigRef<EigMatNX<Float, dim>>)> eval = {}
@@ -90,7 +90,7 @@ public:
     * @brief Returns the evaluation points in the reference unit line segment.
     * @return Read-only reference to the reference segment evaluation points.
     */
-    const EigRowVec<Float>& ref_points() const { return rules_[base::order_ - 1].nodes; };
+    const EigRowVec<Float>& ref_points() const { return rules_[base::order_ - 1].points; };
 
 
     /**
@@ -103,7 +103,7 @@ public:
 protected:
 
     std::string rule_file_ = "line_quad_gauss.json";
-    std::vector<QuadratureRule<1>> rules_;
+    std::vector<QuadratureData<1>> rules_;
 
 };
 

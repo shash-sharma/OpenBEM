@@ -40,9 +40,8 @@ EigMat<Complex> VectorSingleLayerProj<SrcIntegratorType>::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_points_local, src_tri_local, obs_points, src_tri);
 
-    src_integrator_.set_compute_terms(true, false);
     const SrcResult src_result = src_integrator_.integrate(
-        k, src_tri_local, obs_points_local
+        k, src_tri_local, obs_points_local, true, false
         );
 
     EigMatMN<Float, 3, 3> local_uvw = src_tri.local_coordinate_basis();
@@ -77,9 +76,8 @@ EigMat<Complex> ScalarSingleLayerProj<SrcIntegratorType>::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_points_local, src_tri_local, obs_points, src_tri);
 
-    src_integrator_.set_compute_terms(true, false);
     const SrcResult src_result = src_integrator_.integrate(
-        k, src_tri_local, obs_points_local
+        k, src_tri_local, obs_points_local, true, false
         );
 
     return src_result.g.transpose() * Pulse::normalization(src_tri);
@@ -100,9 +98,8 @@ EigMat<Complex> GradScalarSingleLayerProj<SrcIntegratorType>::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_points_local, src_tri_local, obs_points, src_tri);
 
-    src_integrator_.set_compute_terms(false, true);
     const SrcResult src_result = src_integrator_.integrate(
-        k, src_tri_local, obs_points_local
+        k, src_tri_local, obs_points_local, false, true
         );
 
     EigMatMN<Float, 3, 3> local_uvw = src_tri.local_coordinate_basis();

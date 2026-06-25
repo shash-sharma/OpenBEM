@@ -39,8 +39,9 @@ EigMat<Complex> VectorSingleLayerOp<ObsIntegratorType>::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
-    obs_integrator_.set_compute_terms(false, true, false, false);
-    const ObsResult obs_result = obs_integrator_.integrate(k, obs_tri_local, src_tri_local);
+    const ObsResult obs_result = obs_integrator_.integrate(
+        k, obs_tri_local, src_tri_local, false, true, false, false
+        );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
 };
@@ -96,8 +97,9 @@ EigMat<Complex> RotVectorSingleLayerOp<ObsIntegratorType>::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
-    obs_integrator_.set_compute_terms(false, true, false, false);
-    const ObsResult obs_result = obs_integrator_.integrate(k, obs_tri_local, src_tri_local);
+    const ObsResult obs_result = obs_integrator_.integrate(
+        k, obs_tri_local, src_tri_local, false, true, false, false
+        );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
 };
@@ -161,8 +163,9 @@ EigMat<Complex> ScalarSingleLayerOp<ObsIntegratorType>::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
-    obs_integrator_.set_compute_terms(true, false, false, false);
-    const ObsResult obs_result = obs_integrator_.integrate(k, obs_tri_local, src_tri_local);
+    const ObsResult obs_result = obs_integrator_.integrate(
+        k, obs_tri_local, src_tri_local, true, false, false, false
+        );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
 };
@@ -196,8 +199,9 @@ EigMat<Complex> RotGradScalarSingleLayerOp<ObsIntegratorType>::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
-    obs_integrator_.set_compute_terms(false, false, true, false);
-    const ObsResult obs_result = obs_integrator_.integrate(k, obs_tri_local, src_tri_local);
+    const ObsResult obs_result = obs_integrator_.integrate(
+        k, obs_tri_local, src_tri_local, false, false, true, false
+        );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
 };
@@ -259,8 +263,9 @@ EigMat<Complex> VectorHypersingularOp<ObsIntegratorType>::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
-    obs_integrator_.set_compute_terms(true, true, false, false);
-    const ObsResult obs_result = obs_integrator_.integrate(k, obs_tri_local, src_tri_local);
+    const ObsResult obs_result = obs_integrator_.integrate(
+        k, obs_tri_local, src_tri_local, true, true, false, false
+        );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
 };
@@ -292,8 +297,9 @@ EigMat<Complex> RotVectorHypersingularOp<ObsIntegratorType>::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
-    obs_integrator_.set_compute_terms(false, true, true, false);
-    const ObsResult obs_result = obs_integrator_.integrate(k, obs_tri_local, src_tri_local);
+    const ObsResult obs_result = obs_integrator_.integrate(
+        k, obs_tri_local, src_tri_local, false, true, true, false
+        );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
 };

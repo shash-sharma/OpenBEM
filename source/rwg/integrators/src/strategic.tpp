@@ -30,7 +30,9 @@ template <typename TriangleQuadratureType, typename LineQuadratureType>
 SrcResult SrcStrategic<TriangleQuadratureType, LineQuadratureType>::integrate(
     const Complex k,
     const Triangle<2>& src_tri,
-    ConstEigRef<EigMatNX<Float, 3>> r_obs
+    ConstEigRef<EigMatNX<Float, 3>> r_obs,
+    const bool g_terms,
+    const bool grad_g_terms
     )
 {
 
@@ -57,25 +59,16 @@ SrcResult SrcStrategic<TriangleQuadratureType, LineQuadratureType>::integrate(
     bool singularity_separation = false;
 
     if (line_integration)
-    {
-        src_line_.set_compute_terms(base::compute_g_terms_, base::compute_grad_g_terms_);
-        return src_line_.integrate(k, src_tri, r_obs);
-    }
+        return src_line_.integrate(k, src_tri, r_obs, g_terms, grad_g_terms);
+
     else if (singularity_subtraction)
-    {
-        src_sthgf_.set_compute_terms(base::compute_g_terms_, base::compute_grad_g_terms_);
-        return src_sthgf_.integrate(k, src_tri, r_obs);
-    }
+        return src_sthgf_.integrate(k, src_tri, r_obs, g_terms, grad_g_terms);
+
     else if (singularity_separation)
-    {
-        src_shgf_.set_compute_terms(base::compute_g_terms_, base::compute_grad_g_terms_);
-        return src_shgf_.integrate(k, src_tri, r_obs);
-    }
+        return src_shgf_.integrate(k, src_tri, r_obs, g_terms, grad_g_terms);
+
     else
-    {
-        src_hgf_.set_compute_terms(base::compute_g_terms_, base::compute_grad_g_terms_);
-        return src_hgf_.integrate(k, src_tri, r_obs);
-    }
+        return src_hgf_.integrate(k, src_tri, r_obs, g_terms, grad_g_terms);
 
 };
 

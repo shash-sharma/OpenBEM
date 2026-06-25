@@ -150,12 +150,45 @@ public:
     * @param[in] k - Complex wavenumber.
     * @param[in] obs_tri - Observation triangle in the local coordinate system of `src_tri`.
     * @param[in] src_tri - Source triangle in 2D space.
+    * @param[in] g_term - Whether to compute the scalar kernel term (optional).
+    * @param[in] rs_g_terms - Whether to compute the vector kernel termss (optional).
+    * @param[in] grad_g_terms - Whether to compute the gradient kernel terms (optional).
+    * @param[in] rot_grad_g_terms - Whether to compute the rotated gradient kernel terms (optional).
     * @return Integration result.
+    * @details
+    * If `g_term` is true, computes
+    * \f[
+    * \int_{\mathrm{obs\_tri}} d\mathcal{S}\,
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,G(k, \vec{r}, \vec{r}\,')
+    * \f]
+    * for the scalar kernel \f$ G(k, \vec{r}, \vec{r}\,') \f$.
+    * If `rs_g_terms` is true, computes terms related to
+    * \f[
+    * \int_{\mathrm{obs\_tri}} d\mathcal{S}\,\vec{r}\cdot
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,\vec{r}\,'\,G(k, \vec{r}, \vec{r}\,')
+    * \f]
+    * for the scalar kernel \f$ G(k, \vec{r}, \vec{r}\,') \f$.
+    * If `grad_g_terms` is true, computes terms related to
+    * \f[
+    * \int_{\mathrm{obs\_tri}} d\mathcal{S}\,\vec{r}\cdot
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,\nabla G(k, \vec{r}, \vec{r}\,')\times\vec{r}\,'
+    * \f]
+    * for the scalar kernel \f$ G(k, \vec{r}, \vec{r}\,') \f$.
+    * If `rot_grad_g_terms` is true, computes terms related to
+    * \f[
+    * \int_{\mathrm{obs\_tri}} d\mathcal{S}\,\hat{n}\times\vec{r}\cdot
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,\nabla G(k, \vec{r}, \vec{r}\,')\times\vec{r}\,'
+    * \f]
+    * for the scalar kernel \f$ G(k, \vec{r}, \vec{r}\,') \f$.
     */
     ObsResult integrate(
         const Complex k,
         const Triangle<3>& obs_tri,
-        const Triangle<2>& src_tri
+        const Triangle<2>& src_tri,
+        const bool g_term = true,
+        const bool rs_g_terms = true,
+        const bool grad_g_terms = true,
+        const bool rot_grad_g_terms = true
         ) override;
 
 

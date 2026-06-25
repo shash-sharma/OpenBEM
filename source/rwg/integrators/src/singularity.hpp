@@ -80,12 +80,39 @@ public:
     * @param[in] k - Complex wavenumber.
     * @param[in] src_tri - Source triangle in 2D space.
     * @param[in] r_obs - Observation points in the local coordinate system of `src_tri`.
+    * @param[in] g_terms - Whether to compute kernel terms (optional).
+    * @param[in] grad_g_terms - Whether to compute kernel gradient terms (optional).
     * @return Integration result.
+    * @details
+    * If `g_terms` is true, the function computes
+    * \f[
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,G(k, \vec{r}, \vec{r}\,')
+    * \f]
+    * and
+    * \f[
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,\vec{r}\,'\,G(k, \vec{r}, \vec{r}\,')
+    * \f]
+    * for the scalar kernel \f$ G(k, \vec{r}, \vec{r}\,') \f$.
+    * If `grad_g_terms` is true, the function computes
+    * \f[
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,\nabla G(k, \vec{r}, \vec{r}\,'),
+    * \f]
+    * \f[
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,x'\,\nabla G(k, \vec{r}, \vec{r}\,'),
+    * \f]
+    * and
+    * \f[
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,y'\,\nabla G(k, \vec{r}, \vec{r}\,'),
+    * \f]
+    * for the scalar kernel \f$ G(k, \vec{r}, \vec{r}\,') \f$, and for local source
+    * triangle coordinates \f$\vec{r}\,' = [x', y']^T\f$.
     */
     SrcResult integrate(
         const Complex k,
         const Triangle<2>& src_tri,
-        ConstEigRef<EigMatNX<Float, 3>> r_obs
+        ConstEigRef<EigMatNX<Float, 3>> r_obs,
+        const bool g_terms = true,
+        const bool grad_g_terms = true
         ) override;
 
 
@@ -112,12 +139,16 @@ private:
     * @param[in] k - Complex wavenumber.
     * @param[in] src_tri - Source triangle in 2D space.
     * @param[in] r_obs - Observation points in the local coordinate system of `src_tri`.
+    * @param[in] g_terms - Whether to compute kernel terms (optional).
+    * @param[in] grad_g_terms - Whether to compute kernel gradient terms (optional).
     * @return Integration result.
     */
     SrcResult integrate_singular(
         const Complex k,
         const Triangle<2>& src_tri,
-        ConstEigRef<EigMatNX<Float, 3>> r_obs
+        ConstEigRef<EigMatNX<Float, 3>> r_obs,
+        const bool g_terms = true,
+        const bool grad_g_terms = true
         );
 
 

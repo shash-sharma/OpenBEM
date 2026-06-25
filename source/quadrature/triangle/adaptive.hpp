@@ -15,16 +15,15 @@
 * Adaptive quadrature over a triangle.
 */
 
-#ifndef ADAPTIVE_TRI_QUAD_H
-#define ADAPTIVE_TRI_QUAD_H
+#ifndef BEM_ADAPTIVE_TRI_QUAD_H
+#define BEM_ADAPTIVE_TRI_QUAD_H
 
 #include <cassert>
+#include <functional>
 
 #include "types.hpp"
 #include "constants.hpp"
-
 #include "geometry/primitives/triangle.hpp"
-#include "quadrature/utility.hpp"
 #include "quadrature/triangle/base.hpp"
 
 
@@ -49,7 +48,7 @@ template <uint8_t dim>
 class AdaptiveTriangleQuadrature: public TriangleQuadratureBase<dim>
 {
 
-    using base = TriangleQuadratureBase<dim>;
+    using base = QuadratureBase<dim>;
 
 public:
 
@@ -58,12 +57,7 @@ public:
     * @param[in] max_levels - Maximum allowed recursion levels.
     */
     void set_max_levels(const uint16_t max_levels)
-    {
-        max_levels_ = max_levels;
-        base::points_weights_computed_ = false;
-        converged_ = false;
-        return;
-    };
+    { max_levels_ = max_levels; return; };
 
 
     /**
@@ -78,12 +72,7 @@ public:
     * @param[in] tol - Tolerance.
     */
     void set_tol(const Float tol)
-    {
-        tol_ = tol;
-        base::points_weights_computed_ = false;
-        converged_ = false;
-        return;
-    };
+    { tol_ = tol; return; };
 
 
     /**
@@ -94,40 +83,22 @@ public:
 
 
     /**
-    * @brief Computes and stores the points on which to evaluate the integrand, and the corresponding weights.
+    * @brief Computes quadrature evaluation points and corresponding weights.
     * @param[in] tri - Triangle for quadrature evaluation.
-    * @param[in] eval - Function or class with `operator()` that evaluates the integrand.
+    * @param[in] eval - Function or functor to evaluate the integrand (optional, unused).
+    * @return Quadrature points and weights.
     */
-    void compute_points_weights(
+    QuadratureData<dim> compute(
         const Triangle<dim>& tri,
         std::function<EigRowVec<Complex> (ConstEigRef<EigMatNX<Float, dim>>)> eval = {}
         ) override;
-
-
-    /**
-    * @brief Checks whether the recursion converged.
-    * @return `true` if the recursion converged, `false` otherwise.
-    */
-    bool converged() const
-    {
-        if (!base::points_weights_computed_)
-            throw std::runtime_error(
-                "AdaptiveTriangleQuadrature::converged(): must call `compute_points_weights()` first.");
-        return converged_;
-    };
-
-
-    /**
-    * @brief Returns the recursion level at which the recursion converged.
-    * @return Quadrature order at which the recursion converged; 0 if not converged.
-    */
-    uint16_t converged_iter() const { return converged_iter_; };
 
 
 private:
 
     /**
     * @brief Executes a five-point integration rule along the edges of a given triangle.
+    * @param[in, out] qd - Quadrature data.
     * @param[in, out] level - Previous recursion level, gets incremented to the current level.
     * @param[in] tri - Triangle for integration.
     * @param[in] eval - Function or class with `operator()` that evaluates the integrand.
@@ -135,6 +106,7 @@ private:
     * @return Integration result.
     */
     Complex run_recursion(
+        QuadratureData<dim>& qd,
         int& level,
         const Triangle<dim>& tri,
         std::function<EigRowVec<Complex> (ConstEigRef<EigMatNX<Float, dim>>)> eval,
@@ -190,27 +162,6 @@ private:
 
 
     /**
-    * @brief Checks for convergence of the adaptive integration result.
-    * @param[in] val - Value to add to the previously accumulated integral.
-    * @return `true` if the existing and updated values are within the specified tolerance, `false` otherwise.
-    */
-    bool check_convergence(const Complex val)
-    {
-        // Complex I_new = I_prev_ + val;
-        // bool converged = compare_with_tol(I_new, I_prev_, tol, 3);
-        // I_prev_ += val;
-
-        Complex I_new = base::weights_.dot(vals_) + val;
-        bool converged = compare_with_tol(I_new, I_prev_, tol_, 3);
-
-        if (converged)
-            I_prev_ = I_new;
-
-        return converged;
-    }
-
-
-    /**
     * @brief Returns the total number of recursions that were executed.
     * @return Total number of recursions executed.
     */
@@ -222,16 +173,11 @@ private:
     * @brief Resets the counter for the total number of recursions executed.
     */
     void reset_recursion_count()
-    {
-        total_recursions_ = 0;
-        return;
-    };
+    { total_recursions_ = 0; return; };
 
 
     uint16_t max_levels_ = ADAPTIVE_TRI_DEFAULT_MAX_LEVELS;
     Float tol_ = ADAPTIVE_TRI_DEFAULT_TOL;
-    bool converged_ = false;
-    uint16_t converged_iter_ = 0;
 
     const EigColVecN<Float, 10> weights10_ = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 2.0};
     const EigColVecN<Float, 5> weights5_ = {1.0, 1.0, 1.0, 1.0, 2.0};

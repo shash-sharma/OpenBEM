@@ -15,15 +15,16 @@
 * Gaussian quadrature over a triangle.
 */
 
-#ifndef GAUSS_TRI_QUAD_H
-#define GAUSS_TRI_QUAD_H
+#ifndef BEM_GAUSS_TRI_QUAD_H
+#define BEM_GAUSS_TRI_QUAD_H
 
+#include <vector>
+#include <string>
 #include <functional>
 
 #include "types.hpp"
 #include "constants.hpp"
 #include "geometry/primitives/triangle.hpp"
-#include "quadrature/utility.hpp"
 #include "quadrature/triangle/base.hpp"
 
 
@@ -43,7 +44,7 @@ template <uint8_t dim>
 class GaussTriangleQuadrature: public TriangleQuadratureBase<dim>
 {
 
-    using base = TriangleQuadratureBase<dim>;
+    using base = QuadratureBase<dim>;
 
 public:
 
@@ -51,15 +52,15 @@ public:
     * @brief Constructs a `GaussTriangleQuadrature` object with a specified quadrature order.
     * @param[in] order - Quadrature order (optional).
     * @details
-    * Important: this constructor loads tabulated quadrature data from a json file, and stores the
-    * tabulated quadrature data for all possible orders up to `TRI_MAX_ORDER`. Therefore, it is
-    * strongly recommended that objects of this class should be reused within loops, rather than
-    * creating a new object at each iteration of a long loop.
+    * Important: this constructor loads tabulated quadrature data from a json file, and stores
+    * it for all possible orders up to `TRI_MAX_ORDER`. Therefore, it is strongly recommended
+    * that objects of this class should be reused within loops, rather than creating a new
+    * object at each iteration of a loop.
     */
     GaussTriangleQuadrature(const uint8_t order = TRI_DEFAULT_ORDER)
     {
         EigColVec<Index> orders = EigColVec<Index>::LinSpaced(TRI_MAX_ORDER, 1, TRI_MAX_ORDER);
-        rules_ = load_rules<2> (rule_file_, orders);
+        rules_ = QuadratureBase<2>::load_rules(rule_file_, orders);
         set_order(order);
         return;
     };
@@ -73,11 +74,12 @@ public:
 
 
     /**
-    * @brief Computes and stores the points on which to evaluate the integrand, and the corresponding weights.
+    * @brief Computes quadrature evaluation points and corresponding weights.
     * @param[in] tri - Triangle for quadrature evaluation.
-    * @param[in] eval - Function or class with `operator()` that evaluates the integrand (optional, unused).
+    * @param[in] eval - Function or functor to evaluate the integrand (optional, unused).
+    * @return Quadrature points and weights.
     */
-    void compute_points_weights(
+    QuadratureData<dim> compute(
         const Triangle<dim>& tri,
         std::function<EigRowVec<Complex> (ConstEigRef<EigMatNX<Float, dim>>)> eval = {}
         ) override;
@@ -87,7 +89,7 @@ public:
     * @brief Returns the evaluation points in the reference unit triangle.
     * @return Read-only reference to the reference triangle evaluation points.
     */
-    const EigMatNX<Float, 2>& ref_points() const { return rules_[base::order_ - 1].nodes;};
+    const EigMatNX<Float, 2>& ref_points() const { return rules_[base::order_ - 1].points; };
 
 
     /**
@@ -97,10 +99,10 @@ public:
     const EigRowVec<Float>& ref_weights() const { return rules_[base::order_ - 1].weights; };
 
 
-private:
+protected:
 
     std::string rule_file_ = "tri_quad_xiao_gimbutas.json";
-    std::vector<QuadratureRule<2>> rules_;
+    std::vector<QuadratureData<2>> rules_;
 
 };
 

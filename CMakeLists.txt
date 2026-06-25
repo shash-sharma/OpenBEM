@@ -167,7 +167,6 @@ set(SRC_FILES
     ${SRC_DIR}/geometry/primitives/triangle.cpp
     ${SRC_DIR}/geometry/mesh/triangle_mesh.cpp
     ${SRC_DIR}/geometry/mesh/mesh_transfer.cpp
-    ${SRC_DIR}/quadrature/utility.cpp
     ${SRC_DIR}/quadrature/triangle/gauss.cpp
     ${SRC_DIR}/quadrature/triangle/adaptive.cpp
     ${SRC_DIR}/quadrature/triangle/iterative_gauss.cpp

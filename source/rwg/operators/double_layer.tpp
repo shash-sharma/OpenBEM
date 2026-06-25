@@ -40,8 +40,9 @@ EigMat<Complex> VectorDoubleLayerPvOp<ObsIntegratorType>::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
-    obs_integrator_.set_compute_terms(false, false, true, false);
-    const ObsResult obs_result = obs_integrator_.integrate(k, obs_tri_local, src_tri_local);
+    const ObsResult obs_result = obs_integrator_.integrate(
+        k, obs_tri_local, src_tri_local, false, false, true, false
+        );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
 };
@@ -105,8 +106,9 @@ EigMat<Complex> RotVectorDoubleLayerPvOp<ObsIntegratorType>::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
-    obs_integrator_.set_compute_terms(false, false, true, true);
-    const ObsResult obs_result = obs_integrator_.integrate(k, obs_tri_local, src_tri_local);
+    const ObsResult obs_result = obs_integrator_.integrate(
+        k, obs_tri_local, src_tri_local, false, false, true, true
+        );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
 };

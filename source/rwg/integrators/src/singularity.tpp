@@ -31,13 +31,13 @@ template <typename TriangleQuadratureType, typename ScalarKernelType>
 SrcResult SrcSingularity<TriangleQuadratureType, ScalarKernelType>::integrate(
     const Complex k,
     const Triangle<2>& src_tri,
-    ConstEigRef<EigMatNX<Float, 3>> r_obs
+    ConstEigRef<EigMatNX<Float, 3>> r_obs,
+    const bool g_terms,
+    const bool grad_g_terms
     )
 {
-    SrcResult result_singular = integrate_singular(k, src_tri, r_obs);
-
-    src_quad_.set_compute_terms(compute_g_terms_, compute_grad_g_terms_);
-    SrcResult result_nonsingular = src_quad_.integrate(k, src_tri, r_obs);
+    SrcResult result_singular = integrate_singular(k, src_tri, r_obs, g_terms, grad_g_terms);
+    SrcResult result_nonsingular = src_quad_.integrate(k, src_tri, r_obs, g_terms, grad_g_terms);
 
     SrcResult result;
     result.g = result_singular.g + result_nonsingular.g;
@@ -52,7 +52,9 @@ template <typename TriangleQuadratureType, typename ScalarKernelType>
 SrcResult SrcSingularity<TriangleQuadratureType, ScalarKernelType>::integrate_singular(
     const Complex k,
     const Triangle<2>& src_tri,
-    ConstEigRef<EigMatNX<Float, 3>> r_obs
+    ConstEigRef<EigMatNX<Float, 3>> r_obs,
+    const bool g_terms,
+    const bool grad_g_terms
     )
 {
 
@@ -145,7 +147,7 @@ SrcResult SrcSingularity<TriangleQuadratureType, ScalarKernelType>::integrate_si
 
     SrcResult result;
 
-    if (base::compute_g_terms_)
+    if (g_terms)
     {
         result.g = (t0_f2 - z_abs.cwiseProduct(beta)) / four_pi;
 
@@ -153,7 +155,7 @@ SrcResult SrcSingularity<TriangleQuadratureType, ScalarKernelType>::integrate_si
         result.rs_g += r_obs.topRows(2) * result.g.asDiagonal();
     }
 
-    if (base::compute_grad_g_terms_)
+    if (grad_g_terms)
     {
         EigRowVec<Float> sign = z.array() / z_abs.array();
         sign = (

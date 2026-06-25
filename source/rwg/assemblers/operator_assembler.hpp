@@ -180,8 +180,9 @@ void OperatorAssembler::assemble(
             Triangle<2> src_tri_local;
             OperatorBase::transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
-            obs_integrator.set_compute_terms(true, true, true, true);
-            const ObsResult obs_result = obs_integrator.integrate(k, obs_tri_local, src_tri_local);
+            const ObsResult obs_result = obs_integrator.integrate(
+                k, obs_tri_local, src_tri_local, true, true, true, true
+                );
 
             for (Index jj = 0; jj < ops.size(); ++jj)
             {

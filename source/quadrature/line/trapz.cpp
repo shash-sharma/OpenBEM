@@ -21,7 +21,6 @@
 
 #include "types.hpp"
 #include "constants.hpp"
-#include "quadrature/utility.hpp"
 
 
 namespace bem
@@ -34,18 +33,13 @@ void TrapzLineQuadrature<dim>::set_num_segments(const uint16_t num_segments)
         throw std::domain_error(
             "TrapzLineQuadrature::set_num_segments(): max number of segments must be less than "
             + std::to_string(TRAPZ_LINE_MAX_NUM_SEGMENTS) + ".");
-
     num_segments_ = num_segments;
-
-    base::points_.resize(dim, num_segments_ + 1);
-    base::weights_.resize(1, num_segments_ + 1);
-    base::points_weights_computed_ = false;
     return;
 };
 
 
 template <uint8_t dim>
-void TrapzLineQuadrature<dim>::compute_points_weights(
+QuadratureData<dim> TrapzLineQuadrature<dim>::compute(
     ConstEigRef<EigColVecN<Float, dim>> p1,
     ConstEigRef<EigColVecN<Float, dim>> p2,
     std::function<EigRowVec<Complex> (ConstEigRef<EigMatNX<Float, dim>>)> eval
@@ -54,11 +48,11 @@ void TrapzLineQuadrature<dim>::compute_points_weights(
     EigColVecN<Float, dim> p = p2 - p1;
     Float p_len = p.norm();
 
-    base::points_.noalias() = (p * ref_points()).colwise() + p1;
-    base::weights_.noalias() = ref_weights() * p_len;
-    base::points_weights_computed_ = true;
+    QuadratureData<dim> qd;
+    qd.points = (p * ref_points()).colwise() + p1;
+    qd.weights = ref_weights() * p_len;
 
-    return;
+    return qd;
 };
 
 

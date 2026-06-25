@@ -15,8 +15,8 @@
 * Trapezoidal integration over a line segment.
 */
 
-#ifndef TRAPZ_LINE_QUAD_H
-#define TRAPZ_LINE_QUAD_H
+#ifndef BEM_TRAPZ_LINE_QUAD_H
+#define BEM_TRAPZ_LINE_QUAD_H
 
 #include <functional>
 
@@ -73,12 +73,13 @@ public:
 
 
     /**
-    * @brief Computes and stores the points on which to evaluate the integrand, and the corresponding weights.
+    * @brief Computes quadrature evaluation points and corresponding weights.
     * @param[in] p1 - First point of the line segment.
     * @param[in] p2 - Second point of the line segment.
-    * @param[in] eval - Function or class with `operator()` that evaluates the integrand (optional, unused).
+    * @param[in] eval - Function or functor to evaluate the integrand (optional, unused).
+    * @return Quadrature points and weights.
     */
-    void compute_points_weights(
+    QuadratureData<dim> compute(
         ConstEigRef<EigColVecN<Float, dim>> p1,
         ConstEigRef<EigColVecN<Float, dim>> p2,
         std::function<EigRowVec<Complex> (ConstEigRef<EigMatNX<Float, dim>>)> eval = {}
@@ -99,14 +100,16 @@ public:
     */
     EigRowVec<Float> ref_weights() const
     {
-        EigRowVec<Float> weights = EigRowVec<Float>::Constant(1, num_segments_ + 1, 1.0 / num_segments_);
+        EigRowVec<Float> weights = EigRowVec<Float>::Constant(
+            1, num_segments_ + 1, 1.0 / num_segments_
+            );
         weights[0] = 0.5 / num_segments_;
         weights[num_segments_] = 0.5 / num_segments_;
         return weights;
     };
 
 
-private:
+protected:
 
     uint16_t num_segments_ = TRAPZ_LINE_DEFAULT_NUM_SEGMENTS;
 

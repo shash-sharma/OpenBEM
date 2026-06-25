@@ -40,8 +40,9 @@ EigMat<Complex> VectorDoubleLayerProj<SrcIntegratorType>::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_points_local, src_tri_local, obs_points, src_tri);
 
-    src_integrator_.set_compute_terms(false, true);
-    const SrcResult src_result = src_integrator_.integrate(k, src_tri_local, obs_points_local);
+    const SrcResult src_result = src_integrator_.integrate(
+        k, src_tri_local, obs_points_local, false, true
+        );
 
     EigMatMN<Float, 3, 3> local_uvw = src_tri.local_coordinate_basis();
     EigRowVecN<Float, 3> norms = Rwg::normalization(src_tri);
