@@ -70,8 +70,8 @@ int main(int argc, char** argv)
         RotVectorHypersingularOp (obs_int),
         VectorDoubleLayerPvOp (obs_int),
         RotVectorDoubleLayerPvOp (obs_int),
-        VectorIdentityOp<> (),
-        RotVectorIdentityOp<> ()
+        VectorIdentityOp (),
+        RotVectorIdentityOp ()
         );
 
     std::apply(

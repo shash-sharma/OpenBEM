@@ -15,8 +15,9 @@
 * RWG-based Gram matrix operators.
 */
 
-#ifndef BEM_RWG_OPS_GRAM_I
-#define BEM_RWG_OPS_GRAM_I
+#include "rwg/operators/gram.hpp"
+
+#include <external/Eigen/Dense>
 
 #include "types.hpp"
 #include "constants.hpp"
@@ -27,8 +28,7 @@
 namespace bem::rwg
 {
 
-template <typename TriangleQuadratureType>
-EigMat<Complex> VectorIdentityOp<TriangleQuadratureType>::compute(
+EigMat<Complex> VectorIdentityOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
@@ -40,7 +40,7 @@ EigMat<Complex> VectorIdentityOp<TriangleQuadratureType>::compute(
     if (GeometryOps<3>::common_vertices(obs_tri, src_tri) < 3)
         return result;
 
-    QuadratureData<3> qd = tri_quad_.compute(obs_tri);
+    QuadratureData<3> qd = tri_quad_->compute(obs_tri);
 
     // source triangle edges
     for (uint8_t jj = 0; jj < 3; ++jj)
@@ -64,8 +64,7 @@ EigMat<Complex> VectorIdentityOp<TriangleQuadratureType>::compute(
 };
 
 
-template <typename TriangleQuadratureType>
-EigMat<Complex> RotVectorIdentityOp<TriangleQuadratureType>::compute(
+EigMat<Complex> RotVectorIdentityOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
@@ -77,7 +76,7 @@ EigMat<Complex> RotVectorIdentityOp<TriangleQuadratureType>::compute(
     if (GeometryOps<3>::common_vertices(obs_tri, src_tri) < 3)
         return result;
 
-    QuadratureData<3> qd = tri_quad_.compute(obs_tri);
+    QuadratureData<3> qd = tri_quad_->compute(obs_tri);
 
     // source triangle edges
     for (uint8_t jj = 0; jj < 3; ++jj)
@@ -102,4 +101,3 @@ EigMat<Complex> RotVectorIdentityOp<TriangleQuadratureType>::compute(
 
 }
 
-#endif

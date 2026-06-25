@@ -72,8 +72,8 @@ public:
     * @param[in] op_Kr - Object for the rotationally-tested vector double-layer potential operator.
     */
     void set_operators(
-        const RotVectorHypersingularOp<>& op_Tr,
-        const RotVectorDoubleLayerPvOp<>& op_Kr
+        const RotVectorHypersingularOp& op_Tr,
+        const RotVectorDoubleLayerPvOp& op_Kr
         )
     {
         op_Tr_ = op_Tr;
@@ -140,7 +140,7 @@ public:
     */
     MatrixType id_matrix()
     {
-        VectorIdentityOp<> op_I;
+        VectorIdentityOp op_I;
         MatrixType I;
         assembler_.assemble(I, op_I, 0);
         return I;
@@ -234,8 +234,8 @@ public:
 
 protected:
 
-    RotVectorHypersingularOp<> op_Tr_;
-    RotVectorDoubleLayerPvOp<> op_Kr_;
+    RotVectorHypersingularOp op_Tr_;
+    RotVectorDoubleLayerPvOp op_Kr_;
 
     VectorHypersingularProj<> proj_T_;
     VectorDoubleLayerProj<> proj_K_;
