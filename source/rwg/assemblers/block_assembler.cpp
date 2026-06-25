@@ -116,7 +116,7 @@ void BlockAssembler::get_block(
 
 #pragma omp parallel
     {
-        std::unique_ptr<OperatorBase> opc = op.clone();
+        // std::unique_ptr<OperatorBase> opc = op.clone();
 
 #pragma omp for
         for (Index ii = 0; ii < elem_pairs.cols(); ++ii)
@@ -124,7 +124,7 @@ void BlockAssembler::get_block(
             Triangle<3> obs_tri = mesh_.elem_primitive(elem_pairs(0, ii));
             Triangle<3> src_tri = mesh_.elem_primitive(elem_pairs(1, ii));
 
-            EigMat<Complex> values = opc->compute(
+            EigMat<Complex> values = op.compute(
                 k, obs_tri, src_tri
                 );
 
