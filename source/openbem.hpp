@@ -37,6 +37,14 @@
 #include "matrix/base.hpp"
 #include "matrix/eigen_matrix.hpp"
 
+#include "quadrature/triangle/gauss.hpp"
+#include "quadrature/triangle/adaptive.hpp"
+#include "quadrature/triangle/iterative_gauss.hpp"
+#include "quadrature/line/gauss.hpp"
+#include "quadrature/line/iterative_gauss.hpp"
+#include "quadrature/line/trapz.hpp"
+#include "quadrature/line/iterative_trapz.hpp"
+
 #include "kernels/base.hpp"
 #include "kernels/hgf.hpp"
 

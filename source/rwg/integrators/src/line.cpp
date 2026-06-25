@@ -54,7 +54,7 @@ SrcResult SrcLineIntegrator::integrate(
     }
     else
         throw std::runtime_error(
-            "SrcLineIntegrator::integrate(): line quadrature type not currently supported. "
+            "SrcLineIntegrator::integrate(): Given line quadrature type is not currently supported."
             );
 
     Index num_points = ref_points.cols();

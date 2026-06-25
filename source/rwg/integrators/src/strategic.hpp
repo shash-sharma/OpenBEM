@@ -69,33 +69,28 @@ struct SrcIntegrationSettings
 /**
 * @brief Class integration over the source triangle for RWG-based BEM operators. The method of integration
 * is chosen automatically and strategically based on mesh parameters, materials, and frequency.
-* @tparam TriangleQuadratureType - Type of the triangle quadrature object, which must derive from
-* `TriangleQuadratureBase<2>`.
-* @tparam LineQuadratureType - Type of the line quadrature object, which must derive from
-* `LineQuadratureBase<1>`.
 */
-template <typename TriangleQuadratureType = GaussTriangleQuadrature<2>, typename LineQuadratureType = GaussLineQuadrature<1>>
 class SrcStrategic: public SrcIntegratorBase
 {
 
     using base = SrcIntegratorBase;
-    static_assert(
-        std::is_base_of<TriangleQuadratureBase<2>, TriangleQuadratureType>::value,
-        "SrcStrategic: `TriangleQuadratureType` must derive from `TriangleQuadratureBase<2>`"
-        );
-    static_assert(
-        std::is_base_of<LineQuadratureBase<1>, LineQuadratureType>::value,
-        "SrcStrategic: `LineQuadratureType` must derive from `LineQuadratureBase<1>`"
-        );
 
 public:
 
     /**
     * @brief Constructs a `SrcStrategic` integrator with specified line and triangle quadrature objects.
+    * @tparam TriangleQuadratureType - Type of the triangle quadrature object, which must derive from
+    * `TriangleQuadratureBase<2>`.
+    * @tparam LineQuadratureType - Type of the line quadrature object, which must derive from
+    * `LineQuadratureBase<1>`.
     * @param[in] settings - Integration settings for singularity treatment and line integration (optional).
     * @param[in] tri_quad - Triangle quadrature object to use for integration (optional).
     * @param[in] line_quad - Line quadrature object to use for integration (optional).
     */
+    template <
+        typename TriangleQuadratureType = GaussTriangleQuadrature<2>,
+        typename LineQuadratureType = GaussLineQuadrature<1>
+        >
     SrcStrategic(
         const SrcIntegrationSettings settings = SrcIntegrationSettings(),
         const TriangleQuadratureType tri_quad = GaussTriangleQuadrature<2>(),
@@ -171,6 +166,8 @@ private:
 
 }
 
-#include "rwg/integrators/src/strategic.tpp"
+#ifndef BEM_LINKED
+#include "rwg/integrators/src/strategic.cpp"
+#endif
 
 #endif

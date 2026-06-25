@@ -15,8 +15,7 @@
 * Strategic auto-integration over the observation and source triangles for RWG-based BEM operators.
 */
 
-#ifndef BEM_RWG_OPINT_OBS_STRATEGIC_I
-#define BEM_RWG_OPINT_OBS_STRATEGIC_I
+#include "rwg/integrators/obs/strategic.hpp"
 
 #include "types.hpp"
 #include "constants.hpp"
@@ -27,8 +26,7 @@
 namespace bem::rwg
 {
 
-template <typename ObsTriangleQuadratureType, typename SrcTriangleQuadratureType, typename LineQuadratureType>
-ObsResult ObsStrategic<ObsTriangleQuadratureType, SrcTriangleQuadratureType, LineQuadratureType>::integrate(
+ObsResult ObsStrategic::integrate(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<2>& src_tri,
@@ -81,4 +79,3 @@ ObsResult ObsStrategic<ObsTriangleQuadratureType, SrcTriangleQuadratureType, Lin
 
 }
 
-#endif

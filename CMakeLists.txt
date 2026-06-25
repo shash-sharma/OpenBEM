@@ -179,6 +179,9 @@ set(SRC_FILES
     ${SRC_DIR}/rwg/integrators/src/quadrature.cpp
     ${SRC_DIR}/rwg/integrators/src/singularity.cpp
     ${SRC_DIR}/rwg/integrators/src/line.cpp
+    ${SRC_DIR}/rwg/integrators/src/strategic.cpp
+    ${SRC_DIR}/rwg/integrators/obs/quadrature.cpp
+    ${SRC_DIR}/rwg/integrators/obs/strategic.cpp
     ${SRC_DIR}/rwg/assemblers/indexing.cpp
     ${SRC_DIR}/rwg/assemblers/operator_assembler.cpp
     ${SRC_DIR}/rwg/assemblers/block_assembler.cpp

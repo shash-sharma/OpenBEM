@@ -665,7 +665,7 @@ int main(int argc, char** argv)
     SrcLineIntegrator src_line_default;
     SrcQuadrature src_quad_default;
     SrcSingularity src_sing_default;
-    SrcStrategic<> src_str_default;
+    SrcStrategic src_str_default;
 
 
     // TODO: improvements for single precision

@@ -51,7 +51,7 @@ namespace bem::rwg
 * Rows of the output matrix correspond to observation edges, and columns
 * correspond to source edges.
 */
-template <typename ObsIntegratorType = ObsStrategic<>>
+template <typename ObsIntegratorType = ObsStrategic>
 class VectorSingleLayerOp: public OperatorBase
 {
 
@@ -66,7 +66,7 @@ public:
     * @brief Constructs a `VectorSingleLayerOp` object with a specified integration object.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    VectorSingleLayerOp(const ObsIntegratorType obs_integrator = ObsStrategic<>()):
+    VectorSingleLayerOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
         obs_integrator_(obs_integrator) {};
 
 
@@ -147,7 +147,7 @@ protected:
 * associated with `obs_tri`. Rows of the output matrix correspond to observation edges,
 * and columns correspond to source edges.
 */
-template <typename ObsIntegratorType = ObsStrategic<>>
+template <typename ObsIntegratorType = ObsStrategic>
 class RotVectorSingleLayerOp: public OperatorBase
 {
 
@@ -162,7 +162,7 @@ public:
     * @brief Constructs a `RotVectorSingleLayerOp` object with a specified integration object.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    RotVectorSingleLayerOp(const ObsIntegratorType obs_integrator = ObsStrategic<>()):
+    RotVectorSingleLayerOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
         obs_integrator_(obs_integrator) {};
 
 
@@ -240,7 +240,7 @@ protected:
 * where \f$ G(k, \vec{r}, \vec{r}\,') \f$ is a scalar kernel, and \f$ h(\vec{r}) \f$ is a pulse
 * function that is a non-zero constant inside the associated triangle, and zero outside.
 */
-template <typename ObsIntegratorType = ObsStrategic<>>
+template <typename ObsIntegratorType = ObsStrategic>
 class ScalarSingleLayerOp: public OperatorBase
 {
 
@@ -255,7 +255,7 @@ public:
     * @brief Constructs a `ScalarSingleLayerOp` object with a specified integration object.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    ScalarSingleLayerOp(const ObsIntegratorType obs_integrator = ObsStrategic<>()):
+    ScalarSingleLayerOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
         obs_integrator_(obs_integrator) {};
 
 
@@ -336,7 +336,7 @@ protected:
 * associated triangle, and zero outside, and \f$ \hat{n} \f$ is the unit normal vector
 * associated with `obs_tri`. Rows of the output matrix correspond to observation edges.
 */
-template <typename ObsIntegratorType = ObsStrategic<>>
+template <typename ObsIntegratorType = ObsStrategic>
 class RotGradScalarSingleLayerOp: public OperatorBase
 {
 
@@ -351,7 +351,7 @@ public:
     * @brief Constructs a `RotGradScalarSingleLayerOp` object with a specified integration object.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    RotGradScalarSingleLayerOp(const ObsIntegratorType obs_integrator = ObsStrategic<>()):
+    RotGradScalarSingleLayerOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
         obs_integrator_(obs_integrator) {};
 
 
@@ -433,7 +433,7 @@ protected:
 * function associated with edge \f$ i \f$. Rows of the output matrix correspond to observation
 * edges, and columns correspond to source edges.
 */
-template <typename ObsIntegratorType = ObsStrategic<>>
+template <typename ObsIntegratorType = ObsStrategic>
 class VectorHypersingularOp: public OperatorBase
 {
 
@@ -448,7 +448,7 @@ public:
     * @brief Constructs a `VectorHypersingularOp` object with a specified integration object.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    VectorHypersingularOp(const ObsIntegratorType obs_integrator = ObsStrategic<>()):
+    VectorHypersingularOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
         obs_integrator_(obs_integrator),
         op_g_(obs_integrator),
         op_hessg_(obs_integrator) {};
@@ -535,7 +535,7 @@ protected:
 * associated with `obs_tri`. Rows of the output matrix correspond to observation edges,
 * and columns correspond to source edges.
 */
-template <typename ObsIntegratorType = ObsStrategic<>>
+template <typename ObsIntegratorType = ObsStrategic>
 class RotVectorHypersingularOp: public OperatorBase
 {
 
@@ -550,7 +550,7 @@ public:
     * @brief Constructs a `RotVectorHypersingularOp` object with a specified integration object.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    RotVectorHypersingularOp(const ObsIntegratorType obs_integrator = ObsStrategic<>()):
+    RotVectorHypersingularOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
         obs_integrator_(obs_integrator),
         op_g_(obs_integrator),
         op_hessg_(obs_integrator) {};

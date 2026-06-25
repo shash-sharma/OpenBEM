@@ -52,7 +52,7 @@ namespace bem::rwg
 * Rows of the output matrix correspond to observation edges, and columns
 * correspond to source edges.
 */
-template <typename ObsIntegratorType = ObsStrategic<>>
+template <typename ObsIntegratorType = ObsStrategic>
 class VectorDoubleLayerPvOp: public OperatorBase
 {
 
@@ -67,7 +67,7 @@ public:
     * @brief Constructs a `VectorDoubleLayerPvOp` object with a specified integration object.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    VectorDoubleLayerPvOp(const ObsIntegratorType obs_integrator = ObsStrategic<>()):
+    VectorDoubleLayerPvOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
         obs_integrator_(obs_integrator) {};
 
 
@@ -148,7 +148,7 @@ protected:
 * Rows of the output matrix correspond to observation edges, and columns
 * correspond to source edges.
 */
-template <typename ObsIntegratorType = ObsStrategic<>>
+template <typename ObsIntegratorType = ObsStrategic>
 class RotVectorDoubleLayerPvOp: public OperatorBase
 {
 
@@ -163,7 +163,7 @@ public:
     * @brief Constructs a `RotVectorDoubleLayerPvOp` object with a specified integration object.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    RotVectorDoubleLayerPvOp(const ObsIntegratorType obs_integrator = ObsStrategic<>()):
+    RotVectorDoubleLayerPvOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
         obs_integrator_(obs_integrator) {};
 
 

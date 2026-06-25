@@ -78,7 +78,7 @@ void test_cfie_pec()
 
     assm.assemble<
         EigenMatrix<Complex>,
-        ObsStrategic<>,
+        ObsStrategic,
         VectorHypersingularOp<>,
         RotVectorDoubleLayerPvOp<>,
         VectorIdentityOp<>

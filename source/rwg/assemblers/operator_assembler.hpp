@@ -105,11 +105,11 @@ public:
     * @param[in] ops - Operator objects that compute the coefficients to assemble into `mat`.
     * @param[in] k - Complex wavenumber.
     */
-    template <typename MatrixType, typename ObsIntegratorType = ObsStrategic<>, typename... Ops>
+    template <typename MatrixType, typename ObsIntegratorType = ObsStrategic, typename... Ops>
     void assemble(
         std::vector<MatrixType>& mats,
         const Complex k,
-        const ObsIntegratorType obs_integrator = ObsStrategic<>()
+        const ObsIntegratorType obs_integrator = ObsStrategic()
         );
 
 

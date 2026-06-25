@@ -18,6 +18,8 @@
 #ifndef BEM_RWG_OPINT_OBS_QUAD_H
 #define BEM_RWG_OPINT_OBS_QUAD_H
 
+#include <memory>
+
 #include "types.hpp"
 #include "geometry/primitives/triangle.hpp"
 #include "quadrature/triangle/base.hpp"
@@ -40,36 +42,33 @@ namespace bem::rwg
 * @brief Class for quadrature over the observation triangle for RWG-based BEM operators.
 * Reference: O. Ergul, L. Gurel, "The Multilevel Fast Multipole Algorithm (MLFMA) for Solving
 * Large-Scale Computational Electromagnetics Problems," book, Wiley-IEEE Press, 2014.
-* @tparam TriangleQuadratureType - Type of the triangle quadrature object, which must derive from
-* `TriangleQuadratureBase<3>`.
-* @tparam SrcIntegratorType - Object for integrating over the source triangle, which must derive from
-* `SrcIntegratorBase`.
 */
-template <typename TriangleQuadratureType = GaussTriangleQuadrature<3>, typename SrcIntegratorType = SrcStrategic<>>
 class ObsQuadrature: public ObsIntegratorBase
 {
 
     using base = ObsIntegratorBase;
-    static_assert(
-        std::is_base_of<TriangleQuadratureBase<3>, TriangleQuadratureType>::value,
-        "ObsQuadrature: `TriangleQuadratureType` must derive from `TriangleQuadratureBase<3>`"
-        );
-    static_assert(
-        std::is_base_of<SrcIntegratorBase, SrcIntegratorType>::value,
-        "ObsQuadrature: `SrcIntegratorType` must derive from `SrcIntegratorBase`"
-        );
 
 public:
 
     /**
     * @brief Constructs an `ObsQuadrature` with a specified triangle quadrature object.
+    * @tparam TriangleQuadratureType - Type of the triangle quadrature object, which must derive from
+    * `TriangleQuadratureBase<3>`.
+    * @tparam SrcIntegratorType - Object for integrating over the source triangle, which must derive from
+    * `SrcIntegratorBase`.
     * @param[in] tri_quad - Triangle quadrature object to use for integration.
     * @param[in] src_integrator - Object for integrating over the source triangle.
     */
+    template <
+        typename TriangleQuadratureType = GaussTriangleQuadrature<3>,
+        typename SrcIntegratorType = SrcStrategic
+        >
     ObsQuadrature(
         const TriangleQuadratureType tri_quad = GaussTriangleQuadrature<3>(),
-        const SrcIntegratorType src_integrator = SrcStrategic<>()
-        ): tri_quad_(tri_quad), src_integrator_(src_integrator) {};
+        const SrcIntegratorType src_integrator = SrcStrategic()
+        ):
+        tri_quad_(std::make_shared<TriangleQuadratureType> (tri_quad)),
+        src_integrator_(std::make_shared<SrcIntegratorType> (src_integrator)) {};
 
 
     /**
@@ -123,32 +122,32 @@ public:
     * @brief Provides read-only access to the triangle quadrature object for inspection.
     * @return Read-only reference to the triangle quadrature object.
     */
-    const TriangleQuadratureType& quadrature_object() const
-    { return tri_quad_; };
+    const TriangleQuadratureBase<3>& quadrature_object() const
+    { return *tri_quad_; };
 
 
     /**
     * @brief Provides writable access to the triangle quadrature object.
     * @return Writable reference to the triangle quadrature object.
     */
-    TriangleQuadratureType& quadrature_object()
-    { return tri_quad_; };
+    TriangleQuadratureBase<3>& quadrature_object()
+    { return *tri_quad_; };
 
 
     /**
     * @brief Provides read-only access to the source integrator for inspection.
     * @return Read-only reference to the source integrator object.
     */
-    const SrcIntegratorType& src_integrator() const
-    { return src_integrator_; };
+    const SrcIntegratorBase& src_integrator() const
+    { return *src_integrator_; };
 
 
     /**
     * @brief Provides writable access to the source integrator object.
     * @return Writable reference to the source integrator object.
     */
-    SrcIntegratorType& src_integrator()
-    { return src_integrator_; };
+    SrcIntegratorBase& src_integrator()
+    { return *src_integrator_; };
 
 
     /**
@@ -156,10 +155,10 @@ public:
     * @return Unique pointer to the new object.
     */
     std::unique_ptr<ObsIntegratorBase> clone() const override
-    { return std::make_unique<ObsQuadrature<TriangleQuadratureType, SrcIntegratorType>> (*this); };
+    { return std::make_unique<ObsQuadrature> (*this); };
 
 
-private:
+protected:
 
     /**
     * @brief Computes
@@ -224,8 +223,8 @@ private:
         const SrcResult& src_result, const QuadratureData<3>& qd);
 
 
-    TriangleQuadratureType tri_quad_;
-    SrcIntegratorType src_integrator_;
+    std::shared_ptr<TriangleQuadratureBase<3>> tri_quad_;
+    std::shared_ptr<SrcIntegratorBase> src_integrator_;
 
 };
 
@@ -235,6 +234,8 @@ private:
 
 }
 
-#include "rwg/integrators/obs/quadrature.tpp"
+#ifndef BEM_LINKED
+#include "rwg/integrators/obs/quadrature.cpp"
+#endif
 
 #endif

@@ -37,7 +37,7 @@ namespace bem::rwg
 /**
 * @brief Class for computing the vector single-layer potential projector.
 */
-template <typename SrcIntegratorType = SrcStrategic<>>
+template <typename SrcIntegratorType = SrcStrategic>
 class VectorSingleLayerProj: public ProjectorBase
 {
 
@@ -52,7 +52,7 @@ public:
     * @brief Constructs a `VectorSingleLayerProj` object with a specified integration object.
     * @param[in] src_integrator - Integration object for the source triangle (optional).
     */
-    VectorSingleLayerProj(const SrcIntegratorType src_integrator = SrcStrategic<>()):
+    VectorSingleLayerProj(const SrcIntegratorType src_integrator = SrcStrategic()):
         src_integrator_(src_integrator) {};
 
 
@@ -99,7 +99,7 @@ private:
 /**
 * @brief Class for computing the scalar single-layer potential projector.
 */
-template <typename SrcIntegratorType = SrcStrategic<>>
+template <typename SrcIntegratorType = SrcStrategic>
 class ScalarSingleLayerProj: public ProjectorBase
 {
 
@@ -114,7 +114,7 @@ public:
     * @brief Constructs a `ScalarSingleLayerProj` object with a specified integration object.
     * @param[in] src_integrator - Integration object for the source triangle (optional).
     */
-    ScalarSingleLayerProj(const SrcIntegratorType src_integrator = SrcStrategic<>()):
+    ScalarSingleLayerProj(const SrcIntegratorType src_integrator = SrcStrategic()):
         src_integrator_(src_integrator) {};
 
 
@@ -157,7 +157,7 @@ private:
 /**
 * @brief Class for computing the gradient of the scalar single-layer potential projector.
 */
-template <typename SrcIntegratorType = SrcStrategic<>>
+template <typename SrcIntegratorType = SrcStrategic>
 class GradScalarSingleLayerProj: public ProjectorBase
 {
 
@@ -172,7 +172,7 @@ public:
     * @brief Constructs a `GradScalarSingleLayerProj` object with a specified integration object.
     * @param[in] src_integrator - Integration object for the source triangle (optional).
     */
-    GradScalarSingleLayerProj(const SrcIntegratorType src_integrator = SrcStrategic<>()):
+    GradScalarSingleLayerProj(const SrcIntegratorType src_integrator = SrcStrategic()):
         src_integrator_(src_integrator) {};
 
 
@@ -218,7 +218,7 @@ private:
 /**
 * @brief Class for computing the vector hypersingular potential projector.
 */
-template <typename SrcIntegratorType = SrcStrategic<>>
+template <typename SrcIntegratorType = SrcStrategic>
 class VectorHypersingularProj: public ProjectorBase
 {
 
@@ -233,7 +233,7 @@ public:
     * @brief Constructs a `VectorHypersingularProj` object with a specified integration object.
     * @param[in] src_integrator - Integration object for the source triangle (optional).
     */
-    VectorHypersingularProj(const SrcIntegratorType src_integrator = SrcStrategic<>()):
+    VectorHypersingularProj(const SrcIntegratorType src_integrator = SrcStrategic()):
         proj_g_(src_integrator), proj_gradg_(src_integrator) {};
 
 

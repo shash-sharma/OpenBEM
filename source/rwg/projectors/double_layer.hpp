@@ -37,7 +37,7 @@ namespace bem::rwg
 /**
 * @brief Class for computing the vector double-layer potential projector.
 */
-template <typename SrcIntegratorType = SrcStrategic<>>
+template <typename SrcIntegratorType = SrcStrategic>
 class VectorDoubleLayerProj: public ProjectorBase
 {
 
@@ -53,7 +53,7 @@ public:
     * @param[in] src_integrator - Integration object for the source triangle (optional).
     */
 
-    VectorDoubleLayerProj(const SrcIntegratorType src_integrator = SrcStrategic<>()):
+    VectorDoubleLayerProj(const SrcIntegratorType src_integrator = SrcStrategic()):
         src_integrator_(src_integrator) {};
 
 

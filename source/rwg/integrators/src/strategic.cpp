@@ -15,8 +15,7 @@
 * Strategic auto-integration over the source triangle for RWG-based BEM operators.
 */
 
-#ifndef BEM_RWG_OPINT_SRC_STRATEGIC_I
-#define BEM_RWG_OPINT_SRC_STRATEGIC_I
+#include "rwg/integrators/src/strategic.hpp"
 
 #include "types.hpp"
 #include "constants.hpp"
@@ -26,8 +25,7 @@
 namespace bem::rwg
 {
 
-template <typename TriangleQuadratureType, typename LineQuadratureType>
-SrcResult SrcStrategic<TriangleQuadratureType, LineQuadratureType>::integrate(
+SrcResult SrcStrategic::integrate(
     const Complex k,
     const Triangle<2>& src_tri,
     ConstEigRef<EigMatNX<Float, 3>> r_obs,
@@ -74,4 +72,3 @@ SrcResult SrcStrategic<TriangleQuadratureType, LineQuadratureType>::integrate(
 
 }
 
-#endif

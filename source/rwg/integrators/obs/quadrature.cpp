@@ -15,8 +15,7 @@
 * Quadrature over the observation triangle for RWG-based BEM operators.
 */
 
-#ifndef BEM_RWG_OPINT_OBS_QUAD_I
-#define BEM_RWG_OPINT_OBS_QUAD_I
+#include "rwg/integrators/obs/quadrature.hpp"
 
 #include "types.hpp"
 #include "geometry/primitives/triangle.hpp"
@@ -28,8 +27,7 @@
 namespace bem::rwg
 {
 
-template <typename TriangleQuadratureType, typename SrcIntegratorType>
-ObsResult ObsQuadrature<TriangleQuadratureType, SrcIntegratorType>::integrate(
+ObsResult ObsQuadrature::integrate(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<2>& src_tri,
@@ -43,15 +41,15 @@ ObsResult ObsQuadrature<TriangleQuadratureType, SrcIntegratorType>::integrate(
     // Evaluation function for iterative or adaptive numerical integration
     auto eval = [&](ConstEigRef<EigMatNX<Float, 3>> r_obs) -> EigRowVec<Complex>
     {
-        return src_integrator_.integrate(k, src_tri, r_obs, true, false).g;
+        return src_integrator_->integrate(k, src_tri, r_obs, true, false).g;
     };
 
-    QuadratureData<3> qd = tri_quad_.compute(obs_tri, eval);
+    QuadratureData<3> qd = tri_quad_->compute(obs_tri, eval);
 
     bool src_g_terms = g_term || rs_g_terms;
     bool src_grad_g_terms = grad_g_terms || rot_grad_g_terms;
 
-    SrcResult src_result = src_integrator_.integrate(
+    SrcResult src_result = src_integrator_->integrate(
         k, src_tri, qd.points, src_g_terms, src_grad_g_terms
         );
 
@@ -74,8 +72,7 @@ ObsResult ObsQuadrature<TriangleQuadratureType, SrcIntegratorType>::integrate(
 };
 
 
-template <typename TriangleQuadratureType, typename SrcIntegratorType>
-Complex ObsQuadrature<TriangleQuadratureType, SrcIntegratorType>::compute_g_term(
+Complex ObsQuadrature::compute_g_term(
     const SrcResult& src_result, const QuadratureData<3>& qd
     )
 {
@@ -83,8 +80,7 @@ Complex ObsQuadrature<TriangleQuadratureType, SrcIntegratorType>::compute_g_term
 };
 
 
-template <typename TriangleQuadratureType, typename SrcIntegratorType>
-EigRowVecN<Complex, 12> ObsQuadrature<TriangleQuadratureType, SrcIntegratorType>::compute_rs_g_terms(
+EigRowVecN<Complex, 12> ObsQuadrature::compute_rs_g_terms(
     const SrcResult& src_result, const QuadratureData<3>& qd
     )
 {
@@ -119,8 +115,7 @@ EigRowVecN<Complex, 12> ObsQuadrature<TriangleQuadratureType, SrcIntegratorType>
 };
 
 
-template <typename TriangleQuadratureType, typename SrcIntegratorType>
-EigRowVecN<Complex, 9> ObsQuadrature<TriangleQuadratureType, SrcIntegratorType>::compute_grad_g_terms(
+EigRowVecN<Complex, 9> ObsQuadrature::compute_grad_g_terms(
     const SrcResult& src_result, const QuadratureData<3>& qd
     )
 {
@@ -148,8 +143,7 @@ EigRowVecN<Complex, 9> ObsQuadrature<TriangleQuadratureType, SrcIntegratorType>:
 };
 
 
-template <typename TriangleQuadratureType, typename SrcIntegratorType>
-EigRowVecN<Complex, 15> ObsQuadrature<TriangleQuadratureType, SrcIntegratorType>::compute_rot_grad_g_terms(
+EigRowVecN<Complex, 15> ObsQuadrature::compute_rot_grad_g_terms(
     const SrcResult& src_result, const QuadratureData<3>& qd
     )
 {
@@ -204,4 +198,3 @@ EigRowVecN<Complex, 15> ObsQuadrature<TriangleQuadratureType, SrcIntegratorType>
 
 }
 
-#endif
