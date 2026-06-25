@@ -114,71 +114,66 @@ void BlockAssembler::get_block(
     mat.resize(index_set_.num_rows(), index_set_.num_cols());
     mat.setZero();
 
-#pragma omp parallel
+#pragma omp parallel for
+    for (Index ii = 0; ii < elem_pairs.cols(); ++ii)
     {
-        // std::unique_ptr<OperatorBase> opc = op.clone();
+        Triangle<3> obs_tri = mesh_.elem_primitive(elem_pairs(0, ii));
+        Triangle<3> src_tri = mesh_.elem_primitive(elem_pairs(1, ii));
 
-#pragma omp for
-        for (Index ii = 0; ii < elem_pairs.cols(); ++ii)
+        EigMat<Complex> values = op.compute(
+            k, obs_tri, src_tri
+            );
+
+        if (op.obs_dof() == OperatorDof::EDGE && op.src_dof() == OperatorDof::EDGE)
         {
-            Triangle<3> obs_tri = mesh_.elem_primitive(elem_pairs(0, ii));
-            Triangle<3> src_tri = mesh_.elem_primitive(elem_pairs(1, ii));
-
-            EigMat<Complex> values = op.compute(
-                k, obs_tri, src_tri
-                );
-
-            if (op.obs_dof() == OperatorDof::EDGE && op.src_dof() == OperatorDof::EDGE)
+            for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
             {
-                for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
-                {
-                    Index col = mesh_.elem_edges()(src_edge, elem_pairs(1, ii));
-                    auto icol = col_map.find(col);
-                    if (icol != col_map.end())
-                        for (uint8_t obs_edge = 0; obs_edge < 3; ++obs_edge)
-                        {
-                            Index row = mesh_.elem_edges()(obs_edge, elem_pairs(0, ii));
-                            auto irow = row_map.find(row);
-                            if (irow != row_map.end())
+                Index col = mesh_.elem_edges()(src_edge, elem_pairs(1, ii));
+                auto icol = col_map.find(col);
+                if (icol != col_map.end())
+                    for (uint8_t obs_edge = 0; obs_edge < 3; ++obs_edge)
+                    {
+                        Index row = mesh_.elem_edges()(obs_edge, elem_pairs(0, ii));
+                        auto irow = row_map.find(row);
+                        if (irow != row_map.end())
 #pragma omp critical
-                                mat(irow->second, icol->second) += values(obs_edge, src_edge);
-                        }
-                }
+                            mat(irow->second, icol->second) += values(obs_edge, src_edge);
+                    }
             }
+        }
 
-            else if (op.obs_dof() == OperatorDof::FACE && op.src_dof() == OperatorDof::EDGE)
+        else if (op.obs_dof() == OperatorDof::FACE && op.src_dof() == OperatorDof::EDGE)
+        {
+            Index row = row_map.at(elem_pairs(0, ii));
+            for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
             {
-                Index row = row_map.at(elem_pairs(0, ii));
-                for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
-                {
-                    Index col = mesh_.elem_edges()(src_edge, elem_pairs(1, ii));
-                    auto icol = col_map.find(col);
-                    if (icol != col_map.end())
+                Index col = mesh_.elem_edges()(src_edge, elem_pairs(1, ii));
+                auto icol = col_map.find(col);
+                if (icol != col_map.end())
 #pragma omp critical
-                        mat(row, icol->second) += values(0, src_edge);
-                }
+                    mat(row, icol->second) += values(0, src_edge);
             }
+        }
 
-            else if (op.obs_dof() == OperatorDof::EDGE && op.src_dof() == OperatorDof::FACE)
+        else if (op.obs_dof() == OperatorDof::EDGE && op.src_dof() == OperatorDof::FACE)
+        {
+            Index col = col_map.at(elem_pairs(1, ii));
+            for (uint8_t obs_edge = 0; obs_edge < 3; ++obs_edge)
             {
-                Index col = col_map.at(elem_pairs(1, ii));
-                for (uint8_t obs_edge = 0; obs_edge < 3; ++obs_edge)
-                {
-                    Index row = mesh_.elem_edges()(obs_edge, elem_pairs(0, ii));
-                    auto irow = row_map.find(row);
-                    if (irow != row_map.end())
+                Index row = mesh_.elem_edges()(obs_edge, elem_pairs(0, ii));
+                auto irow = row_map.find(row);
+                if (irow != row_map.end())
 #pragma omp critical
-                        mat(irow->second, col) += values(obs_edge, 0);
-                }
+                    mat(irow->second, col) += values(obs_edge, 0);
             }
+        }
 
-            else if (op.obs_dof() == OperatorDof::FACE && op.src_dof() == OperatorDof::FACE)
-            {
-                Index row = row_map.at(elem_pairs(0, ii));
-                Index col = col_map.at(elem_pairs(1, ii));
+        else if (op.obs_dof() == OperatorDof::FACE && op.src_dof() == OperatorDof::FACE)
+        {
+            Index row = row_map.at(elem_pairs(0, ii));
+            Index col = col_map.at(elem_pairs(1, ii));
 #pragma omp critical
-                mat(row, col) = values(0, 0);
-            }
+            mat(row, col) = values(0, 0);
         }
     }
 
