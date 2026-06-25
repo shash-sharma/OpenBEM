@@ -15,10 +15,10 @@
 * Line integration over the source triangle for RWG-based BEM operators.
 */
 
-#ifndef BEM_RWG_OPINT_SRC_LINE_I
-#define BEM_RWG_OPINT_SRC_LINE_I
+#include "rwg/integrators/src/line.hpp"
 
 #include <cassert>
+#include <stdexcept>
 
 #include "types.hpp"
 #include "constants.hpp"
@@ -30,8 +30,7 @@
 namespace bem::rwg
 {
 
-template <typename LineQuadratureType>
-SrcResult SrcLineIntegrator<LineQuadratureType>::integrate(
+SrcResult SrcLineIntegrator::integrate(
     const Complex k,
     const Triangle<2>& src_tri,
     ConstEigRef<EigMatNX<Float, 3>> r_obs,
@@ -40,7 +39,25 @@ SrcResult SrcLineIntegrator<LineQuadratureType>::integrate(
     )
 {
 
-    Index num_points = line_quad_.ref_points().cols();
+    EigRowVec<Float> ref_points;
+    EigRowVec<Float> ref_weights;
+
+    if (auto line_quad = std::dynamic_pointer_cast<GaussLineQuadrature<1>> (line_quad_))
+    {
+        ref_points = line_quad->ref_points();
+        ref_weights = line_quad->ref_weights();
+    }
+    else if (auto line_quad = std::dynamic_pointer_cast<TrapzLineQuadrature<1>> (line_quad_))
+    {
+        ref_points = line_quad->ref_points();
+        ref_weights = line_quad->ref_weights();
+    }
+    else
+        throw std::runtime_error(
+            "SrcLineIntegrator::integrate(): line quadrature type not currently supported. "
+            );
+
+    Index num_points = ref_points.cols();
 
     EigRowVec<Float> weights_x = EigRowVec<Float>::Zero(1, num_points);
     EigRowVec<Float> weights_r = EigRowVec<Float>::Zero(1, num_points);
@@ -112,12 +129,13 @@ SrcResult SrcLineIntegrator<LineQuadratureType>::integrate(
             Float x_plus = -edge.unit_vec().dot(rproj_to_vplus);
 
             // linear quadrature points and weights
-            QuadratureData<1> qd = line_quad_.compute(
+            QuadratureData<1> qd = line_quad_->compute(
                 EigColVecN<Float, 1> { x_minus }, EigColVecN<Float, 1> { x_plus }
                 );
 
             points_x = qd.points;
-            weights_x = line_quad_.ref_weights() * edge.length();
+            weights_x = ref_weights * edge.length();
+            // weights_x = qd.weights;
 
             EigRowVec<Float> rhosq = (proj_h * proj_h) + (points_x.array() * points_x.array());
             EigRowVec<Float> rho = Eigen::sqrt(rhosq.array());
@@ -152,7 +170,7 @@ SrcResult SrcLineIntegrator<LineQuadratureType>::integrate(
                     h_vec, rproj_to_vplus
                     );
 
-                qd = line_quad_.compute(
+                qd = line_quad_->compute(
                     EigColVecN<Float, 1> { theta_minus }, EigColVecN<Float, 1> { theta_plus }
                     );
 
@@ -248,4 +266,3 @@ SrcResult SrcLineIntegrator<LineQuadratureType>::integrate(
 
 }
 
-#endif

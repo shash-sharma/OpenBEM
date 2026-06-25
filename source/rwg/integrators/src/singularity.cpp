@@ -15,8 +15,7 @@
 * 2D quadrature over the source triangle with singularity treatment for RWG-based BEM operators.
 */
 
-#ifndef BEM_RWG_OPINT_SRC_SINGULARITY_I
-#define BEM_RWG_OPINT_SRC_SINGULARITY_I
+#include "rwg/integrators/src/singularity.hpp"
 
 #include "types.hpp"
 #include "constants.hpp"
@@ -27,8 +26,7 @@
 namespace bem::rwg
 {
 
-template <typename TriangleQuadratureType, typename ScalarKernelType>
-SrcResult SrcSingularity<TriangleQuadratureType, ScalarKernelType>::integrate(
+SrcResult SrcSingularity::integrate(
     const Complex k,
     const Triangle<2>& src_tri,
     ConstEigRef<EigMatNX<Float, 3>> r_obs,
@@ -48,8 +46,7 @@ SrcResult SrcSingularity<TriangleQuadratureType, ScalarKernelType>::integrate(
 };
 
 
-template <typename TriangleQuadratureType, typename ScalarKernelType>
-SrcResult SrcSingularity<TriangleQuadratureType, ScalarKernelType>::integrate_singular(
+SrcResult SrcSingularity::integrate_singular(
     const Complex k,
     const Triangle<2>& src_tri,
     ConstEigRef<EigMatNX<Float, 3>> r_obs,
@@ -135,13 +132,13 @@ SrcResult SrcSingularity<TriangleQuadratureType, ScalarKernelType>::integrate_si
         u_f3 += u_hat * f3;
 
         assert(atan_plus.array().isFinite().all() &&
-            "SrcSingularity::compute_integral_terms(): atan_plus has nan or inf.");
+            "SrcSingularity::integrate_singular(): atan_plus has nan or inf.");
         assert(atan_minus.array().isFinite().all() &&
-            "SrcSingularity::compute_integral_terms(): atan_minus has nan or inf.");
+            "SrcSingularity::integrate_singulars(): atan_minus has nan or inf.");
         assert(f2.array().isFinite().all() &&
-            "SrcSingularity::compute_integral_terms(): f2 has nan or inf.");
+            "SrcSingularity::integrate_singular(): f2 has nan or inf.");
         assert(f3.array().isFinite().all() &&
-            "SrcSingularity::compute_integral_terms(): f3 has nan or inf.");
+            "SrcSingularity::integrate_singular(): f3 has nan or inf.");
 
     }
 
@@ -180,4 +177,3 @@ SrcResult SrcSingularity<TriangleQuadratureType, ScalarKernelType>::integrate_si
 
 }
 
-#endif

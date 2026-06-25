@@ -15,8 +15,7 @@
 * Quadrature over the source triangle for RWG-based BEM operators.
 */
 
-#ifndef BEM_RWG_OPINT_SRC_QUAD_I
-#define BEM_RWG_OPINT_SRC_QUAD_I
+#include "rwg/integrators/src/quadrature.hpp"
 
 #include "types.hpp"
 #include "geometry/primitives/triangle.hpp"
@@ -25,8 +24,7 @@
 namespace bem::rwg
 {
 
-template <typename TriangleQuadratureType, typename ScalarKernelType>
-SrcResult SrcQuadrature<TriangleQuadratureType, ScalarKernelType>::integrate(
+SrcResult SrcQuadrature::integrate(
     const Complex k,
     const Triangle<2>& src_tri,
     ConstEigRef<EigMatNX<Float, 3>> r_obs,
@@ -40,11 +38,11 @@ SrcResult SrcQuadrature<TriangleQuadratureType, ScalarKernelType>::integrate(
     {
         EigMatNX<Float, 3> r_src_3d = EigMatNX<Float, 3>::Zero(3, r_src.cols());
         r_src_3d.topRows(2) = r_src;
-        return kernel_.compute(r_obs.rowwise().mean(), r_src_3d, k);
+        return kernel_->compute(r_obs.rowwise().mean(), r_src_3d, k);
     };
 
     // Get the quadrature points and weights
-    QuadratureData<2> qd = tri_quad_.compute(src_tri, eval);
+    QuadratureData<2> qd = tri_quad_->compute(src_tri, eval);
 
     EigMatNX<Float, 3> points_3d = EigMatNX<Float, 3>::Zero(3, qd.points.cols());
     points_3d.topRows(2) = qd.points;
@@ -59,7 +57,7 @@ SrcResult SrcQuadrature<TriangleQuadratureType, ScalarKernelType>::integrate(
 
         for (std::size_t ro = 0; ro < r_obs.cols(); ++ro)
         {
-            EigRowVec<Complex> gw = kernel_.compute(
+            EigRowVec<Complex> gw = kernel_->compute(
                 r_obs.col(ro), points_3d, k
                 ).array() * qd.weights.array();
             result.g[ro] = gw.array().sum();
@@ -73,7 +71,7 @@ SrcResult SrcQuadrature<TriangleQuadratureType, ScalarKernelType>::integrate(
 
         for (std::size_t ro = 0; ro < r_obs.cols(); ++ro)
         {
-            result.grad_g.col(ro) = kernel_.compute_grad(
+            result.grad_g.col(ro) = kernel_->compute_grad(
                 r_obs.col(ro), points_3d, k
                 ) * qd.weights.transpose();
         }
@@ -85,4 +83,3 @@ SrcResult SrcQuadrature<TriangleQuadratureType, ScalarKernelType>::integrate(
 
 }
 
-#endif

@@ -18,10 +18,13 @@
 #ifndef BEM_RWG_OPINT_SRC_LINE_H
 #define BEM_RWG_OPINT_SRC_LINE_H
 
+#include <memory>
+
 #include "types.hpp"
 #include "geometry/primitives/triangle.hpp"
 #include "quadrature/line/base.hpp"
 #include "quadrature/line/gauss.hpp"
+#include "quadrature/line/trapz.hpp"
 #include "rwg/integrators/src/base.hpp"
 
 
@@ -43,15 +46,10 @@ namespace bem::rwg
 * Modeling in Surface Integral Equation," in IEEE Transactions on Microwave Theory and Techniques,
 * vol. 55, no. 11, pp. 2354-2364, Nov. 2007, doi: 10.1109/TMTT.2007.908678.
 */
-template <typename LineQuadratureType = GaussLineQuadrature<1>>
 class SrcLineIntegrator: public SrcIntegratorBase
 {
 
     using base = SrcIntegratorBase;
-    static_assert(
-        std::is_base_of<LineQuadratureBase<1>, LineQuadratureType>::value,
-        "SrcLineIntegrator: `LineQuadratureType` must derive from `LineQuadratureBase<1>`"
-        );
 
 public:
 
@@ -61,8 +59,9 @@ public:
     * `LineQuadratureBase<1>`.
     * @param[in] line_quad - Line quadrature object to use for integration (optional).
     */
+    template <typename LineQuadratureType = GaussLineQuadrature<1>>
     SrcLineIntegrator(const LineQuadratureType line_quad = GaussLineQuadrature<1>()):
-        line_quad_(line_quad) {};
+        line_quad_(std::make_shared<LineQuadratureType> (line_quad)) {};
 
 
     /**
@@ -110,21 +109,21 @@ public:
     * @brief Provides read-only access to the line quadrature object for inspection.
     * @return Read-only reference to the line quadrature object.
     */
-    const LineQuadratureType& quadrature_object() const
-    { return line_quad_; };
+    const LineQuadratureBase<1>& quadrature_object() const
+    { return *line_quad_; };
 
 
     /**
     * @brief Provides writable access to the line quadrature object.
     * @return Writable reference to the line quadrature object.
     */
-    LineQuadratureType& quadrature_object()
-    { return line_quad_; };
+    LineQuadratureBase<1>& quadrature_object()
+    { return *line_quad_; };
 
 
 protected:
 
-    LineQuadratureType line_quad_;
+    std::shared_ptr<LineQuadratureBase<1>> line_quad_;
 
 };
 
@@ -134,6 +133,8 @@ protected:
 
 }
 
-#include "rwg/integrators/src/line.tpp"
+#ifndef BEM_LINKED
+#include "rwg/integrators/src/line.cpp"
+#endif
 
 #endif

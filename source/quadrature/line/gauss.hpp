@@ -90,14 +90,16 @@ public:
     * @brief Returns the evaluation points in the reference unit line segment.
     * @return Read-only reference to the reference segment evaluation points.
     */
-    const EigRowVec<Float>& ref_points() const { return rules_[base::order_ - 1].points; };
+    const EigRowVec<Float>& ref_points() const
+    { return rules_[base::order_ - 1].points; };
 
 
     /**
     * @brief Returns the weights associated with the evaluation points in the reference unit line segment.
     * @return Read-only reference to the reference segment weights.
     */
-    const EigRowVec<Float>& ref_weights() const { return rules_[base::order_ - 1].weights; };
+    const EigRowVec<Float>& ref_weights() const
+    { return rules_[base::order_ - 1].weights; };
 
 
 protected:

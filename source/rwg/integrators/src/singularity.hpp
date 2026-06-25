@@ -43,32 +43,27 @@ namespace bem::rwg
 * Reference:
 * - [1] O. Ergul, L. Gurel, "The Multilevel Fast Multipole Algorithm (MLFMA) for Solving Large-Scale
 * Computational Electromagnetics Problems," book, Wiley-IEEE Press, 2014.
-* @tparam TriangleQuadratureType - Type of the triangle quadrature object, which must derive from
-* `TriangleQuadratureBase<2>`.
-* @tparam ScalarKernelType - Object for computing the scalar kernel with its singularity subtracted,
-* which must derive from `ScalarKernelBase<3>`.
 */
-template <typename TriangleQuadratureType = GaussTriangleQuadrature<2>, typename ScalarKernelType = SingularitySubtractedTaylorHGF>
 class SrcSingularity: public SrcIntegratorBase
 {
 
     using base = SrcIntegratorBase;
-    static_assert(
-        std::is_base_of<TriangleQuadratureBase<2>, TriangleQuadratureType>::value,
-        "SrcSingularity: `TriangleQuadratureType` must derive from `TriangleQuadratureBase<2>`"
-        );
-    static_assert(
-        std::is_base_of<ScalarKernelBase<3>, ScalarKernelType>::value,
-        "SrcSingularity: `ScalarKernelType` must derive from `ScalarKernelBase<3>`"
-        );
 
 public:
 
     /**
     * @brief Constructs a `SrcSingularity` with a specified triangle quadrature object.
+    * @tparam TriangleQuadratureType - Type of the triangle quadrature object, which must
+    * derive from `TriangleQuadratureBase<2>`.
+    * @tparam ScalarKernelType - Object for computing the scalar kernel with its singularity
+    * subtracted, which must derive from `ScalarKernelBase<3>`.
     * @param[in] tri_quad - Triangle quadrature object to use for integration (optional).
     * @param[in] kernel - Object for computing the scalar kernel with its singularity subtracted (optional).
     */
+    template <
+        typename TriangleQuadratureType = GaussTriangleQuadrature<2>,
+        typename ScalarKernelType = SingularitySubtractedTaylorHGF
+        >
     SrcSingularity(
         const TriangleQuadratureType tri_quad = GaussTriangleQuadrature<2>(),
         const ScalarKernelType kernel = SingularitySubtractedTaylorHGF()
@@ -120,7 +115,7 @@ public:
     * @brief Provides read-only access to the triangle quadrature object for inspection.
     * @return Read-only reference to the triangle quadrature object.
     */
-    const TriangleQuadratureType& quadrature_object() const
+    const TriangleQuadratureBase<2>& quadrature_object() const
     { return src_quad_.quadrature_object(); };
 
 
@@ -128,11 +123,11 @@ public:
     * @brief Provides writable access to the triangle quadrature object.
     * @return Writable reference to the triangle quadrature object.
     */
-    TriangleQuadratureType& quadrature_object()
+    TriangleQuadratureBase<2>& quadrature_object()
     { return src_quad_.quadrature_object(); };
 
 
-private:
+protected:
 
     /**
     * @brief Computes the singular integrals.
@@ -152,7 +147,7 @@ private:
         );
 
 
-    SrcQuadrature<TriangleQuadratureType, ScalarKernelType> src_quad_;
+    SrcQuadrature src_quad_;
 
 };
 
@@ -162,6 +157,8 @@ private:
 
 }
 
-#include "rwg/integrators/src/singularity.tpp"
+#ifndef BEM_LINKED
+#include "rwg/integrators/src/singularity.cpp"
+#endif
 
 #endif

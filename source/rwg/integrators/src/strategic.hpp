@@ -158,10 +158,10 @@ private:
 
     SrcIntegrationSettings settings_;
 
-    SrcQuadrature<TriangleQuadratureType, HGF> src_hgf_;
-    SrcSingularity<TriangleQuadratureType, SingularitySubtractedHGF> src_shgf_;
-    SrcSingularity<TriangleQuadratureType, SingularitySubtractedTaylorHGF> src_sthgf_;
-    SrcLineIntegrator<LineQuadratureType> src_line_;
+    SrcQuadrature src_hgf_;
+    SrcSingularity src_shgf_;
+    SrcSingularity src_sthgf_;
+    SrcLineIntegrator src_line_;
 
 };
 

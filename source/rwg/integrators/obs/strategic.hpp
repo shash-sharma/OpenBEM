@@ -212,10 +212,10 @@ private:
 
     IntegrationSettings settings_;
 
-    ObsQuadrature<ObsTriangleQuadratureType, SrcQuadrature<SrcTriangleQuadratureType, HGF>> hgf_;
-    ObsQuadrature<ObsTriangleQuadratureType, SrcSingularity<SrcTriangleQuadratureType, SingularitySubtractedHGF>> shgf_;
-    ObsQuadrature<ObsTriangleQuadratureType, SrcSingularity<SrcTriangleQuadratureType, SingularitySubtractedTaylorHGF>> sthgf_;
-    ObsQuadrature<ObsTriangleQuadratureType, SrcLineIntegrator<LineQuadratureType>> line_;
+    ObsQuadrature<ObsTriangleQuadratureType, SrcQuadrature> hgf_;
+    ObsQuadrature<ObsTriangleQuadratureType, SrcSingularity> shgf_;
+    ObsQuadrature<ObsTriangleQuadratureType, SrcSingularity> sthgf_;
+    ObsQuadrature<ObsTriangleQuadratureType, SrcLineIntegrator> line_;
 
 };
 

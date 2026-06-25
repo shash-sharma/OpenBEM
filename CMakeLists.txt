@@ -176,6 +176,9 @@ set(SRC_FILES
     ${SRC_DIR}/quadrature/line/iterative_trapz.cpp
     ${SRC_DIR}/kernels/hgf.cpp
     ${SRC_DIR}/rwg/function_space.cpp
+    ${SRC_DIR}/rwg/integrators/src/quadrature.cpp
+    ${SRC_DIR}/rwg/integrators/src/singularity.cpp
+    ${SRC_DIR}/rwg/integrators/src/line.cpp
     ${SRC_DIR}/rwg/assemblers/indexing.cpp
     ${SRC_DIR}/rwg/assemblers/operator_assembler.cpp
     ${SRC_DIR}/rwg/assemblers/block_assembler.cpp
