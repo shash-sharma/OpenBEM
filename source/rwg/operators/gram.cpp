@@ -32,7 +32,7 @@ EigMat<Complex> VectorIdentityOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
-    )
+    ) const
 {
 
     EigMatMN<Complex, 3, 3> result = EigMatMN<Complex, 3, 3>::Zero(3, 3);
@@ -68,7 +68,7 @@ EigMat<Complex> RotVectorIdentityOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
-    )
+    ) const
 {
 
     EigMatMN<Complex, 3, 3> result = EigMatMN<Complex, 3, 3>::Zero(3, 3);

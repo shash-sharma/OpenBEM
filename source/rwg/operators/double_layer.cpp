@@ -32,7 +32,7 @@ EigMat<Complex> VectorDoubleLayerPvOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
-    )
+    ) const
 {
     Triangle<3> obs_tri_local;
     Triangle<2> src_tri_local;
@@ -51,7 +51,7 @@ EigMat<Complex> VectorDoubleLayerPvOp::assemble(
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,
     const ObsResult& obs_result
-    )
+    ) const
 {
 
     EigMatMN<Complex, 3, 3> result = EigMatMN<Complex, 3, 3>::Zero(3, 3);
@@ -96,7 +96,7 @@ EigMat<Complex> RotVectorDoubleLayerPvOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
-    )
+    ) const
 {
     Triangle<3> obs_tri_local;
     Triangle<2> src_tri_local;
@@ -115,7 +115,7 @@ EigMat<Complex> RotVectorDoubleLayerPvOp::assemble(
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,
     const ObsResult& obs_result
-    )
+    ) const
 {
 
     EigMatMN<Complex, 3, 3> result = EigMatMN<Complex, 3, 3>::Zero(3, 3);

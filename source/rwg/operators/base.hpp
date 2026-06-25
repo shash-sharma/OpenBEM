@@ -70,7 +70,7 @@ public:
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
-        ) = 0;
+        ) const = 0;
 
 
     /**
@@ -86,7 +86,7 @@ public:
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri,
         const ObsResult& obs_result
-        ) = 0;
+        ) const = 0;
 
 
     /**

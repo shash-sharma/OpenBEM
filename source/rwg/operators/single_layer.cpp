@@ -31,7 +31,7 @@ EigMat<Complex> VectorSingleLayerOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
-    )
+    ) const
 {
     Triangle<3> obs_tri_local;
     Triangle<2> src_tri_local;
@@ -50,7 +50,7 @@ EigMat<Complex> VectorSingleLayerOp::assemble(
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,
     const ObsResult& obs_result
-    )
+    ) const
 {
     EigMatMN<Complex, 3, 3> result = EigMatMN<Complex, 3, 3>::Zero(3, 3);
 
@@ -87,7 +87,7 @@ EigMat<Complex> RotVectorSingleLayerOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
-    )
+    ) const
 {
     Triangle<3> obs_tri_local;
     Triangle<2> src_tri_local;
@@ -106,7 +106,7 @@ EigMat<Complex> RotVectorSingleLayerOp::assemble(
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,
     const ObsResult& obs_result
-    )
+    ) const
 {
     EigMatMN<Complex, 3, 3> result = EigMatMN<Complex, 3, 3>::Zero(3, 3);
 
@@ -151,7 +151,7 @@ EigMat<Complex> ScalarSingleLayerOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
-    )
+    ) const
 {
     Triangle<3> obs_tri_local;
     Triangle<2> src_tri_local;
@@ -170,7 +170,7 @@ EigMat<Complex> ScalarSingleLayerOp::assemble(
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,
     const ObsResult& obs_result
-    )
+    ) const
 {
     EigMatMN<Complex, 1, 1> result = EigMatMN<Complex, 1, 1>::Zero(1, 1);
 
@@ -185,7 +185,7 @@ EigMat<Complex> RotGradScalarSingleLayerOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
-    )
+    ) const
 {
     Triangle<3> obs_tri_local;
     Triangle<2> src_tri_local;
@@ -204,7 +204,7 @@ EigMat<Complex> RotGradScalarSingleLayerOp::assemble(
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,
     const ObsResult& obs_result
-    )
+    ) const
 {
     EigMatMN<Complex, 3, 1> result = EigMatMN<Complex, 3, 1>::Zero(3, 1);
 
@@ -247,7 +247,7 @@ EigMat<Complex> VectorHypersingularOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
-    )
+    ) const
 {
     Triangle<3> obs_tri_local;
     Triangle<2> src_tri_local;
@@ -266,7 +266,7 @@ EigMat<Complex> VectorHypersingularOp::assemble(
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,
     const ObsResult& obs_result
-    )
+    ) const
 {
     EigMatMN<Complex, 3, 3> result = op_g_.assemble(k, obs_tri, src_tri, obs_result);
     Complex hessg_term = op_hessg_.assemble(k, obs_tri, src_tri, obs_result)(0, 0) / k / k;
@@ -279,7 +279,7 @@ EigMat<Complex> RotVectorHypersingularOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
-    )
+    ) const
 {
     Triangle<3> obs_tri_local;
     Triangle<2> src_tri_local;
@@ -298,7 +298,7 @@ EigMat<Complex> RotVectorHypersingularOp::assemble(
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,
     const ObsResult& obs_result
-    )
+    ) const
 {
     EigMatMN<Complex, 3, 3> result = op_g_.assemble(k, obs_tri, src_tri, obs_result);
     EigMatMN<Complex, 3, 1> hessg_term = op_hessg_.assemble(k, obs_tri, src_tri, obs_result) / k / k;
