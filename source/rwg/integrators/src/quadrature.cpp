@@ -15,8 +15,7 @@
 * Quadrature over the source triangle for RWG-based BEM operators.
 */
 
-#ifndef BEM_RWG_OPINT_SRC_QUAD_I
-#define BEM_RWG_OPINT_SRC_QUAD_I
+#include "rwg/integrators/src/quadrature.hpp"
 
 #include "types.hpp"
 #include "geometry/primitives/triangle.hpp"
@@ -25,11 +24,12 @@
 namespace bem::rwg
 {
 
-template <typename TriangleQuadratureType, typename ScalarKernelType>
-SrcResult SrcQuadrature<TriangleQuadratureType, ScalarKernelType>::integrate(
+SrcResult SrcQuadrature::integrate(
     const Complex k,
     const Triangle<2>& src_tri,
-    ConstEigRef<EigMatNX<Float, 3>> r_obs
+    ConstEigRef<EigMatNX<Float, 3>> r_obs,
+    const bool g_terms,
+    const bool grad_g_terms
     )
 {
 
@@ -38,42 +38,42 @@ SrcResult SrcQuadrature<TriangleQuadratureType, ScalarKernelType>::integrate(
     {
         EigMatNX<Float, 3> r_src_3d = EigMatNX<Float, 3>::Zero(3, r_src.cols());
         r_src_3d.topRows(2) = r_src;
-        return kernel_.compute(r_obs.rowwise().mean(), r_src_3d, k);
+        return kernel_->compute(r_obs.rowwise().mean(), r_src_3d, k);
     };
 
     // Get the quadrature points and weights
-    tri_quad_.compute_points_weights(src_tri, eval);
+    QuadratureData<2> qd = tri_quad_->compute(src_tri, eval);
 
-    EigMatNX<Float, 3> points_3d = EigMatNX<Float, 3>::Zero(3, tri_quad_.points().cols());
-    points_3d.topRows(2) = tri_quad_.points();
+    EigMatNX<Float, 3> points_3d = EigMatNX<Float, 3>::Zero(3, qd.points.cols());
+    points_3d.topRows(2) = qd.points;
 
     // Assemble the integration results
     SrcResult result;
 
-    if (base::compute_g_terms_)
+    if (g_terms)
     {
         result.g.setZero(1, r_obs.cols());
         result.rs_g.setZero(2, r_obs.cols());
 
         for (std::size_t ro = 0; ro < r_obs.cols(); ++ro)
         {
-            EigRowVec<Complex> gw = kernel_.compute(
+            EigRowVec<Complex> gw = kernel_->compute(
                 r_obs.col(ro), points_3d, k
-                ).array() * tri_quad_.weights().array();
+                ).array() * qd.weights.array();
             result.g[ro] = gw.array().sum();
-            result.rs_g.col(ro) = tri_quad_.points() * gw.transpose();
+            result.rs_g.col(ro) = qd.points * gw.transpose();
         }
     }
 
-    if (base::compute_grad_g_terms_)
+    if (grad_g_terms)
     {
         result.grad_g.setZero(3, r_obs.cols());
 
         for (std::size_t ro = 0; ro < r_obs.cols(); ++ro)
         {
-            result.grad_g.col(ro) = kernel_.compute_grad(
+            result.grad_g.col(ro) = kernel_->compute_grad(
                 r_obs.col(ro), points_3d, k
-                ) * tri_quad_.weights().transpose();
+                ) * qd.weights.transpose();
         }
     }
 
@@ -83,4 +83,3 @@ SrcResult SrcQuadrature<TriangleQuadratureType, ScalarKernelType>::integrate(
 
 }
 
-#endif

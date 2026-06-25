@@ -49,16 +49,16 @@ EigColVecN<Complex, 3> Rwg::test_field(
     TriangleQuadratureBase<3>& tri_quad
     )
 {
-    tri_quad.compute_points_weights(tri);
-    EigMatNX<Complex, 3> field = field_eval(tri_quad.points());
+    QuadratureData<3> qd = tri_quad.compute(tri);
+    EigMatNX<Complex, 3> field = field_eval(qd.points);
 
     EigColVecN<Complex, 3> result = EigColVecN<Complex, 3>::Zero(3, 1);
     for (uint8_t edge = 0; edge < 3; ++edge)
     {
         result[edge] =
             ((
-                value(tri, tri_quad.points(), edge).array() * field.array()
-                ).colwise().sum().matrix() * tri_quad.weights().transpose())[0];
+                value(tri, qd.points, edge).array() * field.array()
+                ).colwise().sum().matrix() * qd.weights.transpose())[0];
     }
     return result;
 };
@@ -116,16 +116,16 @@ EigColVecN<Complex, 3> NxRwg::test_field(
     TriangleQuadratureBase<3>& tri_quad
     )
 {
-    tri_quad.compute_points_weights(tri);
-    EigMatNX<Complex, 3> field = field_eval(tri_quad.points());
+    QuadratureData<3> qd = tri_quad.compute(tri);
+    EigMatNX<Complex, 3> field = field_eval(qd.points);
 
     EigColVecN<Complex, 3> result = EigColVecN<Complex, 3>::Zero(3, 1);
     for (uint8_t edge = 0; edge < 3; ++edge)
     {
         result[edge] =
             ((
-                value(tri, tri_quad.points(), edge).array() * field.array()
-                ).colwise().sum().matrix() * tri_quad.weights().transpose())[0];
+                value(tri, qd.points, edge).array() * field.array()
+                ).colwise().sum().matrix() * qd.weights.transpose())[0];
     }
     return result;
 };
@@ -171,11 +171,11 @@ Complex Pulse::test_field(
     TriangleQuadratureBase<3>& tri_quad
     )
 {
-    tri_quad.compute_points_weights(tri);
+    QuadratureData<3> qd = tri_quad.compute(tri);
     EigRowVec<Complex> field =
-        field_eval(tri_quad.points()).array() *
-        value(tri, tri_quad.points()).array();
-    return (field * tri_quad.weights().transpose())[0];
+        field_eval(qd.points).array() *
+        value(tri, qd.points).array();
+    return (field * qd.weights.transpose())[0];
 };
 
 

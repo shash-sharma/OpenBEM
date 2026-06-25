@@ -72,9 +72,9 @@ public:
     * @param[in] op_K - Object for the vector double-layer potential operator.
     */
     void set_operators(
-        const VectorSingleLayerOp<>& op_La,
-        const ScalarSingleLayerOp<>& op_Lp,
-        const VectorDoubleLayerPvOp<>& op_K
+        const VectorSingleLayerOp& op_La,
+        const ScalarSingleLayerOp& op_Lp,
+        const VectorDoubleLayerPvOp& op_K
         )
     {
         op_La_ = op_La;
@@ -152,7 +152,7 @@ public:
     */
     MatrixType id_matrix()
     {
-        RotVectorIdentityOp<> op_Ir;
+        RotVectorIdentityOp op_Ir;
         MatrixType Ir;
         assembler_.assemble(Ir, op_Ir, 0);
         if (base::flip_normals_)
@@ -307,13 +307,13 @@ public:
 
 protected:
 
-    VectorSingleLayerOp<> op_La_;
-    ScalarSingleLayerOp<> op_Lp_;
-    VectorDoubleLayerPvOp<> op_K_;
+    VectorSingleLayerOp op_La_;
+    ScalarSingleLayerOp op_Lp_;
+    VectorDoubleLayerPvOp op_K_;
 
-    VectorSingleLayerProj<> proj_La_;
-    GradScalarSingleLayerProj<> proj_Lp_;
-    VectorDoubleLayerProj<> proj_K_;
+    VectorSingleLayerProj proj_La_;
+    GradScalarSingleLayerProj proj_Lp_;
+    VectorDoubleLayerProj proj_K_;
 
     OperatorAssembler assembler_ = OperatorAssembler (base::obs_mesh_, base::src_mesh_, base::elem_pairs_);
 

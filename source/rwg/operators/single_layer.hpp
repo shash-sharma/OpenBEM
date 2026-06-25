@@ -38,7 +38,6 @@ namespace bem::rwg
 
 /**
 * @brief Class for computing the vector single-layer potential operator.
-* @tparam ObsIntegratorType - Type of the observation triangle integrator, must derive from `ObsIntegratorBase`.
 * @details
 * Computes
 * \f[
@@ -51,23 +50,18 @@ namespace bem::rwg
 * Rows of the output matrix correspond to observation edges, and columns
 * correspond to source edges.
 */
-template <typename ObsIntegratorType = ObsStrategic<>>
 class VectorSingleLayerOp: public OperatorBase
 {
-
-    static_assert(
-        std::is_base_of<ObsIntegratorBase, ObsIntegratorType>::value,
-        "VectorSingleLayerOp: `ObsIntegratorType` must derive from `ObsIntegratorBase`"
-        );
-
 public:
 
     /**
     * @brief Constructs a `VectorSingleLayerOp` object with a specified integration object.
+    * @tparam ObsIntegratorType - Type of the observation triangle integrator, derived from `ObsIntegratorBase`.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    VectorSingleLayerOp(const ObsIntegratorType obs_integrator = ObsStrategic<>()):
-        obs_integrator_(obs_integrator) {};
+    template <typename ObsIntegratorType = ObsStrategic>
+    VectorSingleLayerOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
+        obs_integrator_(std::make_shared<ObsIntegratorType> (obs_integrator)) {};
 
 
     /**
@@ -98,7 +92,7 @@ public:
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
-        ) override;
+        ) const override;
 
 
     /**
@@ -114,7 +108,7 @@ public:
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri,
         const ObsResult& obs_result
-        ) override;
+        ) const override;
 
 
     /**
@@ -122,19 +116,18 @@ public:
     * @return Unique pointer to the new object.
     */
     std::unique_ptr<OperatorBase> clone() const override
-    { return std::make_unique<VectorSingleLayerOp<ObsIntegratorType>> (*this); };
+    { return std::make_unique<VectorSingleLayerOp> (*this); };
 
 
 protected:
 
-    ObsIntegratorType obs_integrator_;
+    std::shared_ptr<ObsIntegratorBase> obs_integrator_;
 
 };
 
 
 /**
 * @brief Class for computing the rotationally-tested vector single-layer potential operator.
-* @tparam ObsIntegratorType - Type of the observation triangle integrator, must derive from `ObsIntegratorBase`.
 * @details
 * Computes
 * \f[
@@ -147,23 +140,18 @@ protected:
 * associated with `obs_tri`. Rows of the output matrix correspond to observation edges,
 * and columns correspond to source edges.
 */
-template <typename ObsIntegratorType = ObsStrategic<>>
 class RotVectorSingleLayerOp: public OperatorBase
 {
-
-    static_assert(
-        std::is_base_of<ObsIntegratorBase, ObsIntegratorType>::value,
-        "RotVectorSingleLayerOp: `ObsIntegratorType` must derive from `ObsIntegratorBase`"
-        );
-
 public:
 
     /**
     * @brief Constructs a `RotVectorSingleLayerOp` object with a specified integration object.
+    * @tparam ObsIntegratorType - Type of the observation triangle integrator, derived from `ObsIntegratorBase`.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    RotVectorSingleLayerOp(const ObsIntegratorType obs_integrator = ObsStrategic<>()):
-        obs_integrator_(obs_integrator) {};
+    template <typename ObsIntegratorType = ObsStrategic>
+    RotVectorSingleLayerOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
+        obs_integrator_(std::make_shared<ObsIntegratorType> (obs_integrator)) {};
 
 
     /**
@@ -194,7 +182,7 @@ public:
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
-        ) override;
+        ) const override;
 
 
     /**
@@ -210,7 +198,7 @@ public:
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri,
         const ObsResult& obs_result
-        ) override;
+        ) const override;
 
 
     /**
@@ -218,19 +206,18 @@ public:
     * @return Unique pointer to the new object.
     */
     std::unique_ptr<OperatorBase> clone() const override
-    { return std::make_unique<RotVectorSingleLayerOp<ObsIntegratorType>> (*this); };
+    { return std::make_unique<RotVectorSingleLayerOp> (*this); };
 
 
 protected:
 
-    ObsIntegratorType obs_integrator_;
+    std::shared_ptr<ObsIntegratorBase> obs_integrator_;
 
 };
 
 
 /**
 * @brief Class for computing the scalar single-layer potential operator.
-* @tparam ObsIntegratorType - Type of the observation triangle integrator, must derive from `ObsIntegratorBase`.
 * @details
 * Computes
 * \f[
@@ -240,23 +227,18 @@ protected:
 * where \f$ G(k, \vec{r}, \vec{r}\,') \f$ is a scalar kernel, and \f$ h(\vec{r}) \f$ is a pulse
 * function that is a non-zero constant inside the associated triangle, and zero outside.
 */
-template <typename ObsIntegratorType = ObsStrategic<>>
 class ScalarSingleLayerOp: public OperatorBase
 {
-
-    static_assert(
-        std::is_base_of<ObsIntegratorBase, ObsIntegratorType>::value,
-        "ScalarSingleLayerOp: `ObsIntegratorType` must derive from `ObsIntegratorBase`"
-        );
-
 public:
 
     /**
     * @brief Constructs a `ScalarSingleLayerOp` object with a specified integration object.
+    * @tparam ObsIntegratorType - Type of the observation triangle integrator, derived from `ObsIntegratorBase`.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    ScalarSingleLayerOp(const ObsIntegratorType obs_integrator = ObsStrategic<>()):
-        obs_integrator_(obs_integrator) {};
+    template <typename ObsIntegratorType = ObsStrategic>
+    ScalarSingleLayerOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
+        obs_integrator_(std::make_shared<ObsIntegratorType> (obs_integrator)) {};
 
 
     /**
@@ -287,7 +269,7 @@ public:
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
-        ) override;
+        ) const override;
 
 
     /**
@@ -303,7 +285,7 @@ public:
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri,
         const ObsResult& obs_result
-        ) override;
+        ) const override;
 
 
     /**
@@ -311,19 +293,18 @@ public:
     * @return Unique pointer to the new object.
     */
     std::unique_ptr<OperatorBase> clone() const override
-    { return std::make_unique<ScalarSingleLayerOp<ObsIntegratorType>> (*this); };
+    { return std::make_unique<ScalarSingleLayerOp> (*this); };
 
 
 protected:
 
-    ObsIntegratorType obs_integrator_;
+    std::shared_ptr<ObsIntegratorBase> obs_integrator_;
 
 };
 
 
 /**
 * @brief Class for computing the rotationally-tested gradient of the scalar single-layer potential operator.
-* @tparam ObsIntegratorType - Type of the observation triangle integrator, must derive from `ObsIntegratorBase`.
 * @details
 * Computes
 * \f[
@@ -336,23 +317,18 @@ protected:
 * associated triangle, and zero outside, and \f$ \hat{n} \f$ is the unit normal vector
 * associated with `obs_tri`. Rows of the output matrix correspond to observation edges.
 */
-template <typename ObsIntegratorType = ObsStrategic<>>
 class RotGradScalarSingleLayerOp: public OperatorBase
 {
-
-    static_assert(
-        std::is_base_of<ObsIntegratorBase, ObsIntegratorType>::value,
-        "RotGradScalarSingleLayerOp: `ObsIntegratorType` must derive from `ObsIntegratorBase`"
-        );
-
 public:
 
     /**
+     * @tparam ObsIntegratorType - Type of the observation triangle integrator, derived from `ObsIntegratorBase`.
     * @brief Constructs a `RotGradScalarSingleLayerOp` object with a specified integration object.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    RotGradScalarSingleLayerOp(const ObsIntegratorType obs_integrator = ObsStrategic<>()):
-        obs_integrator_(obs_integrator) {};
+    template <typename ObsIntegratorType = ObsStrategic>
+    RotGradScalarSingleLayerOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
+        obs_integrator_(std::make_shared<ObsIntegratorType> (obs_integrator)) {};
 
 
     /**
@@ -383,7 +359,7 @@ public:
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
-        ) override;
+        ) const override;
 
 
     /**
@@ -399,7 +375,7 @@ public:
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri,
         const ObsResult& obs_result
-        ) override;
+        ) const override;
 
 
     /**
@@ -407,19 +383,18 @@ public:
     * @return Unique pointer to the new object.
     */
     std::unique_ptr<OperatorBase> clone() const override
-    { return std::make_unique<RotGradScalarSingleLayerOp<ObsIntegratorType>> (*this); };
+    { return std::make_unique<RotGradScalarSingleLayerOp> (*this); };
 
 
 protected:
 
-    ObsIntegratorType obs_integrator_;
+    std::shared_ptr<ObsIntegratorBase> obs_integrator_;
 
 };
 
 
 /**
 * @brief Class for computing the vector hypersingular operator.
-* @tparam ObsIntegratorType - Type of the observation triangle integrator, must derive from `ObsIntegratorBase`.
 * @details
 * Computes
 * \f{align*}{
@@ -433,23 +408,18 @@ protected:
 * function associated with edge \f$ i \f$. Rows of the output matrix correspond to observation
 * edges, and columns correspond to source edges.
 */
-template <typename ObsIntegratorType = ObsStrategic<>>
 class VectorHypersingularOp: public OperatorBase
 {
-
-    static_assert(
-        std::is_base_of<ObsIntegratorBase, ObsIntegratorType>::value,
-        "VectorHypersingularOp: `ObsIntegratorType` must derive from `ObsIntegratorBase`"
-        );
-
 public:
 
     /**
     * @brief Constructs a `VectorHypersingularOp` object with a specified integration object.
+    * @tparam ObsIntegratorType - Type of the observation triangle integrator, derived from `ObsIntegratorBase`.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    VectorHypersingularOp(const ObsIntegratorType obs_integrator = ObsStrategic<>()):
-        obs_integrator_(obs_integrator),
+    template <typename ObsIntegratorType = ObsStrategic>
+    VectorHypersingularOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
+        obs_integrator_(std::make_shared<ObsIntegratorType> (obs_integrator)),
         op_g_(obs_integrator),
         op_hessg_(obs_integrator) {};
 
@@ -482,7 +452,7 @@ public:
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
-        ) override;
+        ) const override;
 
 
     /**
@@ -498,7 +468,7 @@ public:
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri,
         const ObsResult& obs_result
-        ) override;
+        ) const override;
 
 
     /**
@@ -506,21 +476,20 @@ public:
     * @return Unique pointer to the new object.
     */
     std::unique_ptr<OperatorBase> clone() const override
-    { return std::make_unique<VectorHypersingularOp<ObsIntegratorType>> (*this); };
+    { return std::make_unique<VectorHypersingularOp> (*this); };
 
 
 protected:
 
-    ObsIntegratorType obs_integrator_;
-    VectorSingleLayerOp<ObsIntegratorType> op_g_;
-    ScalarSingleLayerOp<ObsIntegratorType> op_hessg_;
+    std::shared_ptr<ObsIntegratorBase> obs_integrator_;
+    VectorSingleLayerOp op_g_;
+    ScalarSingleLayerOp op_hessg_;
 
 };
 
 
 /**
 * @brief Class for computing the rotationally-tested vector hypersingular operator.
-* @tparam ObsIntegratorType - Type of the observation triangle integrator, must derive from `ObsIntegratorBase`.
 * @details
 * Computes
 * \f{align*}{
@@ -535,23 +504,18 @@ protected:
 * associated with `obs_tri`. Rows of the output matrix correspond to observation edges,
 * and columns correspond to source edges.
 */
-template <typename ObsIntegratorType = ObsStrategic<>>
 class RotVectorHypersingularOp: public OperatorBase
 {
-
-    static_assert(
-        std::is_base_of<ObsIntegratorBase, ObsIntegratorType>::value,
-        "RotVectorHypersingularOp: `ObsIntegratorType` must derive from `ObsIntegratorBase`"
-        );
-
 public:
 
     /**
+     * @tparam ObsIntegratorType - Type of the observation triangle integrator, derived from `ObsIntegratorBase`.
     * @brief Constructs a `RotVectorHypersingularOp` object with a specified integration object.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    RotVectorHypersingularOp(const ObsIntegratorType obs_integrator = ObsStrategic<>()):
-        obs_integrator_(obs_integrator),
+    template <typename ObsIntegratorType = ObsStrategic>
+    RotVectorHypersingularOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
+        obs_integrator_(std::make_shared<ObsIntegratorType> (obs_integrator)),
         op_g_(obs_integrator),
         op_hessg_(obs_integrator) {};
 
@@ -584,7 +548,7 @@ public:
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
-        ) override;
+        ) const override;
 
 
     /**
@@ -600,7 +564,7 @@ public:
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri,
         const ObsResult& obs_result
-        ) override;
+        ) const override;
 
 
     /**
@@ -608,14 +572,14 @@ public:
     * @return Unique pointer to the new object.
     */
     std::unique_ptr<OperatorBase> clone() const override
-    { return std::make_unique<RotVectorHypersingularOp<ObsIntegratorType>> (*this); };
+    { return std::make_unique<RotVectorHypersingularOp> (*this); };
 
 
 protected:
 
-    ObsIntegratorType obs_integrator_;
-    RotVectorSingleLayerOp<ObsIntegratorType> op_g_;
-    RotGradScalarSingleLayerOp<ObsIntegratorType> op_hessg_;
+    std::shared_ptr<ObsIntegratorBase> obs_integrator_;
+    RotVectorSingleLayerOp op_g_;
+    RotGradScalarSingleLayerOp op_hessg_;
 
 };
 
@@ -625,6 +589,8 @@ protected:
 
 }
 
-#include "rwg/operators/single_layer.tpp"
+#ifndef BEM_LINKED
+#include "rwg/operators/single_layer.cpp"
+#endif
 
 #endif

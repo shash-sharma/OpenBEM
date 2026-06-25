@@ -67,8 +67,8 @@ auto make_ops_tuple(ObsIntegratorType& obs_int)
         // RotVectorHypersingularOp (obs_int),
         VectorDoubleLayerPvOp (obs_int),
         RotVectorDoubleLayerPvOp (obs_int),
-        VectorIdentityOp<> (),
-        RotVectorIdentityOp<> ()
+        VectorIdentityOp (),
+        RotVectorIdentityOp ()
         );
 }
 

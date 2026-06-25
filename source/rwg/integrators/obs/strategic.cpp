@@ -15,8 +15,7 @@
 * Strategic auto-integration over the observation and source triangles for RWG-based BEM operators.
 */
 
-#ifndef BEM_RWG_OPINT_OBS_STRATEGIC_I
-#define BEM_RWG_OPINT_OBS_STRATEGIC_I
+#include "rwg/integrators/obs/strategic.hpp"
 
 #include "types.hpp"
 #include "constants.hpp"
@@ -27,11 +26,14 @@
 namespace bem::rwg
 {
 
-template <typename ObsTriangleQuadratureType, typename SrcTriangleQuadratureType, typename LineQuadratureType>
-ObsResult ObsStrategic<ObsTriangleQuadratureType, SrcTriangleQuadratureType, LineQuadratureType>::integrate(
+ObsResult ObsStrategic::integrate(
     const Complex k,
     const Triangle<3>& obs_tri,
-    const Triangle<2>& src_tri
+    const Triangle<2>& src_tri,
+    const bool g_term,
+    const bool rs_g_terms,
+    const bool grad_g_terms,
+    const bool rot_grad_g_terms
     )
 {
 
@@ -60,28 +62,20 @@ ObsResult ObsStrategic<ObsTriangleQuadratureType, SrcTriangleQuadratureType, Lin
     bool singularity_separation = false;
 
     if (line_integration)
-    {
-        line_.set_compute_terms(base::compute_g_term_, base::compute_rs_g_terms_, base::compute_grad_g_terms_, base::compute_rot_grad_g_terms_);
-        return line_.integrate(k, obs_tri, src_tri);
-    }
+        return line_.integrate(
+            k, obs_tri, src_tri, g_term, rs_g_terms, grad_g_terms, rot_grad_g_terms
+            );
+
     else if (singularity_subtraction)
-    {
-        sthgf_.set_compute_terms(base::compute_g_term_, base::compute_rs_g_terms_, base::compute_grad_g_terms_, base::compute_rot_grad_g_terms_);
-        return sthgf_.integrate(k, obs_tri, src_tri);
-    }
+        return sthgf_.integrate(k, obs_tri, src_tri, g_term, rs_g_terms, grad_g_terms, rot_grad_g_terms);
+
     else if (singularity_separation)
-    {
-        shgf_.set_compute_terms(base::compute_g_term_, base::compute_rs_g_terms_, base::compute_grad_g_terms_, base::compute_rot_grad_g_terms_);
-        return shgf_.integrate(k, obs_tri, src_tri);
-    }
+        return shgf_.integrate(k, obs_tri, src_tri, g_term, rs_g_terms, grad_g_terms, rot_grad_g_terms);
+
     else
-    {
-        hgf_.set_compute_terms(base::compute_g_term_, base::compute_rs_g_terms_, base::compute_grad_g_terms_, base::compute_rot_grad_g_terms_);
-        return hgf_.integrate(k, obs_tri, src_tri);
-    }
+        return hgf_.integrate(k, obs_tri, src_tri, g_term, rs_g_terms, grad_g_terms, rot_grad_g_terms);
 
 };
 
 }
 
-#endif

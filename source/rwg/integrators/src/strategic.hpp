@@ -69,48 +69,51 @@ struct SrcIntegrationSettings
 /**
 * @brief Class integration over the source triangle for RWG-based BEM operators. The method of integration
 * is chosen automatically and strategically based on mesh parameters, materials, and frequency.
-* @tparam TriangleQuadratureType - Type of the triangle quadrature object, which must derive from
-* `TriangleQuadratureBase<2>`.
-* @tparam LineQuadratureType - Type of the line quadrature object, which must derive from
-* `LineQuadratureBase<1>`.
 */
-template <typename TriangleQuadratureType = GaussTriangleQuadrature<2>, typename LineQuadratureType = GaussLineQuadrature<1>>
 class SrcStrategic: public SrcIntegratorBase
 {
 
     using base = SrcIntegratorBase;
-    static_assert(
-        std::is_base_of<TriangleQuadratureBase<2>, TriangleQuadratureType>::value,
-        "SrcStrategic: `TriangleQuadratureType` must derive from `TriangleQuadratureBase<2>`"
-        );
-    static_assert(
-        std::is_base_of<LineQuadratureBase<1>, LineQuadratureType>::value,
-        "SrcStrategic: `LineQuadratureType` must derive from `LineQuadratureBase<1>`"
-        );
 
 public:
 
     /**
     * @brief Constructs a `SrcStrategic` integrator with specified line and triangle quadrature objects.
     * @param[in] settings - Integration settings for singularity treatment and line integration (optional).
-    * @param[in] tri_quad - Triangle quadrature object to use for integration (optional).
-    * @param[in] line_quad - Line quadrature object to use for integration (optional).
     */
-    SrcStrategic(
-        const SrcIntegrationSettings settings = SrcIntegrationSettings(),
-        const TriangleQuadratureType tri_quad = GaussTriangleQuadrature<2>(),
-        const LineQuadratureType line_quad = GaussLineQuadrature<1>()
-        ):
-            settings_(settings),
-            src_hgf_(tri_quad, HGF()),
-            src_shgf_(tri_quad, SingularitySubtractedHGF()),
-            src_sthgf_(tri_quad, SingularitySubtractedTaylorHGF()),
-            src_line_(line_quad)
+    SrcStrategic(const SrcIntegrationSettings settings = SrcIntegrationSettings())
+    { set(settings); return; }
+
+
+    /**
+    * @brief Sets specified line and triangle quadrature object types.
+    * @tparam TriangleQuadratureType - Type of the triangle quadrature object, which must derive from
+    * `TriangleQuadratureBase<2>`.
+    * @tparam LineQuadratureType - Type of the line quadrature object, which must derive from
+    * `LineQuadratureBase<1>`.
+    * @param[in] settings - Integration settings for singularity treatment and line integration (optional).
+    */
+    template <
+        typename TriangleQuadratureType = GaussTriangleQuadrature<2>,
+        typename LineQuadratureType = GaussLineQuadrature<1>
+        >
+    void set(const SrcIntegrationSettings settings = SrcIntegrationSettings())
     {
-        src_line_.quadrature_object().set_order(settings_.line_order);
-        src_sthgf_.quadrature_object().set_order(settings_.tri_order_near);
-        src_shgf_.quadrature_object().set_order(settings_.tri_order_near);
-        src_hgf_.quadrature_object().set_order(settings_.tri_order_far);
+        settings_ = settings;
+
+        TriangleQuadratureType tri_quad;
+
+        TriangleQuadratureType tri_quad_near = tri_quad;
+        tri_quad_near.set_order(settings_.tri_order_near);
+
+        TriangleQuadratureType tri_quad_far = tri_quad;
+        tri_quad_far.set_order(settings_.tri_order_far);
+
+        src_line_.set(LineQuadratureType(settings_.line_order));
+        src_hgf_.set(tri_quad_far, HGF());
+        src_shgf_.set(tri_quad_near, SingularitySubtractedHGF());
+        src_sthgf_.set(tri_quad_near, SingularitySubtractedTaylorHGF());
+
         return;
     };
 
@@ -120,12 +123,39 @@ public:
     * @param[in] k - Complex wavenumber.
     * @param[in] src_tri - Source triangle in 2D space.
     * @param[in] r_obs - Observation points in the local coordinate system of `src_tri`.
+    * @param[in] g_terms - Whether to compute kernel terms (optional).
+    * @param[in] grad_g_terms - Whether to compute kernel gradient terms (optional).
     * @return Integration result.
+    * @details
+    * If `g_terms` is true, the function computes
+    * \f[
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,G(k, \vec{r}, \vec{r}\,')
+    * \f]
+    * and
+    * \f[
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,\vec{r}\,'\,G(k, \vec{r}, \vec{r}\,')
+    * \f]
+    * for the scalar kernel \f$ G(k, \vec{r}, \vec{r}\,') \f$.
+    * If `grad_g_terms` is true, the function computes
+    * \f[
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,\nabla G(k, \vec{r}, \vec{r}\,'),
+    * \f]
+    * \f[
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,x'\,\nabla G(k, \vec{r}, \vec{r}\,'),
+    * \f]
+    * and
+    * \f[
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,y'\,\nabla G(k, \vec{r}, \vec{r}\,'),
+    * \f]
+    * for the scalar kernel \f$ G(k, \vec{r}, \vec{r}\,') \f$, and for local source
+    * triangle coordinates \f$\vec{r}\,' = [x', y']^T\f$.
     */
     SrcResult integrate(
         const Complex k,
         const Triangle<2>& src_tri,
-        ConstEigRef<EigMatNX<Float, 3>> r_obs
+        ConstEigRef<EigMatNX<Float, 3>> r_obs,
+        const bool g_terms = true,
+        const bool grad_g_terms = true
         ) override;
 
 
@@ -133,10 +163,10 @@ private:
 
     SrcIntegrationSettings settings_;
 
-    SrcQuadrature<TriangleQuadratureType, HGF> src_hgf_;
-    SrcSingularity<TriangleQuadratureType, SingularitySubtractedHGF> src_shgf_;
-    SrcSingularity<TriangleQuadratureType, SingularitySubtractedTaylorHGF> src_sthgf_;
-    SrcLineIntegrator<LineQuadratureType> src_line_;
+    SrcQuadrature src_hgf_;
+    SrcSingularity src_shgf_;
+    SrcSingularity src_sthgf_;
+    SrcLineIntegrator src_line_;
 
 };
 
@@ -146,6 +176,8 @@ private:
 
 }
 
-#include "rwg/integrators/src/strategic.tpp"
+#ifndef BEM_LINKED
+#include "rwg/integrators/src/strategic.cpp"
+#endif
 
 #endif

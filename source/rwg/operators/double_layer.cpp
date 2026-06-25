@@ -15,8 +15,7 @@
 * RWG-based double-layer potential BEM operators.
 */
 
-#ifndef BEM_RWG_OPS_DOUBLE_LAYER_I
-#define BEM_RWG_OPS_DOUBLE_LAYER_I
+#include "rwg/operators/double_layer.hpp"
 
 #include "types.hpp"
 #include "constants.hpp"
@@ -29,31 +28,30 @@
 namespace bem::rwg
 {
 
-template <typename ObsIntegratorType>
-EigMat<Complex> VectorDoubleLayerPvOp<ObsIntegratorType>::compute(
+EigMat<Complex> VectorDoubleLayerPvOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
-    )
+    ) const
 {
     Triangle<3> obs_tri_local;
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
-    obs_integrator_.set_compute_terms(false, false, true, false);
-    const ObsResult obs_result = obs_integrator_.integrate(k, obs_tri_local, src_tri_local);
+    const ObsResult obs_result = obs_integrator_->integrate(
+        k, obs_tri_local, src_tri_local, false, false, true, false
+        );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
 };
 
 
-template <typename ObsIntegratorType>
-EigMat<Complex> VectorDoubleLayerPvOp<ObsIntegratorType>::assemble(
+EigMat<Complex> VectorDoubleLayerPvOp::assemble(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,
     const ObsResult& obs_result
-    )
+    ) const
 {
 
     EigMatMN<Complex, 3, 3> result = EigMatMN<Complex, 3, 3>::Zero(3, 3);
@@ -94,31 +92,30 @@ EigMat<Complex> VectorDoubleLayerPvOp<ObsIntegratorType>::assemble(
 };
 
 
-template <typename ObsIntegratorType>
-EigMat<Complex> RotVectorDoubleLayerPvOp<ObsIntegratorType>::compute(
+EigMat<Complex> RotVectorDoubleLayerPvOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
-    )
+    ) const
 {
     Triangle<3> obs_tri_local;
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
-    obs_integrator_.set_compute_terms(false, false, true, true);
-    const ObsResult obs_result = obs_integrator_.integrate(k, obs_tri_local, src_tri_local);
+    const ObsResult obs_result = obs_integrator_->integrate(
+        k, obs_tri_local, src_tri_local, false, false, true, true
+        );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
 };
 
 
-template <typename ObsIntegratorType>
-EigMat<Complex> RotVectorDoubleLayerPvOp<ObsIntegratorType>::assemble(
+EigMat<Complex> RotVectorDoubleLayerPvOp::assemble(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,
     const ObsResult& obs_result
-    )
+    ) const
 {
 
     EigMatMN<Complex, 3, 3> result = EigMatMN<Complex, 3, 3>::Zero(3, 3);
@@ -176,4 +173,3 @@ EigMat<Complex> RotVectorDoubleLayerPvOp<ObsIntegratorType>::assemble(
 
 }
 
-#endif

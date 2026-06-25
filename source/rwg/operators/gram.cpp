@@ -15,8 +15,9 @@
 * RWG-based Gram matrix operators.
 */
 
-#ifndef BEM_RWG_OPS_GRAM_I
-#define BEM_RWG_OPS_GRAM_I
+#include "rwg/operators/gram.hpp"
+
+#include <external/Eigen/Dense>
 
 #include "types.hpp"
 #include "constants.hpp"
@@ -27,12 +28,11 @@
 namespace bem::rwg
 {
 
-template <typename TriangleQuadratureType>
-EigMat<Complex> VectorIdentityOp<TriangleQuadratureType>::compute(
+EigMat<Complex> VectorIdentityOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
-    )
+    ) const
 {
 
     EigMatMN<Complex, 3, 3> result = EigMatMN<Complex, 3, 3>::Zero(3, 3);
@@ -40,7 +40,7 @@ EigMat<Complex> VectorIdentityOp<TriangleQuadratureType>::compute(
     if (GeometryOps<3>::common_vertices(obs_tri, src_tri) < 3)
         return result;
 
-    tri_quad_.compute_points_weights(obs_tri);
+    QuadratureData<3> qd = tri_quad_->compute(obs_tri);
 
     // source triangle edges
     for (uint8_t jj = 0; jj < 3; ++jj)
@@ -48,9 +48,9 @@ EigMat<Complex> VectorIdentityOp<TriangleQuadratureType>::compute(
         // observer triangle edges
         for (uint8_t ii = 0; ii < 3; ++ii)
         {
-            result(ii, jj) = tri_quad_.weights().dot(
-                ((tri_quad_.points().colwise() - obs_tri.v((ii + 2) % 3)).transpose() *
-                    (tri_quad_.points().colwise() - src_tri.v((jj + 2) % 3))).diagonal()
+            result(ii, jj) = qd.weights.dot(
+                ((qd.points.colwise() - obs_tri.v((ii + 2) % 3)).transpose() *
+                    (qd.points.colwise() - src_tri.v((jj + 2) % 3))).diagonal()
             );
         }
     }
@@ -64,12 +64,11 @@ EigMat<Complex> VectorIdentityOp<TriangleQuadratureType>::compute(
 };
 
 
-template <typename TriangleQuadratureType>
-EigMat<Complex> RotVectorIdentityOp<TriangleQuadratureType>::compute(
+EigMat<Complex> RotVectorIdentityOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
-    )
+    ) const
 {
 
     EigMatMN<Complex, 3, 3> result = EigMatMN<Complex, 3, 3>::Zero(3, 3);
@@ -77,7 +76,7 @@ EigMat<Complex> RotVectorIdentityOp<TriangleQuadratureType>::compute(
     if (GeometryOps<3>::common_vertices(obs_tri, src_tri) < 3)
         return result;
 
-    tri_quad_.compute_points_weights(obs_tri);
+    QuadratureData<3> qd = tri_quad_->compute(obs_tri);
 
     // source triangle edges
     for (uint8_t jj = 0; jj < 3; ++jj)
@@ -85,10 +84,10 @@ EigMat<Complex> RotVectorIdentityOp<TriangleQuadratureType>::compute(
         // observer triangle edges
         for (uint8_t ii = 0; ii < 3; ++ii)
         {
-            result(ii, jj) = -tri_quad_.weights().dot(
-                (((tri_quad_.points().colwise() - obs_tri.v((ii + 2) % 3)
+            result(ii, jj) = -qd.weights.dot(
+                (((qd.points.colwise() - obs_tri.v((ii + 2) % 3)
                     ).colwise().cross(obs_tri.normal())).transpose() * (
-                        (tri_quad_.points().colwise() - src_tri.v((jj + 2) % 3)))).diagonal());
+                        (qd.points.colwise() - src_tri.v((jj + 2) % 3)))).diagonal());
         }
     }
 
@@ -102,4 +101,3 @@ EigMat<Complex> RotVectorIdentityOp<TriangleQuadratureType>::compute(
 
 }
 
-#endif

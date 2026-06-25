@@ -35,23 +35,18 @@ void OperatorAssembler::assemble(
 
     prep_matrix(mat, op);
 
-#pragma omp parallel
+#pragma omp parallel for
+    for (Index ii = 0; ii < elem_pairs_.cols(); ++ii)
     {
-        std::unique_ptr<OperatorBase> opc = op.clone();
+        Triangle<3> obs_tri = obs_mesh_.elem_primitive(elem_pairs_(0, ii));
+        Triangle<3> src_tri = src_mesh_.elem_primitive(elem_pairs_(1, ii));
 
-#pragma omp for
-        for (Index ii = 0; ii < elem_pairs_.cols(); ++ii)
-        {
-            Triangle<3> obs_tri = obs_mesh_.elem_primitive(elem_pairs_(0, ii));
-            Triangle<3> src_tri = src_mesh_.elem_primitive(elem_pairs_(1, ii));
-
-            EigMat<Complex> values = opc->compute(
-                k, obs_tri, src_tri
-                );
+        EigMat<Complex> values = op.compute(
+            k, obs_tri, src_tri
+            );
 
 #pragma omp critical
-            fill_matrix(mat, op, elem_pairs_.col(ii), values);
-        }
+        fill_matrix(mat, op, elem_pairs_.col(ii), values);
     }
 
     mat.assemble();

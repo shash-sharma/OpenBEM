@@ -180,6 +180,14 @@ public:
 
 
     /**
+    * @brief Sets all matrix entries to a given constant value.
+    * @param[in] a - Constant value to set.
+    */
+    virtual void set_constant(const T& a)
+    { throw std::runtime_error("MatrixBase::set_constant(): Not implemented."); };
+
+
+    /**
     * @brief Retrieves matrix values on the diagonal.
     * @param[out] x - Diagonal matrix.
     */

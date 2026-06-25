@@ -102,14 +102,14 @@ public:
     * @brief Assembles operator matrices for given operator objects.
     * @param[out] mats - Matrices to store the assembled operator coefficients, with columns corresponding
     * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
-    * @param[in] ops - Operator objects that compute the coefficients to assemble into `mat`.
     * @param[in] k - Complex wavenumber.
+    * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    template <typename MatrixType, typename ObsIntegratorType = ObsStrategic<>, typename... Ops>
+    template <typename MatrixType, typename ObsIntegratorType = ObsStrategic, typename... Ops>
     void assemble(
         std::vector<MatrixType>& mats,
         const Complex k,
-        const ObsIntegratorType obs_integrator = ObsStrategic<>()
+        const ObsIntegratorType obs_integrator = ObsStrategic()
         );
 
 
@@ -117,6 +117,7 @@ public:
     * @brief Prepares the matrix for assembly (e.g., resizing and preallocation).
     * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
     * to source edges, and rows corresponding to observation edges.
+    * @param[in] op - Operator object that computes the coefficients to be assembled into `mat`.
     */
     void prep_matrix(
         MatrixBase<Complex>& mat,
@@ -127,6 +128,7 @@ public:
     /**
     * @brief Fills operator values in the matrix.
     * @param[out] mat - Matrix to store the assembled operator coefficients.
+    * @param[in] op - Operator object that computes the coefficients to be assembled into `mat`.
     * @param[in] elem_pair - Observation (first entry) and source (second entry) triangle index pair.
     * @param[in] values - Operator values for each pair of observation and source degrees of freedom.
     */
@@ -164,36 +166,29 @@ void OperatorAssembler::assemble(
     for (Index ii = 0; ii < ops.size(); ++ii)
         prep_matrix(mats[ii], *ops[ii]);
 
-#pragma omp parallel firstprivate(obs_integrator)
+#pragma omp parallel for
+    for (Index ii = 0; ii < elem_pairs_.cols(); ++ii)
     {
+        Triangle<3> obs_tri = obs_mesh_.elem_primitive(elem_pairs_(0, ii));
+        Triangle<3> src_tri = src_mesh_.elem_primitive(elem_pairs_(1, ii));
 
-        std::vector<std::unique_ptr<OperatorBase>> ops;
-        (ops.push_back(std::make_unique<Ops>()), ...);
+        Triangle<3> obs_tri_local;
+        Triangle<2> src_tri_local;
+        OperatorBase::transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
-#pragma omp for
-        for (Index ii = 0; ii < elem_pairs_.cols(); ++ii)
+        const ObsResult obs_result = obs_integrator.integrate(
+            k, obs_tri_local, src_tri_local, true, true, true, true
+            );
+
+        for (Index jj = 0; jj < ops.size(); ++jj)
         {
-            Triangle<3> obs_tri = obs_mesh_.elem_primitive(elem_pairs_(0, ii));
-            Triangle<3> src_tri = src_mesh_.elem_primitive(elem_pairs_(1, ii));
-
-            Triangle<3> obs_tri_local;
-            Triangle<2> src_tri_local;
-            OperatorBase::transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
-
-            obs_integrator.set_compute_terms(true, true, true, true);
-            const ObsResult obs_result = obs_integrator.integrate(k, obs_tri_local, src_tri_local);
-
-            for (Index jj = 0; jj < ops.size(); ++jj)
-            {
-                EigMat<Complex> values = ops[jj]->assemble(
-                    k, obs_tri_local, src_tri_local.to_3d(), obs_result
-                    );
+            EigMat<Complex> values = ops[jj]->assemble(
+                k, obs_tri_local, src_tri_local.to_3d(), obs_result
+                );
 
 #pragma omp critical
-                fill_matrix(mats[jj], *ops[jj], elem_pairs_.col(ii), values);
-            }
+            fill_matrix(mats[jj], *ops[jj], elem_pairs_.col(ii), values);
         }
-
     }
 
     for (auto& mat: mats)

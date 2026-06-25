@@ -15,8 +15,7 @@
 * 2D quadrature over the source triangle with singularity treatment for RWG-based BEM operators.
 */
 
-#ifndef BEM_RWG_OPINT_SRC_SINGULARITY_I
-#define BEM_RWG_OPINT_SRC_SINGULARITY_I
+#include "rwg/integrators/src/singularity.hpp"
 
 #include "types.hpp"
 #include "constants.hpp"
@@ -27,17 +26,16 @@
 namespace bem::rwg
 {
 
-template <typename TriangleQuadratureType, typename ScalarKernelType>
-SrcResult SrcSingularity<TriangleQuadratureType, ScalarKernelType>::integrate(
+SrcResult SrcSingularity::integrate(
     const Complex k,
     const Triangle<2>& src_tri,
-    ConstEigRef<EigMatNX<Float, 3>> r_obs
+    ConstEigRef<EigMatNX<Float, 3>> r_obs,
+    const bool g_terms,
+    const bool grad_g_terms
     )
 {
-    SrcResult result_singular = integrate_singular(k, src_tri, r_obs);
-
-    src_quad_.set_compute_terms(compute_g_terms_, compute_grad_g_terms_);
-    SrcResult result_nonsingular = src_quad_.integrate(k, src_tri, r_obs);
+    SrcResult result_singular = integrate_singular(k, src_tri, r_obs, g_terms, grad_g_terms);
+    SrcResult result_nonsingular = src_quad_.integrate(k, src_tri, r_obs, g_terms, grad_g_terms);
 
     SrcResult result;
     result.g = result_singular.g + result_nonsingular.g;
@@ -48,11 +46,12 @@ SrcResult SrcSingularity<TriangleQuadratureType, ScalarKernelType>::integrate(
 };
 
 
-template <typename TriangleQuadratureType, typename ScalarKernelType>
-SrcResult SrcSingularity<TriangleQuadratureType, ScalarKernelType>::integrate_singular(
+SrcResult SrcSingularity::integrate_singular(
     const Complex k,
     const Triangle<2>& src_tri,
-    ConstEigRef<EigMatNX<Float, 3>> r_obs
+    ConstEigRef<EigMatNX<Float, 3>> r_obs,
+    const bool g_terms,
+    const bool grad_g_terms
     )
 {
 
@@ -133,19 +132,19 @@ SrcResult SrcSingularity<TriangleQuadratureType, ScalarKernelType>::integrate_si
         u_f3 += u_hat * f3;
 
         assert(atan_plus.array().isFinite().all() &&
-            "SrcSingularity::compute_integral_terms(): atan_plus has nan or inf.");
+            "SrcSingularity::integrate_singular(): atan_plus has nan or inf.");
         assert(atan_minus.array().isFinite().all() &&
-            "SrcSingularity::compute_integral_terms(): atan_minus has nan or inf.");
+            "SrcSingularity::integrate_singulars(): atan_minus has nan or inf.");
         assert(f2.array().isFinite().all() &&
-            "SrcSingularity::compute_integral_terms(): f2 has nan or inf.");
+            "SrcSingularity::integrate_singular(): f2 has nan or inf.");
         assert(f3.array().isFinite().all() &&
-            "SrcSingularity::compute_integral_terms(): f3 has nan or inf.");
+            "SrcSingularity::integrate_singular(): f3 has nan or inf.");
 
     }
 
     SrcResult result;
 
-    if (base::compute_g_terms_)
+    if (g_terms)
     {
         result.g = (t0_f2 - z_abs.cwiseProduct(beta)) / four_pi;
 
@@ -153,7 +152,7 @@ SrcResult SrcSingularity<TriangleQuadratureType, ScalarKernelType>::integrate_si
         result.rs_g += r_obs.topRows(2) * result.g.asDiagonal();
     }
 
-    if (base::compute_grad_g_terms_)
+    if (grad_g_terms)
     {
         EigRowVec<Float> sign = z.array() / z_abs.array();
         sign = (
@@ -178,4 +177,3 @@ SrcResult SrcSingularity<TriangleQuadratureType, ScalarKernelType>::integrate_si
 
 }
 
-#endif

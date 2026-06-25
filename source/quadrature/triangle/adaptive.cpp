@@ -22,7 +22,6 @@
 #include "types.hpp"
 #include "constants.hpp"
 #include "geometry/primitives/triangle.hpp"
-#include "quadrature/utility.hpp"
 #include "quadrature/triangle/iterative_gauss.hpp"
 
 
@@ -30,18 +29,17 @@ namespace bem
 {
 
 template <uint8_t dim>
-void AdaptiveTriangleQuadrature<dim>::compute_points_weights(
+QuadratureData<dim> AdaptiveTriangleQuadrature<dim>::compute(
     const Triangle<dim>& tri,
     std::function<EigRowVec<Complex> (ConstEigRef<EigMatNX<Float, dim>>)> eval
     )
 {
+
     if (!eval)
         throw std::invalid_argument(
-            "AdaptiveTriangleQuadrature::compute_points_weights(): invalid or missing eval."
+            "AdaptiveTriangleQuadrature::compute(): invalid or missing eval."
             );
 
-    base::points_.resize(dim, 0);
-    base::weights_.resize(1, 0);
     vals_.resize(1, 0);
     reset_recursion_count();
 
@@ -52,15 +50,11 @@ void AdaptiveTriangleQuadrature<dim>::compute_points_weights(
     iq.set_tol(tol_);
     iq.set_max_iters(2);
     iq.set_starting_order(1);
-    iq.compute_points_weights(tri, eval);
-    if (iq.converged())
+    QuadratureData<dim> qdi = iq.compute(tri, eval);
+    if (qdi.converged)
     {
-        base::points_ = iq.points();
-        base::weights_ = iq.weights();
-        base::points_weights_computed_ = true;
-        vals_ = eval(base::points_);
-        converged_ = true;
-        return;
+        vals_ = eval(qdi.points);
+        return qdi;
     }
 
     int level = 0;
@@ -69,24 +63,27 @@ void AdaptiveTriangleQuadrature<dim>::compute_points_weights(
     get_5_points(p_main_, tri, longest_edge);
     vals_main_ = eval(p_main_);
 
-    run_recursion(level, tri, eval, longest_edge);
+    QuadratureData<dim> qd;
+    run_recursion(qd, level, tri, eval, longest_edge);
 
     if (level == max_levels_)
     {
-        base::points_weights_computed_ = true;
-        converged_ = false;
-        return;
+        qd.converged = false;
+    }
+    else
+    {
+        qd.converged = true;
+        qd.converged_iter = level;
     }
 
-    converged_iter_ = level;
-    base::points_weights_computed_ = true;
-    converged_ = true;
+    return qd;
 
 };
 
 
 template <uint8_t dim>
 Complex AdaptiveTriangleQuadrature<dim>::run_recursion(
+    QuadratureData<dim>& qd,
     int& level,
     const Triangle<dim>& tri,
     std::function<EigRowVec<Complex> (ConstEigRef<EigMatNX<Float, dim>>)> eval,
@@ -194,16 +191,16 @@ Complex AdaptiveTriangleQuadrature<dim>::run_recursion(
     {
 
         const uint16_t num_add = 10;
-        const uint16_t idx_add = base::points_.cols();
+        const uint16_t idx_add = qd.points.cols();
 
-        base::points_.conservativeResize(dim, base::points_.cols() + num_add);
-        base::weights_.conservativeResize(1, base::weights_.size() + num_add);
+        qd.points.conservativeResize(dim, qd.points.cols() + num_add);
+        qd.weights.conservativeResize(1, qd.weights.size() + num_add);
         vals_.conservativeResize(1, vals_.size() + num_add);
 
         for (uint8_t ii = 0; ii < 2; ii++)
         {
-            base::points_.col(idx_add + 2 * ii) = p_main_.col(idx_extra1_[ii]);
-            base::points_.col(idx_add + 2 * ii + 1) = p_main_.col(idx_extra2_[ii]);
+            qd.points.col(idx_add + 2 * ii) = p_main_.col(idx_extra1_[ii]);
+            qd.points.col(idx_add + 2 * ii + 1) = p_main_.col(idx_extra2_[ii]);
 
             vals_[idx_add + 2 * ii] = vals_main_[idx_extra1_[ii]];
             vals_[idx_add + 2 * ii + 1] = vals_main_[idx_extra2_[ii]];
@@ -211,8 +208,8 @@ Complex AdaptiveTriangleQuadrature<dim>::run_recursion(
             // if (level == 2) std::cout << "level: " << level << "\n" << points_[points_.cols()-2] << "\n--\n" << points_[points_.cols()-1] << "\n==" << std::endl;
         }
 
-        base::points_.rightCols(p_sub_.cols()) = p_sub_;
-        base::weights_.rightCols(10) = weights10_ * area / (Float)12.0;
+        qd.points.rightCols(p_sub_.cols()) = p_sub_;
+        qd.weights.rightCols(10) = weights10_ * area / (Float)12.0;
         vals_.rightCols(vals_sub_.size()) = vals_sub_;
 
         total_recursions_++;
@@ -255,18 +252,18 @@ Complex AdaptiveTriangleQuadrature<dim>::run_recursion(
     {
         p_main_ = p_sub1;
         vals_main_ = vals_subtri1_;
-        I10_subtri1 = run_recursion(level, subtri1, eval, longest_edge1);
+        I10_subtri1 = run_recursion(qd, level, subtri1, eval, longest_edge1);
         level--;
     }
     else
     {
         const uint16_t num_add = 5;
 
-        base::points_.conservativeResize(dim, base::points_.cols() + num_add);
-        base::points_.rightCols(num_add) = p_sub1;
+        qd.points.conservativeResize(dim, qd.points.cols() + num_add);
+        qd.points.rightCols(num_add) = p_sub1;
 
-        base::weights_.conservativeResize(1, base::weights_.size() + num_add);
-        base::weights_.rightCols(num_add) = weights5_ * area1 / (Float)6.0;
+        qd.weights.conservativeResize(1, qd.weights.size() + num_add);
+        qd.weights.rightCols(num_add) = weights5_ * area1 / (Float)6.0;
 
         vals_.conservativeResize(1, vals_.size() + num_add);
         vals_.rightCols(num_add) = vals_subtri1_;
@@ -280,18 +277,18 @@ Complex AdaptiveTriangleQuadrature<dim>::run_recursion(
     {
         p_main_ = p_sub2;
         vals_main_ = vals_subtri2_;
-        I10_subtri2 = run_recursion(level, subtri2, eval, longest_edge2);
+        I10_subtri2 = run_recursion(qd, level, subtri2, eval, longest_edge2);
         level--;
     }
     else
     {
         const uint16_t num_add = 5;
 
-        base::points_.conservativeResize(dim, base::points_.cols() + num_add);
-        base::points_.rightCols(num_add) = p_sub2;
+        qd.points.conservativeResize(dim, qd.points.cols() + num_add);
+        qd.points.rightCols(num_add) = p_sub2;
 
-        base::weights_.conservativeResize(1, base::weights_.size() + num_add);
-        base::weights_.rightCols(num_add) = weights5_ * area2 / (Float)6.0;
+        qd.weights.conservativeResize(1, qd.weights.size() + num_add);
+        qd.weights.rightCols(num_add) = weights5_ * area2 / (Float)6.0;
 
         vals_.conservativeResize(1, vals_.size() + num_add);
         vals_.rightCols(num_add) = vals_subtri2_;

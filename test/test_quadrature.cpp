@@ -87,9 +87,9 @@ void test_line_integration()
         // std::cout << "------" << std::endl;
 
         // To check that all the methods compute the length of the line correctly
-        lq[ii]->compute_points_weights(p1, p2, evals[ii]);
-        EigRowVec<Complex> vals = evals[ii](lq[ii]->points());
-        Complex result = lq[ii]->weights().dot(vals);
+        QuadratureData<3> qd = lq[ii]->compute(p1, p2, evals[ii]);
+        EigRowVec<Complex> vals = evals[ii](qd.points);
+        Complex result = qd.weights.dot(vals);
 
         Float ref_val, rel_err;
         if (evals[ii].fast)

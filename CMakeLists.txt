@@ -167,7 +167,6 @@ set(SRC_FILES
     ${SRC_DIR}/geometry/primitives/triangle.cpp
     ${SRC_DIR}/geometry/mesh/triangle_mesh.cpp
     ${SRC_DIR}/geometry/mesh/mesh_transfer.cpp
-    ${SRC_DIR}/quadrature/utility.cpp
     ${SRC_DIR}/quadrature/triangle/gauss.cpp
     ${SRC_DIR}/quadrature/triangle/adaptive.cpp
     ${SRC_DIR}/quadrature/triangle/iterative_gauss.cpp
@@ -177,6 +176,17 @@ set(SRC_FILES
     ${SRC_DIR}/quadrature/line/iterative_trapz.cpp
     ${SRC_DIR}/kernels/hgf.cpp
     ${SRC_DIR}/rwg/function_space.cpp
+    ${SRC_DIR}/rwg/integrators/src/quadrature.cpp
+    ${SRC_DIR}/rwg/integrators/src/singularity.cpp
+    ${SRC_DIR}/rwg/integrators/src/line.cpp
+    ${SRC_DIR}/rwg/integrators/src/strategic.cpp
+    ${SRC_DIR}/rwg/integrators/obs/quadrature.cpp
+    ${SRC_DIR}/rwg/integrators/obs/strategic.cpp
+    ${SRC_DIR}/rwg/operators/single_layer.cpp
+    ${SRC_DIR}/rwg/operators/double_layer.cpp
+    ${SRC_DIR}/rwg/operators/gram.cpp
+    ${SRC_DIR}/rwg/projectors/single_layer.cpp
+    ${SRC_DIR}/rwg/projectors/double_layer.cpp
     ${SRC_DIR}/rwg/assemblers/indexing.cpp
     ${SRC_DIR}/rwg/assemblers/operator_assembler.cpp
     ${SRC_DIR}/rwg/assemblers/block_assembler.cpp

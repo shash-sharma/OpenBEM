@@ -7,7 +7,8 @@
 - Changelog.
 - `IndexGenerator` helper class.
 - `BoundingBox` geometry class.
-- `IndexSet` and `BlockAssembler` for blocked operator assembly.
+- `IndexSet` to manage index blocks.
+- `BlockAssembler` to allow assembling (not necessarily contiguous) index blocks.
 
 ### Changed
 
@@ -19,6 +20,7 @@
 - Simplified `TriangleMesh` interface and added a map from edges to associated elements.
 - Refactored operator and assembler classes and added support for multiple operator generation.
 - Changed assembler file names for consistency with class names.
+- Refactored operator, integrator, and quadrature classes to remove templates, use cpp instead of tpp files, and make the computational routines all thread-safe.
 
 ### Fixed
 

@@ -24,6 +24,7 @@
 
 #include "types.hpp"
 #include "constants.hpp"
+#include "quadrature/base.hpp"
 
 
 namespace bem
@@ -42,7 +43,7 @@ const uint8_t LINE_MAX_ORDER = 30;
 * @tparam dim - Dimension of the line segment (1, 2, or 3).
 */
 template <uint8_t dim>
-class LineQuadratureBase
+class LineQuadratureBase: public QuadratureBase<dim>
 {
 
     static_assert((dim == 1 || dim == 2 || dim == 3), "`dim` must be 1, 2, or 3.");
@@ -50,12 +51,13 @@ class LineQuadratureBase
 public:
 
     /**
-    * @brief Computes and stores the points on which to evaluate the integrand, and the corresponding weights.
+    * @brief Computes quadrature evaluation points and corresponding weights.
     * @param[in] p1 - First point of the line segment.
     * @param[in] p2 - Second point of the line segment.
-    * @param[in] eval - Function or class with `operator()` that evaluates the integrand (optional).
+    * @param[in] eval - Function or functor to evaluate the integrand (optional).
+    * @return Quadrature points and weights.
     */
-    virtual void compute_points_weights(
+    virtual QuadratureData<dim> compute(
         ConstEigRef<EigColVecN<Float, dim>> p1,
         ConstEigRef<EigColVecN<Float, dim>> p2,
         std::function<EigRowVec<Complex> (ConstEigRef<EigMatNX<Float, dim>>)> eval = {}
@@ -63,58 +65,9 @@ public:
 
 
     /**
-    * @brief Sets the quadrature order.
-    * @param[in] order - Quadrature order.
-    */
-    virtual void set_order(const uint8_t order) { order_ = order; return; };
-
-
-    /**
-    * @brief Returns the quadrature order.
-    * @return Quadrature order.
-    */
-    uint8_t order() const { return order_; };
-
-
-    /**
-    * @brief Returns the points on which to evaluate the integrand.
-    * @returns Read-only reference to the evaluation points.
-    */
-    const EigMatNX<Float, dim>& points() const
-    {
-        if (!points_weights_computed_)
-            throw std::runtime_error(
-                "LineQuadratureBase::points(): must call `compute_points_weights()` first.");
-        return points_;
-    };
-
-
-    /**
-    * @brief Returns the weights associated with the points on which the integrand is evaluated.
-    * @returns Read-only reference to the weights.
-    */
-    const EigRowVec<Float>& weights() const
-    {
-        if (!points_weights_computed_)
-            throw std::runtime_error(
-                "LineQuadratureBase::weights(): must call `compute_points_weights()` first.");
-        return weights_;
-    };
-
-
-    /**
     * @brief Virtual destructor.
     */
     virtual ~LineQuadratureBase() = default;
-
-
-protected:
-
-    EigMatNX<Float, dim> points_;
-    EigRowVec<Float> weights_;
-
-    uint8_t order_ = LINE_DEFAULT_ORDER;
-    bool points_weights_computed_ = false;
 
 };
 

@@ -57,56 +57,46 @@ public:
     * @param[in] k - Complex wavenumber.
     * @param[in] obs_tri - Observation triangle in the local coordinate system of `src_tri`.
     * @param[in] src_tri - Source triangle in 2D space.
+    * @param[in] g_term - Whether to compute the scalar kernel term (optional).
+    * @param[in] rs_g_terms - Whether to compute the vector kernel termss (optional).
+    * @param[in] grad_g_terms - Whether to compute the gradient kernel terms (optional).
+    * @param[in] rot_grad_g_terms - Whether to compute the rotated gradient kernel terms (optional).
     * @return Integration result.
-    */
-    virtual ObsResult integrate(
-        const Complex k,
-        const Triangle<3>& obs_tri,
-        const Triangle<2>& src_tri
-        ) = 0;
-
-
-    /**
-    * @brief Sets flags defining which terms to compute during integration, which are propagated into
-    * the source triangle integration.
-    * @param[in] compute_g_term - If true, computes
+    * @details
+    * If `g_term` is true, computes
     * \f[
     * \int_{\mathrm{obs\_tri}} d\mathcal{S}\,
     * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,G(k, \vec{r}, \vec{r}\,')
     * \f]
     * for the scalar kernel \f$ G(k, \vec{r}, \vec{r}\,') \f$.
-    * @param[in] compute_rs_g_terms - If true, computes terms related to
+    * If `rs_g_terms` is true, computes terms related to
     * \f[
     * \int_{\mathrm{obs\_tri}} d\mathcal{S}\,\vec{r}\cdot
     * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,\vec{r}\,'\,G(k, \vec{r}, \vec{r}\,')
     * \f]
     * for the scalar kernel \f$ G(k, \vec{r}, \vec{r}\,') \f$.
-    * @param[in] compute_grad_g_terms - If true, computes terms related to
+    * If `grad_g_terms` is true, computes terms related to
     * \f[
     * \int_{\mathrm{obs\_tri}} d\mathcal{S}\,\vec{r}\cdot
     * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,\nabla G(k, \vec{r}, \vec{r}\,')\times\vec{r}\,'
     * \f]
     * for the scalar kernel \f$ G(k, \vec{r}, \vec{r}\,') \f$.
-    * @param[in] compute_rot_grad_g_terms - If true, computes terms related to
+    * If `rot_grad_g_terms` is true, computes terms related to
     * \f[
     * \int_{\mathrm{obs\_tri}} d\mathcal{S}\,\hat{n}\times\vec{r}\cdot
     * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,\nabla G(k, \vec{r}, \vec{r}\,')\times\vec{r}\,'
     * \f]
     * for the scalar kernel \f$ G(k, \vec{r}, \vec{r}\,') \f$.
     */
-    virtual void set_compute_terms(
-        bool compute_g_term,
-        bool compute_rs_g_terms,
-        bool compute_grad_g_terms,
-        bool compute_rot_grad_g_terms
-        )
-    {
-        compute_g_term_ = compute_g_term;
-        compute_rs_g_terms_ = compute_rs_g_terms;
-        compute_grad_g_terms_ = compute_grad_g_terms;
-        compute_rot_grad_g_terms_ = compute_rot_grad_g_terms;
-        return;
-    };
+    virtual ObsResult integrate(
+        const Complex k,
+        const Triangle<3>& obs_tri,
+        const Triangle<2>& src_tri,
+        const bool g_term = true,
+        const bool rs_g_terms = true,
+        const bool grad_g_terms = true,
+        const bool rot_grad_g_terms = true
+        ) = 0;
 
 
     /**
@@ -121,14 +111,6 @@ public:
     * @brief Virtual destructor.
     */
     virtual ~ObsIntegratorBase() = default;
-
-
-protected:
-
-    bool compute_g_term_ = true;
-    bool compute_rs_g_terms_ = true;
-    bool compute_grad_g_terms_ = true;
-    bool compute_rot_grad_g_terms_ = true;
 
 };
 

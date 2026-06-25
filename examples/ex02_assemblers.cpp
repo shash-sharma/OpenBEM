@@ -97,14 +97,13 @@ int main(int argc, char** argv)
     // available in OpenBEM. To use them, we need the `rwg/operators/single_layer.hpp` and
     // `rwg/operators/double_layer.hpp` headers.
 
-    bem::rwg::VectorHypersingularOp<> L_operator;
-    bem::rwg::RotVectorDoubleLayerPvOp<> Kpv_operator;
+    bem::rwg::VectorHypersingularOp L_operator;
+    bem::rwg::RotVectorDoubleLayerPvOp Kpv_operator;
 
-    // First, notice the empty template argument provided via the <> syntax. The operators take an
-    // optional template argument to define the source and observation triangle integration routines
-    // for computing the operator.  Using custom integration settings will be discussed in later
-    // examples; here, we just use the default by providing no template arguments (which still
-    // requires the empty <> syntax).
+    // First, note that the operators can take an optional constructor argument to define the source
+    // and observation triangle integration routines for computing the operator.  Using custom
+    // integration settings will be discussed in later examples; here, we just use the default by
+    // providing no constructor arguments.
 
     // Second, for the double layer operator, its singularity must be handled separately in a
     // residue-and-principal-value sense, as is standard in the literature. The `Pv` in the class
@@ -119,7 +118,7 @@ int main(int argc, char** argv)
     // For the self-interactions involving the singularity, we compute the identity operator
     // separately, as follows. This requires the `rwg/operators/gram.hpp` header.
 
-    bem::rwg::VectorIdentityOp<> I_operator;
+    bem::rwg::VectorIdentityOp I_operator;
 
     // Each operator has a `compute()` method which takes the wave number, a source triangle, and an
     // observation triangle as argument, to compute the operator values associated with that pair of
@@ -253,7 +252,7 @@ int main(int argc, char** argv)
     // The projector is defined analogously to the BEM operators above. This requires the header
     // `rwg/projectors/single_layer.hpp`.
 
-    bem::rwg::VectorHypersingularProj<> L_projector;
+    bem::rwg::VectorHypersingularProj L_projector;
 
     // Next, similar to the RWG operators, define an assembler to assemble the projector matrix,
     // using the `ProjectorAssembler` class, which works in much the same way as the assembler

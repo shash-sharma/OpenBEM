@@ -15,8 +15,8 @@
 * Iterative trapezoidal integration over a line segment.
 */
 
-#ifndef ITER_TRAPZ_LINE_QUAD_H
-#define ITER_TRAPZ_LINE_QUAD_H
+#ifndef BEM_ITER_TRAPZ_LINE_QUAD_H
+#define BEM_ITER_TRAPZ_LINE_QUAD_H
 
 #include <functional>
 #include <stdexcept>
@@ -52,19 +52,7 @@ public:
     * @brief Sets the initial number of sub-segments into which the given line segment is divided.
     * @param[in] starting_num_segments - Number of sub-segments with which to start the iterations.
     */
-    void set_starting_num_segments(const uint16_t starting_num_segments)
-    {
-        if (starting_num_segments > TRAPZ_LINE_MAX_NUM_SEGMENTS)
-            throw std::domain_error(
-                std::string("IterativeTrapzLineQuadrature::set_starting_num_segments(): number of ") +
-                std::string("segments must be less than ") +
-                std::to_string(TRAPZ_LINE_MAX_NUM_SEGMENTS) + ".");
-
-        starting_num_segments_ = starting_num_segments;
-        base::points_weights_computed_ = false;
-        converged_ = false;
-        return;
-    };
+    void set_starting_num_segments(const uint16_t starting_num_segments);
 
 
     /**
@@ -79,12 +67,7 @@ public:
     * @param[in] tol - Tolerance.
     */
     void set_tol(const Float tol)
-    {
-        tol_ = tol;
-        base::points_weights_computed_ = false;
-        converged_ = false;
-        return;
-    };
+    { tol_ = tol; return; };
 
 
     /**
@@ -99,11 +82,7 @@ public:
     * @param[in] max_iters - Maximum allowed iterations.
     */
     void set_max_iters(const uint16_t max_iters)
-    {
-        max_iters_ = max_iters;
-        base::points_weights_computed_ = false;
-        converged_ = false;
-        return;
+    { max_iters_ = max_iters; return;
     };
 
 
@@ -115,43 +94,22 @@ public:
 
 
     /**
-    * @brief Computes and stores the points on which to evaluate the integrand, and the corresponding weights.
+    * @brief Computes quadrature evaluation points and corresponding weights.
     * @param[in] p1 - First point of the line segment.
     * @param[in] p2 - Second point of the line segment.
-    * @param[in] eval - Function or class with `operator()` that evaluates the integrand.
+    * @param[in] eval - Function or functor to evaluate the integrand.
+    * @return Quadrature points and weights.
     */
-    void compute_points_weights(
+    QuadratureData<dim> compute(
         ConstEigRef<EigColVecN<Float, dim>> p1,
         ConstEigRef<EigColVecN<Float, dim>> p2,
         std::function<EigRowVec<Complex> (ConstEigRef<EigMatNX<Float, dim>>)> eval = {}
         ) override;
 
 
-    /**
-    * @brief Checks whether the iterations converged.
-    * @return `true` if the iterations converged, `false` otherwise.
-    */
-    bool converged() const
-    {
-        if (!base::points_weights_computed_)
-            throw std::runtime_error(
-                "IterativeTrapzLineQuadrature::converged(): must call `compute_points_weights()` first.");
-        return converged_;
-    };
+protected:
 
-
-    /**
-    * @brief Returns the number of sub-segments for which the iterations converged.
-    * @return Number of sub-segments for which the iterations converged; 0 if not converged.
-    */
-    uint16_t converged_num_segments() const { return converged_num_segments_; };
-
-
-private:
-
-    bool converged_ = false;
     uint16_t starting_num_segments_ = 1;
-    uint16_t converged_num_segments_ = 0;
     uint16_t max_iters_ = LINE_MAX_ORDER;
     Float tol_ = ITER_TRAPZ_LINE_DEFAULT_TOL;
 

@@ -58,7 +58,8 @@ int main(int argc, char** argv)
     GaussTriangleQuadrature<3> obs_tri_quad (4);
     GaussLineQuadrature<1> line_quad (10);
 
-    SrcStrategic src_int (SrcIntegrationSettings(), src_tri_quad, line_quad);
+    SrcIntegrationSettings settings;
+    SrcStrategic src_int (settings);
     ObsQuadrature obs_int (obs_tri_quad, src_int);
 
     auto ops = std::make_tuple(
@@ -70,8 +71,8 @@ int main(int argc, char** argv)
         RotVectorHypersingularOp (obs_int),
         VectorDoubleLayerPvOp (obs_int),
         RotVectorDoubleLayerPvOp (obs_int),
-        VectorIdentityOp<> (),
-        RotVectorIdentityOp<> ()
+        VectorIdentityOp (),
+        RotVectorIdentityOp ()
         );
 
     std::apply(

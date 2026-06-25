@@ -111,7 +111,7 @@ void test_cfie_pec_lineint()
     PointCloud<3> cloud;
     cloud.set_polar_data(start, stop, center, num_pts);
 
-    VectorHypersingularProj<> op_T_proj;
+    VectorHypersingularProj op_T_proj;
     ProjectorAssembler<3> T_proj_assembler (cloud, mesh);
 
     EigenMatrix<Complex> T_proj;

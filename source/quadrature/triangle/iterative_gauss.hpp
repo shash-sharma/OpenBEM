@@ -15,8 +15,8 @@
 * Iterative Gaussian quadrature over a triangle.
 */
 
-#ifndef ITER_GAUSS_TRI_QUAD_H
-#define ITER_GAUSS_TRI_QUAD_H
+#ifndef BEM_ITER_GAUSS_TRI_QUAD_H
+#define BEM_ITER_GAUSS_TRI_QUAD_H
 
 #include <functional>
 
@@ -40,16 +40,16 @@ const Float ITER_GAUSS_TRI_DEFAULT_TOL = 1e-3;
 * @brief Class for iterative Gaussian quadrature over a triangle.
 * @tparam dim - Dimension of the triangle (2 or 3)
 * @details
-* Important: upon construction, this class loads tabulated quadrature data from a json file, and
-* stores the tabulated quadrature data for all possible orders up to `TRI_MAX_ORDER`. Therefore, it
-* is strongly recommended that objects of this class should be reused within loops, rather than
-* creating a new object at each iteration of a long loop.
+* Important: upon construction, this class loads tabulated quadrature data from a json file,
+* and stores it for all possible orders up to `TRI_MAX_ORDER`. Therefore, it is strongly
+* recommended that objects of this class should be reused within loops, rather than creating
+* a new object at each iteration of a loop.
 */
 template <uint8_t dim>
 class IterativeGaussTriangleQuadrature: public TriangleQuadratureBase<dim>
 {
 
-    using base = TriangleQuadratureBase<dim>;
+    using base = QuadratureBase<dim>;
 
 public:
 
@@ -58,11 +58,7 @@ public:
     * @param[in] starting_order - Starting quadrature order.
     */
     void set_starting_order(const uint8_t starting_order)
-    {
-        starting_order_ = starting_order;
-        converged_ = false;
-        return;
-    };
+    { starting_order_ = starting_order; return; };
 
 
     /**
@@ -77,11 +73,7 @@ public:
     * @param[in] tol - Tolerance.
     */
     void set_tol(const Float tol)
-    {
-        tol_ = tol;
-        converged_ = false;
-        return;
-    };
+    { tol_ = tol; return; };
 
 
     /**
@@ -96,11 +88,7 @@ public:
     * @param[in] max_iters - Maximum allowed iterations.
     */
     void set_max_iters(const uint16_t max_iters)
-    {
-        max_iters_ = max_iters;
-        converged_ = false;
-        return;
-    };
+    { max_iters_ = max_iters; return; };
 
 
     /**
@@ -111,47 +99,20 @@ public:
 
 
     /**
-    * @brief Computes and stores the points on which to evaluate the integrand, and the corresponding weights.
+    * @brief Computes quadrature evaluation points and corresponding weights.
     * @param[in] tri - Triangle for quadrature evaluation.
-    * @param[in] eval - Function or class with `operator()` that evaluates the integrand.
+    * @param[in] eval - Function or functor to evaluate the integrand.
+    * @return Quadrature points and weights.
     */
-    void compute_points_weights(
+    QuadratureData<dim> compute(
         const Triangle<dim>& tri,
         std::function<EigRowVec<Complex> (ConstEigRef<EigMatNX<Float, dim>>)> eval = {}
         ) override;
 
 
-    /**
-    * @brief Checks whether the iterations converged.
-    * @return `true` if the iterations converged, `false` otherwise.
-    */
-    bool converged() const
-    {
-        if (!base::points_weights_computed_)
-            throw std::runtime_error(
-                "IterativeGaussTriangleQuadrature::converged(): must call `compute_points_weights()` first.");
-        return converged_;
-    };
+protected:
 
-
-    /**
-    * @brief Returns the quadrature order at which the iterations converged.
-    * @return Quadrature order at which the iterations converged; 0 if not converged.
-    */
-    uint8_t converged_order() const
-    {
-        if (!base::points_weights_computed_)
-            throw std::runtime_error(
-                "IterativeGaussTriangleQuadrature::converged_order(): must call `compute_points_weights()` first.");
-        return converged_order_;
-    };
-
-
-private:
-
-    bool converged_ = false;
     uint8_t starting_order_ = 1;
-    uint8_t converged_order_ = 0;
     uint16_t max_iters_ = TRI_MAX_ORDER;
     Float tol_ = ITER_GAUSS_TRI_DEFAULT_TOL;
     GaussTriangleQuadrature<dim> gauss_quad_ = GaussTriangleQuadrature<dim> (starting_order_);

@@ -72,8 +72,8 @@ public:
     * @param[in] op_K - Object for the vector double-layer potential operator.
     */
     void set_operators(
-        const VectorHypersingularOp<>& op_T,
-        const VectorDoubleLayerPvOp<>& op_K
+        const VectorHypersingularOp& op_T,
+        const VectorDoubleLayerPvOp& op_K
         )
     {
         op_T_ = op_T;
@@ -134,7 +134,7 @@ public:
     */
     MatrixType id_matrix()
     {
-        RotVectorIdentityOp<> op_Ir;
+        RotVectorIdentityOp op_Ir;
         MatrixType Ir;
         assembler_.assemble(Ir, op_Ir, 0);
         if (base::flip_normals_)
@@ -227,11 +227,11 @@ public:
 
 protected:
 
-    VectorHypersingularOp<> op_T_;
-    VectorDoubleLayerPvOp<> op_K_;
+    VectorHypersingularOp op_T_;
+    VectorDoubleLayerPvOp op_K_;
 
-    VectorHypersingularProj<> proj_T_;
-    VectorDoubleLayerProj<> proj_K_;
+    VectorHypersingularProj proj_T_;
+    VectorDoubleLayerProj proj_K_;
 
     OperatorAssembler assembler_ = OperatorAssembler (base::obs_mesh_, base::src_mesh_, base::elem_pairs_);
 

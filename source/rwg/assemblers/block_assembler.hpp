@@ -7,6 +7,7 @@
 #define BEM_BLOCK_ASSEMBLER_H
 
 #include <vector>
+#include <unordered_map>
 
 #include "types.hpp"
 #include "geometry/mesh/triangle_mesh.hpp"
@@ -43,7 +44,16 @@ public:
         const IndexSet& index_set
         ):
         mesh_(mesh),
-        index_set_(index_set) {};
+        index_set_(index_set)
+    {
+        for (Index ii = 0; ii < index_set_.num_rows(); ++ii)
+            row_map_.insert({ index_set_.rows()[ii], ii });
+
+        for (Index ii = 0; ii < index_set_.num_cols(); ++ii)
+            col_map_.insert({ index_set_.cols()[ii], ii });
+
+        return;
+    };
 
 
     /**
@@ -64,14 +74,14 @@ public:
     * @brief Assembles operator matrices for given operator objects.
     * @param[out] mats - Matrices to store the assembled operator coefficients, with columns corresponding
     * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
-    * @param[in] ops - Operator objects that compute the coefficients to assemble into `mat`.
     * @param[in] k - Complex wavenumber.
+    * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    template <typename MatrixType, typename ObsIntegratorType = ObsStrategic<>, typename... Ops>
+    template <typename MatrixType, typename ObsIntegratorType = ObsStrategic, typename... Ops>
     void assemble(
         std::vector<MatrixType>& mats,
         const Complex k,
-        const ObsIntegratorType obs_integrator = ObsStrategic<>()
+        const ObsIntegratorType obs_integrator = ObsStrategic()
         );
 
 
@@ -88,10 +98,27 @@ public:
         );
 
 
+    /**
+    * @brief Fills operator values in the matrix.
+    * @param[out] mat - Matrix to store the assembled operator coefficients.
+    * @param[in] op - Operator object that computes the coefficients to be assembled into `mat`.
+    * @param[in] elem_pair - Observation (first entry) and source (second entry) triangle index pair.
+    * @param[in] values - Operator values for each pair of observation and source degrees of freedom.
+    */
+    void fill_matrix(
+        EigMat<Complex>& mat,
+        const OperatorBase& op,
+        ConstEigRef<EigColVecN<Index, 2>> elem_pair,
+        ConstEigRef<EigMat<Complex>> values
+        );
+
+
 protected:
 
     const TriangleMesh<3>& mesh_;
     const IndexSet index_set_;
+    std::unordered_map<Index, Index> row_map_;
+    std::unordered_map<Index, Index> col_map_;
 
 };
 

@@ -17,23 +17,24 @@
 
 #include "quadrature/triangle/iterative_gauss.hpp"
 
+#include <stdexcept>
 #include <functional>
 
 #include "types.hpp"
 #include "constants.hpp"
 #include "geometry/primitives/triangle.hpp"
-#include "quadrature/utility.hpp"
 
 
 namespace bem
 {
 
 template <uint8_t dim>
-void IterativeGaussTriangleQuadrature<dim>::compute_points_weights(
+QuadratureData<dim> IterativeGaussTriangleQuadrature<dim>::compute(
     const Triangle<dim>& tri,
     std::function<EigRowVec<Complex> (ConstEigRef<EigMatNX<Float, dim>>)> eval
     )
 {
+
     if (!eval)
         throw std::invalid_argument(
             "IterativeGaussTriangleQuadrature::compute_points_weights(): invalid or missing eval."
@@ -41,14 +42,15 @@ void IterativeGaussTriangleQuadrature<dim>::compute_points_weights(
 
     uint8_t order = starting_order_;
     gauss_quad_.set_order(order);
-    gauss_quad_.compute_points_weights(tri);
 
-    EigRowVec<Complex> vals = eval(gauss_quad_.points());
-    Complex val_ref = gauss_quad_.weights().dot(vals);
+    QuadratureData<dim> qd = gauss_quad_.compute(tri);
+
+    EigRowVec<Complex> vals = eval(qd.points);
+    Complex val_ref = qd.weights.dot(vals);
 
     if (max_iters_ > TRI_MAX_ORDER)
         throw std::runtime_error(
-            "IterativeGaussTriangleQuadrature::compute_points_weights(): max iterations must not exceed " + std::to_string(TRI_MAX_ORDER));
+            "IterativeGaussTriangleQuadrature::compute(): max iterations must not exceed " + std::to_string(TRI_MAX_ORDER));
 
     for (order = starting_order_ + 1; order <= max_iters_; ++order)
     {
@@ -57,34 +59,28 @@ void IterativeGaussTriangleQuadrature<dim>::compute_points_weights(
             continue;
 
         gauss_quad_.set_order(order);
-        gauss_quad_.compute_points_weights(tri);
-        vals = eval(gauss_quad_.points());
-        Complex val = gauss_quad_.weights().dot(vals);
+        qd = gauss_quad_.compute(tri);
+        vals = eval(qd.points);
+        Complex val = qd.weights.dot(vals);
 
         bool equal = val_ref == val;
         bool converged = compare_with_tol(val, val_ref, tol_, 1);
 
         assert((equal || val_ref != zero) &&
-               "IterativeGaussTriangleQuadrature::compute_points_weights(): divide by zero.");
+               "IterativeGaussTriangleQuadrature::compute(): divide by zero.");
 
         if (equal || converged)
         {
-            base::points_ = gauss_quad_.points();
-            base::weights_ = gauss_quad_.weights();
-            base::points_weights_computed_ = true;
-            converged_order_ = order;
-            converged_ = true;
-            return;
+            qd.converged_iter = order;
+            qd.converged = true;
+            return qd;
         }
         val_ref = val;
     }
 
-    base::points_ = gauss_quad_.points();
-    base::weights_ = gauss_quad_.weights();
-    base::points_weights_computed_ = true;
-    converged_ = false;
+    qd.converged = false;
+    return qd;
 
-    return;
 };
 
 

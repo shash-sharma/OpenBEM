@@ -15,8 +15,7 @@
 * RWG-based single-layer potential BEM operators.
 */
 
-#ifndef BEM_RWG_OPS_SINGLE_LAYER_I
-#define BEM_RWG_OPS_SINGLE_LAYER_I
+#include "rwg/operators/single_layer.hpp"
 
 #include "types.hpp"
 #include "constants.hpp"
@@ -28,31 +27,30 @@
 namespace bem::rwg
 {
 
-template <typename ObsIntegratorType>
-EigMat<Complex> VectorSingleLayerOp<ObsIntegratorType>::compute(
+EigMat<Complex> VectorSingleLayerOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
-    )
+    ) const
 {
     Triangle<3> obs_tri_local;
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
-    obs_integrator_.set_compute_terms(false, true, false, false);
-    const ObsResult obs_result = obs_integrator_.integrate(k, obs_tri_local, src_tri_local);
+    const ObsResult obs_result = obs_integrator_->integrate(
+        k, obs_tri_local, src_tri_local, false, true, false, false
+        );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
 };
 
 
-template <typename ObsIntegratorType>
-EigMat<Complex> VectorSingleLayerOp<ObsIntegratorType>::assemble(
+EigMat<Complex> VectorSingleLayerOp::assemble(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,
     const ObsResult& obs_result
-    )
+    ) const
 {
     EigMatMN<Complex, 3, 3> result = EigMatMN<Complex, 3, 3>::Zero(3, 3);
 
@@ -85,31 +83,30 @@ EigMat<Complex> VectorSingleLayerOp<ObsIntegratorType>::assemble(
 };
 
 
-template <typename ObsIntegratorType>
-EigMat<Complex> RotVectorSingleLayerOp<ObsIntegratorType>::compute(
+EigMat<Complex> RotVectorSingleLayerOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
-    )
+    ) const
 {
     Triangle<3> obs_tri_local;
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
-    obs_integrator_.set_compute_terms(false, true, false, false);
-    const ObsResult obs_result = obs_integrator_.integrate(k, obs_tri_local, src_tri_local);
+    const ObsResult obs_result = obs_integrator_->integrate(
+        k, obs_tri_local, src_tri_local, false, true, false, false
+        );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
 };
 
 
-template <typename ObsIntegratorType>
-EigMat<Complex> RotVectorSingleLayerOp<ObsIntegratorType>::assemble(
+EigMat<Complex> RotVectorSingleLayerOp::assemble(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,
     const ObsResult& obs_result
-    )
+    ) const
 {
     EigMatMN<Complex, 3, 3> result = EigMatMN<Complex, 3, 3>::Zero(3, 3);
 
@@ -150,31 +147,30 @@ EigMat<Complex> RotVectorSingleLayerOp<ObsIntegratorType>::assemble(
 };
 
 
-template <typename ObsIntegratorType>
-EigMat<Complex> ScalarSingleLayerOp<ObsIntegratorType>::compute(
+EigMat<Complex> ScalarSingleLayerOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
-    )
+    ) const
 {
     Triangle<3> obs_tri_local;
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
-    obs_integrator_.set_compute_terms(true, false, false, false);
-    const ObsResult obs_result = obs_integrator_.integrate(k, obs_tri_local, src_tri_local);
+    const ObsResult obs_result = obs_integrator_->integrate(
+        k, obs_tri_local, src_tri_local, true, false, false, false
+        );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
 };
 
 
-template <typename ObsIntegratorType>
-EigMat<Complex> ScalarSingleLayerOp<ObsIntegratorType>::assemble(
+EigMat<Complex> ScalarSingleLayerOp::assemble(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,
     const ObsResult& obs_result
-    )
+    ) const
 {
     EigMatMN<Complex, 1, 1> result = EigMatMN<Complex, 1, 1>::Zero(1, 1);
 
@@ -185,31 +181,30 @@ EigMat<Complex> ScalarSingleLayerOp<ObsIntegratorType>::assemble(
 };
 
 
-template <typename ObsIntegratorType>
-EigMat<Complex> RotGradScalarSingleLayerOp<ObsIntegratorType>::compute(
+EigMat<Complex> RotGradScalarSingleLayerOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
-    )
+    ) const
 {
     Triangle<3> obs_tri_local;
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
-    obs_integrator_.set_compute_terms(false, false, true, false);
-    const ObsResult obs_result = obs_integrator_.integrate(k, obs_tri_local, src_tri_local);
+    const ObsResult obs_result = obs_integrator_->integrate(
+        k, obs_tri_local, src_tri_local, false, false, true, false
+        );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
 };
 
 
-template <typename ObsIntegratorType>
-EigMat<Complex> RotGradScalarSingleLayerOp<ObsIntegratorType>::assemble(
+EigMat<Complex> RotGradScalarSingleLayerOp::assemble(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,
     const ObsResult& obs_result
-    )
+    ) const
 {
     EigMatMN<Complex, 3, 1> result = EigMatMN<Complex, 3, 1>::Zero(3, 1);
 
@@ -248,31 +243,30 @@ EigMat<Complex> RotGradScalarSingleLayerOp<ObsIntegratorType>::assemble(
 };
 
 
-template <typename ObsIntegratorType>
-EigMat<Complex> VectorHypersingularOp<ObsIntegratorType>::compute(
+EigMat<Complex> VectorHypersingularOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
-    )
+    ) const
 {
     Triangle<3> obs_tri_local;
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
-    obs_integrator_.set_compute_terms(true, true, false, false);
-    const ObsResult obs_result = obs_integrator_.integrate(k, obs_tri_local, src_tri_local);
+    const ObsResult obs_result = obs_integrator_->integrate(
+        k, obs_tri_local, src_tri_local, true, true, false, false
+        );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
 };
 
 
-template <typename ObsIntegratorType>
-EigMat<Complex> VectorHypersingularOp<ObsIntegratorType>::assemble(
+EigMat<Complex> VectorHypersingularOp::assemble(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,
     const ObsResult& obs_result
-    )
+    ) const
 {
     EigMatMN<Complex, 3, 3> result = op_g_.assemble(k, obs_tri, src_tri, obs_result);
     Complex hessg_term = op_hessg_.assemble(k, obs_tri, src_tri, obs_result)(0, 0) / k / k;
@@ -281,31 +275,30 @@ EigMat<Complex> VectorHypersingularOp<ObsIntegratorType>::assemble(
 };
 
 
-template <typename ObsIntegratorType>
-EigMat<Complex> RotVectorHypersingularOp<ObsIntegratorType>::compute(
+EigMat<Complex> RotVectorHypersingularOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri
-    )
+    ) const
 {
     Triangle<3> obs_tri_local;
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
-    obs_integrator_.set_compute_terms(false, true, true, false);
-    const ObsResult obs_result = obs_integrator_.integrate(k, obs_tri_local, src_tri_local);
+    const ObsResult obs_result = obs_integrator_->integrate(
+        k, obs_tri_local, src_tri_local, false, true, true, false
+        );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
 };
 
 
-template <typename ObsIntegratorType>
-EigMat<Complex> RotVectorHypersingularOp<ObsIntegratorType>::assemble(
+EigMat<Complex> RotVectorHypersingularOp::assemble(
     const Complex k,
     const Triangle<3>& obs_tri,
     const Triangle<3>& src_tri,
     const ObsResult& obs_result
-    )
+    ) const
 {
     EigMatMN<Complex, 3, 3> result = op_g_.assemble(k, obs_tri, src_tri, obs_result);
     EigMatMN<Complex, 3, 1> hessg_term = op_hessg_.assemble(k, obs_tri, src_tri, obs_result) / k / k;
@@ -315,4 +308,3 @@ EigMat<Complex> RotVectorHypersingularOp<ObsIntegratorType>::assemble(
 
 }
 
-#endif

@@ -18,6 +18,8 @@
 #ifndef BEM_RWG_OPINT_SRC_QUAD_H
 #define BEM_RWG_OPINT_SRC_QUAD_H
 
+#include <memory>
+
 #include "types.hpp"
 #include "geometry/primitives/triangle.hpp"
 #include "quadrature/triangle/base.hpp"
@@ -39,36 +41,49 @@ namespace bem::rwg
 * Reference:
 * - [1] O. Ergul, L. Gurel, "The Multilevel Fast Multipole Algorithm (MLFMA) for Solving Large-Scale
 * Computational Electromagnetics Problems," book, Wiley-IEEE Press, 2014.
-* @tparam TriangleQuadratureType - Type of the triangle quadrature object, which must derive from
-* `TriangleQuadratureBase<2>`.
-* @tparam ScalarKernelType - Object for computing the scalar kernel, which must derive from
-* `ScalarKernelBase<3>`.
 */
-template <typename TriangleQuadratureType = GaussTriangleQuadrature<2>, typename ScalarKernelType = HGF>
 class SrcQuadrature: public SrcIntegratorBase
 {
 
     using base = SrcIntegratorBase;
-    static_assert(
-        std::is_base_of<TriangleQuadratureBase<2>, TriangleQuadratureType>::value,
-        "SrcQuadrature: `TriangleQuadratureType` must derive from `TriangleQuadratureBase<2>`"
-        );
-    static_assert(
-        std::is_base_of<ScalarKernelBase<3>, ScalarKernelType>::value,
-        "SrcQuadrature: `ScalarKernelType` must derive from `ScalarKernelBase<3>`"
-        );
 
 public:
 
     /**
     * @brief Constructs a `SrcQuadrature` with a specified triangle quadrature object.
+    * @tparam TriangleQuadratureType - Type of the triangle quadrature object, which must derive
+    * from `TriangleQuadratureBase<2>`.
+    * @tparam ScalarKernelType - Object for computing the scalar kernel, which must derive from
+    * `ScalarKernelBase<3>`.
     * @param[in] tri_quad - Triangle quadrature object to use for integration (optional).
     * @param[in] kernel - Object for computing the scalar kernel (optional).
     */
+    template <
+        typename TriangleQuadratureType = GaussTriangleQuadrature<2>,
+        typename ScalarKernelType = HGF
+        >
     SrcQuadrature(
         const TriangleQuadratureType tri_quad = GaussTriangleQuadrature<2>(),
         const ScalarKernelType kernel = HGF()
-        ): tri_quad_(tri_quad), kernel_(kernel) {};
+        ) { set(tri_quad, kernel); return; };
+
+
+    /**
+    * @brief Sets the triangle quadrature object and kernel object.
+    * @tparam TriangleQuadratureType - Type of the triangle quadrature object, which must derive
+    * from `TriangleQuadratureBase<2>`.
+    * @tparam ScalarKernelType - Object for computing the scalar kernel, which must derive from
+    * `ScalarKernelBase<3>`.
+    * @param[in] tri_quad - Triangle quadrature object to use for integration.
+    * @param[in] kernel - Object for computing the scalar kernel.
+    */
+    template <typename TriangleQuadratureType, typename ScalarKernelType>
+    void set(const TriangleQuadratureType& tri_quad, const ScalarKernelType& kernel)
+    {
+        tri_quad_ = std::make_shared<TriangleQuadratureType> (std::move(tri_quad));
+        kernel_ = std::make_shared<ScalarKernelType> (std::move(kernel));
+        return;
+    };
 
 
     /**
@@ -76,35 +91,46 @@ public:
     * @param[in] k - Complex wavenumber.
     * @param[in] src_tri - Source triangle in 2D space.
     * @param[in] r_obs - Observation points in the local coordinate system of `src_tri`.
+    * @param[in] g_terms - Whether to compute kernel terms (optional).
+    * @param[in] grad_g_terms - Whether to compute kernel gradient terms (optional).
     * @return Integration result.
+    * @details
+    * If `g_terms` is true, the function computes
+    * \f[
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,G(k, \vec{r}, \vec{r}\,')
+    * \f]
+    * and
+    * \f[
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,\vec{r}\,'\,G(k, \vec{r}, \vec{r}\,')
+    * \f]
+    * for the scalar kernel \f$ G(k, \vec{r}, \vec{r}\,') \f$.
+    * If `grad_g_terms` is true, the function computes
+    * \f[
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,\nabla G(k, \vec{r}, \vec{r}\,'),
+    * \f]
+    * \f[
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,x'\,\nabla G(k, \vec{r}, \vec{r}\,'),
+    * \f]
+    * and
+    * \f[
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,y'\,\nabla G(k, \vec{r}, \vec{r}\,'),
+    * \f]
+    * for the scalar kernel \f$ G(k, \vec{r}, \vec{r}\,') \f$, and for local source
+    * triangle coordinates \f$\vec{r}\,' = [x', y']^T\f$.
     */
     SrcResult integrate(
         const Complex k,
         const Triangle<2>& src_tri,
-        ConstEigRef<EigMatNX<Float, 3>> r_obs
+        ConstEigRef<EigMatNX<Float, 3>> r_obs,
+        const bool g_terms = true,
+        const bool grad_g_terms = true
         ) override;
 
 
-    /**
-    * @brief Provides read-only access to the triangle quadrature object for inspection.
-    * @return Read-only reference to the triangle quadrature object.
-    */
-    const TriangleQuadratureType& quadrature_object() const
-    { return tri_quad_; };
+protected:
 
-
-    /**
-    * @brief Provides writable access to the triangle quadrature object.
-    * @return Writable reference to the triangle quadrature object.
-    */
-    TriangleQuadratureType& quadrature_object()
-    { return tri_quad_; };
-
-
-private:
-
-    TriangleQuadratureType tri_quad_;
-    ScalarKernelType kernel_;
+    std::shared_ptr<TriangleQuadratureBase<2>> tri_quad_;
+    std::shared_ptr<ScalarKernelBase<3>> kernel_;
 
 };
 
@@ -114,6 +140,8 @@ private:
 
 }
 
-#include "rwg/integrators/src/quadrature.tpp"
+#ifndef BEM_LINKED
+#include "rwg/integrators/src/quadrature.cpp"
+#endif
 
 #endif

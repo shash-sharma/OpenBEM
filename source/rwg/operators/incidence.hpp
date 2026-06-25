@@ -74,7 +74,7 @@ public:
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
-        ) override
+        ) const override
     {
         EigMatMN<Complex, 1, 3> result = EigMatMN<Complex, 1, 3>::Zero(1, 3);
 
@@ -99,7 +99,7 @@ public:
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri,
         const ObsResult& obs_result
-        ) override { return compute(k, obs_tri, src_tri); };
+        ) const override { return compute(k, obs_tri, src_tri); };
 
 
     /**

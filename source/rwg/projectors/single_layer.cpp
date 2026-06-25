@@ -15,8 +15,7 @@
 * RWG-based single-layer potential BEM projectors.
 */
 
-#ifndef BEM_RWG_PROJ_SINGLE_LAYER_I
-#define BEM_RWG_PROJ_SINGLE_LAYER_I
+#include "rwg/projectors/single_layer.hpp"
 
 #include "types.hpp"
 #include "constants.hpp"
@@ -27,8 +26,7 @@
 namespace bem::rwg
 {
 
-template <typename SrcIntegratorType>
-EigMat<Complex> VectorSingleLayerProj<SrcIntegratorType>::compute(
+EigMat<Complex> VectorSingleLayerProj::compute(
     const Complex k,
     ConstEigRef<EigMatNX<Float, 3>> obs_points,
     const Triangle<3>& src_tri
@@ -40,9 +38,8 @@ EigMat<Complex> VectorSingleLayerProj<SrcIntegratorType>::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_points_local, src_tri_local, obs_points, src_tri);
 
-    src_integrator_.set_compute_terms(true, false);
-    const SrcResult src_result = src_integrator_.integrate(
-        k, src_tri_local, obs_points_local
+    const SrcResult src_result = src_integrator_->integrate(
+        k, src_tri_local, obs_points_local, true, false
         );
 
     EigMatMN<Float, 3, 3> local_uvw = src_tri.local_coordinate_basis();
@@ -64,8 +61,7 @@ EigMat<Complex> VectorSingleLayerProj<SrcIntegratorType>::compute(
 };
 
 
-template <typename SrcIntegratorType>
-EigMat<Complex> ScalarSingleLayerProj<SrcIntegratorType>::compute(
+EigMat<Complex> ScalarSingleLayerProj::compute(
     const Complex k,
     ConstEigRef<EigMatNX<Float, 3>> obs_points,
     const Triangle<3>& src_tri
@@ -77,9 +73,8 @@ EigMat<Complex> ScalarSingleLayerProj<SrcIntegratorType>::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_points_local, src_tri_local, obs_points, src_tri);
 
-    src_integrator_.set_compute_terms(true, false);
-    const SrcResult src_result = src_integrator_.integrate(
-        k, src_tri_local, obs_points_local
+    const SrcResult src_result = src_integrator_->integrate(
+        k, src_tri_local, obs_points_local, true, false
         );
 
     return src_result.g.transpose() * Pulse::normalization(src_tri);
@@ -87,8 +82,7 @@ EigMat<Complex> ScalarSingleLayerProj<SrcIntegratorType>::compute(
 };
 
 
-template <typename SrcIntegratorType>
-EigMat<Complex> GradScalarSingleLayerProj<SrcIntegratorType>::compute(
+EigMat<Complex> GradScalarSingleLayerProj::compute(
     const Complex k,
     ConstEigRef<EigMatNX<Float, 3>> obs_points,
     const Triangle<3>& src_tri
@@ -100,9 +94,8 @@ EigMat<Complex> GradScalarSingleLayerProj<SrcIntegratorType>::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_points_local, src_tri_local, obs_points, src_tri);
 
-    src_integrator_.set_compute_terms(false, true);
-    const SrcResult src_result = src_integrator_.integrate(
-        k, src_tri_local, obs_points_local
+    const SrcResult src_result = src_integrator_->integrate(
+        k, src_tri_local, obs_points_local, false, true
         );
 
     EigMatMN<Float, 3, 3> local_uvw = src_tri.local_coordinate_basis();
@@ -115,8 +108,7 @@ EigMat<Complex> GradScalarSingleLayerProj<SrcIntegratorType>::compute(
 };
 
 
-template <typename SrcIntegratorType>
-EigMat<Complex> VectorHypersingularProj<SrcIntegratorType>::compute(
+EigMat<Complex> VectorHypersingularProj::compute(
     const Complex k,
     ConstEigRef<EigMatNX<Float, 3>> obs_points,
     const Triangle<3>& src_tri
@@ -130,4 +122,3 @@ EigMat<Complex> VectorHypersingularProj<SrcIntegratorType>::compute(
 
 }
 
-#endif
