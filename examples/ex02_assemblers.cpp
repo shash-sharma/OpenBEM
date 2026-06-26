@@ -252,7 +252,7 @@ int main(int argc, char** argv)
     // The projector is defined analogously to the BEM operators above. This requires the header
     // `rwg/projectors/single_layer.hpp`.
 
-    bem::rwg::VectorHypersingularProj<> L_projector;
+    bem::rwg::VectorHypersingularProj L_projector;
 
     // Next, similar to the RWG operators, define an assembler to assemble the projector matrix,
     // using the `ProjectorAssembler` class, which works in much the same way as the assembler

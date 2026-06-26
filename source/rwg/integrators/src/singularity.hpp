@@ -67,7 +67,24 @@ public:
     SrcSingularity(
         const TriangleQuadratureType tri_quad = GaussTriangleQuadrature<2>(),
         const ScalarKernelType kernel = SingularitySubtractedTaylorHGF()
-        ): src_quad_(tri_quad, kernel) {};
+        ) { set(tri_quad, kernel); return; };
+
+
+    /**
+    * @brief Sets the triangle quadrature object and kernel object.
+    * @tparam TriangleQuadratureType - Type of the triangle quadrature object, which must derive
+    * from `TriangleQuadratureBase<2>`.
+    * @tparam ScalarKernelType - Object for computing the scalar kernel with its singularity
+    * subtracted, which must derive from `ScalarKernelBase<3>`.
+    * @param[in] tri_quad - Triangle quadrature object to use for integration.
+    * @param[in] kernel - Object for computing the scalar kernel with its singularity subtracted.
+    */
+    template <typename TriangleQuadratureType, typename ScalarKernelType>
+    void set(
+        const TriangleQuadratureType& tri_quad,
+        const ScalarKernelType& kernel
+        )
+    { src_quad_.set(tri_quad, kernel); return; }
 
 
     /**
@@ -109,22 +126,6 @@ public:
         const bool g_terms = true,
         const bool grad_g_terms = true
         ) override;
-
-
-    /**
-    * @brief Provides read-only access to the triangle quadrature object for inspection.
-    * @return Read-only reference to the triangle quadrature object.
-    */
-    const TriangleQuadratureBase<2>& quadrature_object() const
-    { return src_quad_.quadrature_object(); };
-
-
-    /**
-    * @brief Provides writable access to the triangle quadrature object.
-    * @return Writable reference to the triangle quadrature object.
-    */
-    TriangleQuadratureBase<2>& quadrature_object()
-    { return src_quad_.quadrature_object(); };
 
 
 protected:

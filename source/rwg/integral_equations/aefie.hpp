@@ -311,9 +311,9 @@ protected:
     ScalarSingleLayerOp op_Lp_;
     VectorDoubleLayerPvOp op_K_;
 
-    VectorSingleLayerProj<> proj_La_;
-    GradScalarSingleLayerProj<> proj_Lp_;
-    VectorDoubleLayerProj<> proj_K_;
+    VectorSingleLayerProj proj_La_;
+    GradScalarSingleLayerProj proj_Lp_;
+    VectorDoubleLayerProj proj_K_;
 
     OperatorAssembler assembler_ = OperatorAssembler (base::obs_mesh_, base::src_mesh_, base::elem_pairs_);
 

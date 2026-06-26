@@ -15,8 +15,7 @@
 * RWG-based double-layer potential BEM projectors.
 */
 
-#ifndef BEM_RWG_PROJ_DOUBLE_LAYER_I
-#define BEM_RWG_PROJ_DOUBLE_LAYER_I
+#include "rwg/projectors/double_layer.hpp"
 
 #include "types.hpp"
 #include "constants.hpp"
@@ -27,8 +26,7 @@
 namespace bem::rwg
 {
 
-template <typename SrcIntegratorType>
-EigMat<Complex> VectorDoubleLayerProj<SrcIntegratorType>::compute(
+EigMat<Complex> VectorDoubleLayerProj::compute(
     const Complex k,
     ConstEigRef<EigMatNX<Float, 3>> obs_points,
     const Triangle<3>& src_tri
@@ -40,7 +38,7 @@ EigMat<Complex> VectorDoubleLayerProj<SrcIntegratorType>::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_points_local, src_tri_local, obs_points, src_tri);
 
-    const SrcResult src_result = src_integrator_.integrate(
+    const SrcResult src_result = src_integrator_->integrate(
         k, src_tri_local, obs_points_local, false, true
         );
 
@@ -71,4 +69,3 @@ EigMat<Complex> VectorDoubleLayerProj<SrcIntegratorType>::compute(
 
 }
 
-#endif

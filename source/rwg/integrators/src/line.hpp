@@ -60,8 +60,22 @@ public:
     * @param[in] line_quad - Line quadrature object to use for integration (optional).
     */
     template <typename LineQuadratureType = GaussLineQuadrature<1>>
-    SrcLineIntegrator(const LineQuadratureType line_quad = GaussLineQuadrature<1>()):
-        line_quad_(std::make_shared<LineQuadratureType> (line_quad)) {};
+    SrcLineIntegrator(const LineQuadratureType line_quad = GaussLineQuadrature<1>())
+    { set(line_quad); return; };
+
+
+    /**
+    * @brief Sets the line quadrature object.
+    * @tparam LineQuadratureType - Type of the line quadrature object, which must derive from
+    * `LineQuadratureBase<1>`.
+    * @param[in] line_quad - Line quadrature object to use for integration.
+    */
+    template <typename LineQuadratureType>
+    void set(const LineQuadratureType& line_quad)
+    {
+        line_quad_ = std::make_shared<LineQuadratureType> (line_quad);
+        return;
+    };
 
 
     /**
@@ -103,22 +117,6 @@ public:
         const bool g_terms = true,
         const bool grad_g_terms = true
         ) override;
-
-
-    /**
-    * @brief Provides read-only access to the line quadrature object for inspection.
-    * @return Read-only reference to the line quadrature object.
-    */
-    const LineQuadratureBase<1>& quadrature_object() const
-    { return *line_quad_; };
-
-
-    /**
-    * @brief Provides writable access to the line quadrature object.
-    * @return Writable reference to the line quadrature object.
-    */
-    LineQuadratureBase<1>& quadrature_object()
-    { return *line_quad_; };
 
 
 protected:

@@ -79,33 +79,33 @@ public:
 
     /**
     * @brief Constructs a `SrcStrategic` integrator with specified line and triangle quadrature objects.
+    * @param[in] settings - Integration settings for singularity treatment and line integration (optional).
+    */
+    SrcStrategic(const SrcIntegrationSettings settings = SrcIntegrationSettings())
+    { set(settings); return; }
+
+
+    /**
+    * @brief Sets specified line and triangle quadrature object types.
     * @tparam TriangleQuadratureType - Type of the triangle quadrature object, which must derive from
     * `TriangleQuadratureBase<2>`.
     * @tparam LineQuadratureType - Type of the line quadrature object, which must derive from
     * `LineQuadratureBase<1>`.
     * @param[in] settings - Integration settings for singularity treatment and line integration (optional).
-    * @param[in] tri_quad - Triangle quadrature object to use for integration (optional).
-    * @param[in] line_quad - Line quadrature object to use for integration (optional).
     */
     template <
         typename TriangleQuadratureType = GaussTriangleQuadrature<2>,
         typename LineQuadratureType = GaussLineQuadrature<1>
         >
-    SrcStrategic(
-        const SrcIntegrationSettings settings = SrcIntegrationSettings(),
-        const TriangleQuadratureType tri_quad = GaussTriangleQuadrature<2>(),
-        const LineQuadratureType line_quad = GaussLineQuadrature<1>()
-        ):
-            settings_(settings),
-            src_hgf_(tri_quad, HGF()),
-            src_shgf_(tri_quad, SingularitySubtractedHGF()),
-            src_sthgf_(tri_quad, SingularitySubtractedTaylorHGF()),
-            src_line_(line_quad)
+    void set(const SrcIntegrationSettings settings = SrcIntegrationSettings())
     {
-        src_line_.quadrature_object().set_order(settings_.line_order);
-        src_sthgf_.quadrature_object().set_order(settings_.tri_order_near);
-        src_shgf_.quadrature_object().set_order(settings_.tri_order_near);
-        src_hgf_.quadrature_object().set_order(settings_.tri_order_far);
+        settings_ = settings;
+
+        src_line_.set(LineQuadratureType(settings_.line_order));
+        src_hgf_.set(TriangleQuadratureType(settings_.tri_order_far), HGF());
+        src_shgf_.set(TriangleQuadratureType(settings_.tri_order_near), SingularitySubtractedHGF());
+        src_sthgf_.set(TriangleQuadratureType(settings_.tri_order_near), SingularitySubtractedTaylorHGF());
+
         return;
     };
 

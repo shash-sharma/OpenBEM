@@ -657,9 +657,8 @@ int main(int argc, char** argv)
     test_corner_cases(0, false);
 
 
-    GaussTriangleQuadrature<2> tri_quad (4);
-    GaussLineQuadrature<1> line_quad (10);
-    SrcStrategic src_int_strategic (SrcIntegrationSettings(), tri_quad, line_quad);
+    SrcIntegrationSettings settings;
+    SrcStrategic src_int_strategic (settings);
 
     // test default declarations
     SrcLineIntegrator src_line_default;

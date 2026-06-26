@@ -91,15 +91,19 @@ public:
 
     /**
     * @brief Constructs an `ObsStrategic` integrator with specified line and triangle quadrature objects.
+    */
+    ObsStrategic(const IntegrationSettings settings = IntegrationSettings())
+    { set(settings); return; }
+
+
+    /**
+    * @brief Sets specified line and triangle quadrature object types.
     * @tparam ObsTriangleQuadratureType - Type of the observation triangle quadrature object, which must derive
     * from `TriangleQuadratureBase<2>`.
     * @tparam SrcTriangleQuadratureType - Type of the source triangle quadrature object, which must derive from
     * `TriangleQuadratureBase<2>`.
     * @tparam LineQuadratureType - Type of the line quadrature object, which must derive from
     * `LineQuadratureBase<1>`.
-    * @param[in] obs_tri_quad - Observation triangle quadrature object.
-    * @param[in] src_tri_quad - Source triangle quadrature object.
-    * @param[in] src_line_quad - Source line quadrature object.
     * @param[in] settings - Integration settings for singularity treatment and line integration (optional).
     */
     template <
@@ -107,36 +111,27 @@ public:
         typename SrcTriangleQuadratureType = GaussTriangleQuadrature<2>,
         typename LineQuadratureType = GaussLineQuadrature<1>
         >
-    ObsStrategic(
-        const IntegrationSettings settings = IntegrationSettings(),
-        const ObsTriangleQuadratureType obs_tri_quad = GaussTriangleQuadrature<3>(),
-        const SrcTriangleQuadratureType src_tri_quad = GaussTriangleQuadrature<2>(),
-        const LineQuadratureType src_line_quad = GaussLineQuadrature<1>()
-        ):
-            settings_(settings),
-            src_hgf_(src_tri_quad, HGF()),
-            src_shgf_(src_tri_quad, SingularitySubtractedHGF()),
-            src_sthgf_(src_tri_quad, SingularitySubtractedTaylorHGF()),
-            src_line_(src_line_quad),
-            hgf_(obs_tri_quad, SrcQuadrature(src_tri_quad, HGF())),
-            shgf_(obs_tri_quad, SrcSingularity(src_tri_quad, SingularitySubtractedHGF())),
-            sthgf_(obs_tri_quad, SrcSingularity(src_tri_quad, SingularitySubtractedTaylorHGF())),
-            line_(obs_tri_quad, SrcLineIntegrator(src_line_quad))
+    void set(const IntegrationSettings settings = IntegrationSettings())
     {
-        src_line_.quadrature_object().set_order(settings_.src_line_order);
-        src_sthgf_.quadrature_object().set_order(settings_.src_quad_order_near);
-        src_shgf_.quadrature_object().set_order(settings_.src_quad_order_near);
-        src_hgf_.quadrature_object().set_order(settings_.src_quad_order_far);
+        settings_ = settings;
 
-        line_.quadrature_object().set_order(settings_.obs_quad_order_far);
-        sthgf_.quadrature_object().set_order(settings_.obs_quad_order_near);
-        shgf_.quadrature_object().set_order(settings_.obs_quad_order_near);
-        hgf_.quadrature_object().set_order(settings_.obs_quad_order_far);
+        src_hgf_.set(
+            SrcTriangleQuadratureType (settings_.src_quad_order_far), HGF()
+            );
+        src_shgf_.set(
+            SrcTriangleQuadratureType (settings_.src_quad_order_near), SingularitySubtractedHGF()
+            );
+        src_sthgf_.set(
+            SrcTriangleQuadratureType (settings_.src_quad_order_near), SingularitySubtractedTaylorHGF()
+            );
+        src_line_.set(
+            LineQuadratureType (settings_.src_line_order)
+            );
 
-        line_.src_integrator() = src_line_;
-        sthgf_.src_integrator() = src_sthgf_;
-        shgf_.src_integrator() = src_shgf_;
-        hgf_.src_integrator() = src_hgf_;
+        hgf_.set(ObsTriangleQuadratureType(settings_.obs_quad_order_far), src_hgf_);
+        shgf_.set(ObsTriangleQuadratureType(settings_.obs_quad_order_near), src_shgf_);
+        sthgf_.set(ObsTriangleQuadratureType(settings_.obs_quad_order_near), src_sthgf_);
+        line_.set(ObsTriangleQuadratureType(settings_.obs_quad_order_far), src_line_);
 
         return;
     };

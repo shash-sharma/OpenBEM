@@ -71,14 +71,14 @@ QuadratureData<dim> IterativeGaussTriangleQuadrature<dim>::compute(
 
         if (equal || converged)
         {
-            // converged_order_ = order;
-            // converged_ = true;
+            qd.converged_iter = order;
+            qd.converged = true;
             return qd;
         }
         val_ref = val;
     }
 
-    // converged_ = false;
+    qd.converged = false;
     return qd;
 
 };

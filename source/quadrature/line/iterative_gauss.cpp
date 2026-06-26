@@ -68,15 +68,15 @@ QuadratureData<dim> IterativeGaussLineQuadrature<dim>::compute(
 
         if (compare_with_tol(val, val_ref, tol_, 1) == true)
         {
-            // converged_ = true;
-            // converged_order_ = order;
+            qd.converged = true;
+            qd.converged_iter = order;
             return qd;
         }
 
         val_ref = val;
     }
 
-    // converged_ = false;
+    qd.converged = false;
     return qd;
 
 };

@@ -37,24 +37,18 @@ namespace bem::rwg
 /**
 * @brief Class for computing the vector double-layer potential projector.
 */
-template <typename SrcIntegratorType = SrcStrategic>
 class VectorDoubleLayerProj: public ProjectorBase
 {
-
-    static_assert(
-        std::is_base_of<SrcIntegratorBase, SrcIntegratorType>::value,
-        "VectorDoubleLayerProj: `SrcIntegratorType` must derive from `SrcIntegratorBase`"
-        );
-
 public:
 
     /**
     * @brief Constructs a `VectorDoubleLayerProj` object with a specified integration object.
+    * @tparam SrcIntegratorType - Type of the source triangle integrator, derived from `SrcIntegratorBase`.
     * @param[in] src_integrator - Integration object for the source triangle (optional).
     */
-
+    template <typename SrcIntegratorType = SrcStrategic>
     VectorDoubleLayerProj(const SrcIntegratorType src_integrator = SrcStrategic()):
-        src_integrator_(src_integrator) {};
+        src_integrator_(std::make_shared<SrcIntegratorType> (src_integrator)) {};
 
 
     /**
@@ -90,9 +84,9 @@ public:
         ) override;
 
 
-private:
+protected:
 
-    SrcIntegratorType src_integrator_;
+    std::shared_ptr<SrcIntegratorBase> src_integrator_;
 
 };
 
@@ -102,6 +96,8 @@ private:
 
 }
 
-#include "rwg/projectors/double_layer.tpp"
+#ifndef BEM_LINKED
+#include "rwg/projectors/double_layer.cpp"
+#endif
 
 #endif

@@ -84,7 +84,7 @@ QuadratureData<dim> IterativeTrapzLineQuadrature<dim>::compute(
     }
 
     uint16_t max_iters_mod = std::min(max_iters_, (uint16_t)15);
-    bool converged = false;
+    qd.converged = false;
 
     for (uint16_t iter = starting_iter; iter <= max_iters_mod; ++iter)
     {
@@ -112,10 +112,10 @@ QuadratureData<dim> IterativeTrapzLineQuadrature<dim>::compute(
         vals_temp = eval(points_temp);
         val = weights_temp.dot(vals_temp);
 
-        converged = compare_with_tol(val, val_ref, tol_, 1);
-        if (converged)
+        qd.converged = compare_with_tol(val, val_ref, tol_, 1);
+        if (qd.converged)
         {
-            // converged_num_segments_ = points_temp.cols() - 1;
+            qd.converged_iter = points_temp.cols() - 1;
             break;
         }
         val_ref = val;

@@ -66,9 +66,28 @@ public:
     ObsQuadrature(
         const TriangleQuadratureType tri_quad = GaussTriangleQuadrature<3>(),
         const SrcIntegratorType src_integrator = SrcStrategic()
-        ):
-        tri_quad_(std::make_shared<TriangleQuadratureType> (tri_quad)),
-        src_integrator_(std::make_shared<SrcIntegratorType> (src_integrator)) {};
+        ) { set(tri_quad, src_integrator); return; };
+
+
+    /**
+    * @brief Sets the triangle quadrature object and kernel object.
+    * @tparam TriangleQuadratureType - Type of the triangle quadrature object, which must derive
+    * from `TriangleQuadratureBase<3>`.
+    * @tparam SrcIntegratorType - Object for integrating over the source triangle, which must derive from
+    * `SrcIntegratorBase`.
+    * @param[in] tri_quad - Triangle quadrature object to use for integration.
+    * @param[in] src_integrator - Object for integrating over the source triangle.
+    */
+    template <typename TriangleQuadratureType, typename SrcIntegratorType>
+    void set(
+        const TriangleQuadratureType& tri_quad,
+        const SrcIntegratorType& src_integrator
+        )
+    {
+        tri_quad_ = std::make_shared<TriangleQuadratureType> (tri_quad);
+        src_integrator_ = std::make_shared<SrcIntegratorType> (src_integrator);
+        return;
+    };
 
 
     /**
@@ -116,38 +135,6 @@ public:
         const bool grad_g_terms = true,
         const bool rot_grad_g_terms = true
         ) override;
-
-
-    /**
-    * @brief Provides read-only access to the triangle quadrature object for inspection.
-    * @return Read-only reference to the triangle quadrature object.
-    */
-    const TriangleQuadratureBase<3>& quadrature_object() const
-    { return *tri_quad_; };
-
-
-    /**
-    * @brief Provides writable access to the triangle quadrature object.
-    * @return Writable reference to the triangle quadrature object.
-    */
-    TriangleQuadratureBase<3>& quadrature_object()
-    { return *tri_quad_; };
-
-
-    /**
-    * @brief Provides read-only access to the source integrator for inspection.
-    * @return Read-only reference to the source integrator object.
-    */
-    const SrcIntegratorBase& src_integrator() const
-    { return *src_integrator_; };
-
-
-    /**
-    * @brief Provides writable access to the source integrator object.
-    * @return Writable reference to the source integrator object.
-    */
-    SrcIntegratorBase& src_integrator()
-    { return *src_integrator_; };
 
 
     /**

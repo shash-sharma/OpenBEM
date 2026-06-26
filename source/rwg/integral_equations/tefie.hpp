@@ -231,8 +231,8 @@ protected:
     VectorHypersingularOp op_T_;
     VectorDoubleLayerPvOp op_K_;
 
-    VectorHypersingularProj<> proj_T_;
-    VectorDoubleLayerProj<> proj_K_;
+    VectorHypersingularProj proj_T_;
+    VectorDoubleLayerProj proj_K_;
 
     OperatorAssembler assembler_ = OperatorAssembler (base::obs_mesh_, base::src_mesh_, base::elem_pairs_);
 

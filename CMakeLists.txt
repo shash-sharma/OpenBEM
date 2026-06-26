@@ -185,6 +185,8 @@ set(SRC_FILES
     ${SRC_DIR}/rwg/operators/single_layer.cpp
     ${SRC_DIR}/rwg/operators/double_layer.cpp
     ${SRC_DIR}/rwg/operators/gram.cpp
+    ${SRC_DIR}/rwg/projectors/single_layer.cpp
+    ${SRC_DIR}/rwg/projectors/double_layer.cpp
     ${SRC_DIR}/rwg/assemblers/indexing.cpp
     ${SRC_DIR}/rwg/assemblers/operator_assembler.cpp
     ${SRC_DIR}/rwg/assemblers/block_assembler.cpp

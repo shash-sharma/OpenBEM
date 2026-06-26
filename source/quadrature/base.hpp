@@ -50,6 +50,9 @@ struct QuadratureData
 
     EigMatNX<Float, dim> points;
     EigRowVec<Float> weights;
+
+    bool converged = false;
+    Index converged_iter = 0;
 };
 
 

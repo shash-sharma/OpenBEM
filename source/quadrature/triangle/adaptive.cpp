@@ -40,26 +40,22 @@ QuadratureData<dim> AdaptiveTriangleQuadrature<dim>::compute(
             "AdaptiveTriangleQuadrature::compute(): invalid or missing eval."
             );
 
-    QuadratureData<dim> qd;
-
-    qd.points.resize(dim, 0);
-    qd.weights.resize(1, 0);
     vals_.resize(1, 0);
     reset_recursion_count();
 
-    // // The adaptive routine requires at least 11 function evals
-    // // As a first step, try iterative Gaussian quadrature with four
-    // // evals to see if that's already enough, to possibly save time.
-    // IterativeGaussTriangleQuadrature<dim> iq;
-    // iq.set_tol(tol_);
-    // iq.set_max_iters(2);
-    // iq.set_starting_order(1);
-    // qd = iq.compute(tri, eval);
-    // if (iq.converged())
-    // {
-    //     vals_ = eval(qd.points);
-    //     return qd;
-    // }
+    // The adaptive routine requires at least 11 function evals
+    // As a first step, try iterative Gaussian quadrature with four
+    // evals to see if that's already enough, to possibly save time.
+    IterativeGaussTriangleQuadrature<dim> iq;
+    iq.set_tol(tol_);
+    iq.set_max_iters(2);
+    iq.set_starting_order(1);
+    QuadratureData<dim> qdi = iq.compute(tri, eval);
+    if (qdi.converged)
+    {
+        vals_ = eval(qdi.points);
+        return qdi;
+    }
 
     int level = 0;
     uint8_t longest_edge = tri.longest_edge_index();
@@ -67,16 +63,17 @@ QuadratureData<dim> AdaptiveTriangleQuadrature<dim>::compute(
     get_5_points(p_main_, tri, longest_edge);
     vals_main_ = eval(p_main_);
 
+    QuadratureData<dim> qd;
     run_recursion(qd, level, tri, eval, longest_edge);
 
     if (level == max_levels_)
     {
-        // converged_ = false;
+        qd.converged = false;
     }
     else
     {
-        // converged_iter_ = level;
-        // converged_ = true;
+        qd.converged = true;
+        qd.converged_iter = level;
     }
 
     return qd;
