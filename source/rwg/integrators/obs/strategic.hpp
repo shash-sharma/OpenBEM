@@ -115,23 +115,30 @@ public:
     {
         settings_ = settings;
 
-        src_hgf_.set(
-            SrcTriangleQuadratureType (settings_.src_quad_order_far), HGF()
-            );
-        src_shgf_.set(
-            SrcTriangleQuadratureType (settings_.src_quad_order_near), SingularitySubtractedHGF()
-            );
-        src_sthgf_.set(
-            SrcTriangleQuadratureType (settings_.src_quad_order_near), SingularitySubtractedTaylorHGF()
-            );
-        src_line_.set(
-            LineQuadratureType (settings_.src_line_order)
-            );
+        ObsTriangleQuadratureType obs_tri_quad;
+        SrcTriangleQuadratureType src_tri_quad;
 
-        hgf_.set(ObsTriangleQuadratureType(settings_.obs_quad_order_far), src_hgf_);
-        shgf_.set(ObsTriangleQuadratureType(settings_.obs_quad_order_near), src_shgf_);
-        sthgf_.set(ObsTriangleQuadratureType(settings_.obs_quad_order_near), src_sthgf_);
-        line_.set(ObsTriangleQuadratureType(settings_.obs_quad_order_far), src_line_);
+        SrcTriangleQuadratureType src_tri_quad_near = src_tri_quad;
+        src_tri_quad_near.set_order(settings_.src_quad_order_near);
+
+        SrcTriangleQuadratureType src_tri_quad_far = src_tri_quad;
+        src_tri_quad_far.set_order(settings_.src_quad_order_far);
+
+        ObsTriangleQuadratureType obs_tri_quad_near = obs_tri_quad;
+        obs_tri_quad_near.set_order(settings_.obs_quad_order_near);
+
+        ObsTriangleQuadratureType obs_tri_quad_far = obs_tri_quad;
+        obs_tri_quad_far.set_order(settings_.obs_quad_order_far);
+
+        src_hgf_.set(src_tri_quad_far, HGF());
+        src_shgf_.set(src_tri_quad_near, SingularitySubtractedHGF());
+        src_sthgf_.set(src_tri_quad_near, SingularitySubtractedTaylorHGF());
+        src_line_.set(LineQuadratureType (settings_.src_line_order));
+
+        hgf_.set(obs_tri_quad_far, src_hgf_);
+        shgf_.set(obs_tri_quad_near, src_shgf_);
+        sthgf_.set(obs_tri_quad_near, src_sthgf_);
+        line_.set(obs_tri_quad_far, src_line_);
 
         return;
     };

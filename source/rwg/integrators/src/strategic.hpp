@@ -101,10 +101,18 @@ public:
     {
         settings_ = settings;
 
+        TriangleQuadratureType tri_quad;
+
+        TriangleQuadratureType tri_quad_near = tri_quad;
+        tri_quad_near.set_order(settings_.tri_order_near);
+
+        TriangleQuadratureType tri_quad_far = tri_quad;
+        tri_quad_far.set_order(settings_.tri_order_far);
+
         src_line_.set(LineQuadratureType(settings_.line_order));
-        src_hgf_.set(TriangleQuadratureType(settings_.tri_order_far), HGF());
-        src_shgf_.set(TriangleQuadratureType(settings_.tri_order_near), SingularitySubtractedHGF());
-        src_sthgf_.set(TriangleQuadratureType(settings_.tri_order_near), SingularitySubtractedTaylorHGF());
+        src_hgf_.set(tri_quad_far, HGF());
+        src_shgf_.set(tri_quad_near, SingularitySubtractedHGF());
+        src_sthgf_.set(tri_quad_near, SingularitySubtractedTaylorHGF());
 
         return;
     };

@@ -79,13 +79,10 @@ public:
     * @param[in] src_integrator - Object for integrating over the source triangle.
     */
     template <typename TriangleQuadratureType, typename SrcIntegratorType>
-    void set(
-        const TriangleQuadratureType& tri_quad,
-        const SrcIntegratorType& src_integrator
-        )
+    void set(const TriangleQuadratureType& tri_quad, const SrcIntegratorType& src_integrator)
     {
-        tri_quad_ = std::make_shared<TriangleQuadratureType> (tri_quad);
-        src_integrator_ = std::make_shared<SrcIntegratorType> (src_integrator);
+        tri_quad_ = std::make_shared<TriangleQuadratureType> (std::move(tri_quad));
+        src_integrator_ = std::make_shared<SrcIntegratorType> (std::move(src_integrator));
         return;
     };
 

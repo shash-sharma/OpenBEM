@@ -164,37 +164,29 @@ void OperatorAssembler::assemble(
     for (Index ii = 0; ii < ops.size(); ++ii)
         prep_matrix(mats[ii], *ops[ii]);
 
-#pragma omp parallel firstprivate(obs_integrator)
+#pragma omp parallel for
+    for (Index ii = 0; ii < elem_pairs_.cols(); ++ii)
     {
+        Triangle<3> obs_tri = obs_mesh_.elem_primitive(elem_pairs_(0, ii));
+        Triangle<3> src_tri = src_mesh_.elem_primitive(elem_pairs_(1, ii));
 
-        std::vector<std::unique_ptr<OperatorBase>> ops;
-        (ops.push_back(std::make_unique<Ops>()), ...);
+        Triangle<3> obs_tri_local;
+        Triangle<2> src_tri_local;
+        OperatorBase::transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
-#pragma omp for
-        for (Index ii = 0; ii < elem_pairs_.cols(); ++ii)
+        const ObsResult obs_result = obs_integrator.integrate(
+            k, obs_tri_local, src_tri_local, true, true, true, true
+            );
+
+        for (Index jj = 0; jj < ops.size(); ++jj)
         {
-            Triangle<3> obs_tri = obs_mesh_.elem_primitive(elem_pairs_(0, ii));
-            Triangle<3> src_tri = src_mesh_.elem_primitive(elem_pairs_(1, ii));
-
-            Triangle<3> obs_tri_local;
-            Triangle<2> src_tri_local;
-            OperatorBase::transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
-
-            const ObsResult obs_result = obs_integrator.integrate(
-                k, obs_tri_local, src_tri_local, true, true, true, true
+            EigMat<Complex> values = ops[jj]->assemble(
+                k, obs_tri_local, src_tri_local.to_3d(), obs_result
                 );
 
-            for (Index jj = 0; jj < ops.size(); ++jj)
-            {
-                EigMat<Complex> values = ops[jj]->assemble(
-                    k, obs_tri_local, src_tri_local.to_3d(), obs_result
-                    );
-
 #pragma omp critical
-                fill_matrix(mats[jj], *ops[jj], elem_pairs_.col(ii), values);
-            }
+            fill_matrix(mats[jj], *ops[jj], elem_pairs_.col(ii), values);
         }
-
     }
 
     for (auto& mat: mats)

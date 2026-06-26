@@ -73,7 +73,7 @@ public:
     template <typename LineQuadratureType>
     void set(const LineQuadratureType& line_quad)
     {
-        line_quad_ = std::make_shared<LineQuadratureType> (line_quad);
+        line_quad_ = std::make_shared<LineQuadratureType> (std::move(line_quad));
         return;
     };
 

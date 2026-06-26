@@ -78,13 +78,10 @@ public:
     * @param[in] kernel - Object for computing the scalar kernel.
     */
     template <typename TriangleQuadratureType, typename ScalarKernelType>
-    void set(
-        const TriangleQuadratureType& tri_quad,
-        const ScalarKernelType& kernel
-        )
+    void set(const TriangleQuadratureType& tri_quad, const ScalarKernelType& kernel)
     {
-        tri_quad_ = std::make_shared<TriangleQuadratureType> (tri_quad);
-        kernel_ = std::make_shared<ScalarKernelType> (kernel);
+        tri_quad_ = std::make_shared<TriangleQuadratureType> (std::move(tri_quad));
+        kernel_ = std::make_shared<ScalarKernelType> (std::move(kernel));
         return;
     };
 

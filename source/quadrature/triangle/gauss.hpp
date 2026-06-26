@@ -57,13 +57,8 @@ public:
     * that objects of this class should be reused within loops, rather than creating a new
     * object at each iteration of a loop.
     */
-    GaussTriangleQuadrature(const uint8_t order = TRI_DEFAULT_ORDER)
-    {
-        EigColVec<Index> orders = EigColVec<Index>::LinSpaced(TRI_MAX_ORDER, 1, TRI_MAX_ORDER);
-        rules_ = QuadratureBase<2>::load_rules(rule_file_, orders);
-        set_order(order);
-        return;
-    };
+    GaussTriangleQuadrature(const uint8_t order = TRI_DEFAULT_ORDER): rules_(&get_rules())
+    { set_order(order); return; };
 
 
     /**
@@ -89,20 +84,29 @@ public:
     * @brief Returns the evaluation points in the reference unit triangle.
     * @return Read-only reference to the reference triangle evaluation points.
     */
-    const EigMatNX<Float, 2>& ref_points() const { return rules_[base::order_ - 1].points; };
+    const EigMatNX<Float, 2>& ref_points() const { return (*rules_)[base::order_ - 1].points; };
 
 
     /**
     * @brief Returns the weights associated with the evaluation points in the reference unit triangle.
     * @return Read-only reference to the reference triangle weights.
     */
-    const EigRowVec<Float>& ref_weights() const { return rules_[base::order_ - 1].weights; };
+    const EigRowVec<Float>& ref_weights() const { return (*rules_)[base::order_ - 1].weights; };
 
 
 protected:
 
-    std::string rule_file_ = "tri_quad_xiao_gimbutas.json";
-    std::vector<QuadratureData<2>> rules_;
+    static const std::vector<QuadratureData<2>>& get_rules()
+    {
+        EigColVec<Index> orders = EigColVec<Index>::LinSpaced(TRI_MAX_ORDER, 1, TRI_MAX_ORDER);
+        static const std::vector<QuadratureData<2>> shared_data = QuadratureBase<2>::load_rules(
+            rule_file_, orders
+            );
+        return shared_data;
+    }
+
+    inline static const std::string rule_file_ = "tri_quad_xiao_gimbutas.json";
+    const std::vector<QuadratureData<2>>* rules_;
 
 };
 

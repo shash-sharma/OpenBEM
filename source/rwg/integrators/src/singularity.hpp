@@ -80,10 +80,7 @@ public:
     * @param[in] kernel - Object for computing the scalar kernel with its singularity subtracted.
     */
     template <typename TriangleQuadratureType, typename ScalarKernelType>
-    void set(
-        const TriangleQuadratureType& tri_quad,
-        const ScalarKernelType& kernel
-        )
+    void set(const TriangleQuadratureType& tri_quad, const ScalarKernelType& kernel)
     { src_quad_.set(tri_quad, kernel); return; }
 
 
