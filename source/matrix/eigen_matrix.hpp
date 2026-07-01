@@ -452,7 +452,7 @@ public:
     * @brief Sets all matrix entries to a given constant value.
     * @param[in] a - Constant value to set.
     */
-    void set_constant(const T& a)
+    void set_constant(const T& a) override
     {
         if constexpr (type == EigenMatrixType::EIGEN_DENSE)
             matrix_.setConstant(a);
