@@ -88,7 +88,7 @@ void PointCloud<dim>::set_polar_data(
     )
 {
     set_block_data(start, stop, num_pts);
-    points_ = GeometryOps<dim>::polar_to_cartesian(points_).colwise() - center;
+    points_ = GeometryOps<dim>::polar_to_cartesian(points_).colwise() + center;
     return;
 }
 
