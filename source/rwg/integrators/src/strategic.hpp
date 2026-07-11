@@ -123,6 +123,8 @@ public:
     * @param[in] k - Complex wavenumber.
     * @param[in] src_tri - Source triangle in 2D space.
     * @param[in] r_obs - Observation points in the local coordinate system of `src_tri`.
+    * @param[in] g_terms - Whether to compute kernel terms (optional).
+    * @param[in] grad_g_terms - Whether to compute kernel gradient terms (optional).
     * @return Integration result.
     * @details
     * If `g_terms` is true, the function computes

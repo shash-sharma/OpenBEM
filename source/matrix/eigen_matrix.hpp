@@ -997,7 +997,7 @@ public:
     * right-hand side matrix.
     * @param[out] x - Solution.
     * @param[in] b - Right-hand side matrix, must have the same number of rows as this matrix.
-    * @param[in] type - Type of iterative solver to use (optional).
+    * @param[in] solver_type - Type of iterative solver to use (optional).
     * @param[in] tol - Tolerance for convergence (optional).
     * @param[in] restart - Restart iteration at which the Krylov subspace is discarded (optional).
     */
@@ -1318,6 +1318,10 @@ namespace Eigen
 namespace internal
 {
 
+/**
+* @brief Defines sparse matrix traits for the custom matrix multiply shell matrix.
+* @tparam MatrixType - Underlying matrix type associated with the shell matrix.
+*/
 template <typename MatrixType>
 struct traits<bem::MatmulMatrix<MatrixType>>:
         public Eigen::internal::traits<Eigen::SparseMatrix<bem::Complex>> {};
@@ -1328,6 +1332,10 @@ struct traits<bem::MatmulMatrix<MatrixType>>:
 namespace bem
 {
 
+/**
+* @brief Defines a shell matrix for custom matrix products.
+* @tparam MatrixType - Underlying matrix type associated with the shell matrix.
+*/
 template <typename MatrixType>
 class MatmulMatrix: public Eigen::EigenBase<MatmulMatrix<MatrixType>>
 {
@@ -1348,6 +1356,12 @@ public:
     Index rows() const { return num_rows_; };
     Index cols() const { return num_cols_; };
 
+    /**
+    * @brief Wraps the custom matrix product.
+    * @tparam Rhs - Type of the matrix with which to multiply.
+    * @param[in] x - Matrix with which to multiply.
+    * @return Product.
+    */
     template <typename Rhs>
     Eigen::Product<MatmulMatrix<MatrixType>, Rhs, Eigen::AliasFreeProduct> operator*(
         const Eigen::MatrixBase<Rhs>& x
@@ -1364,6 +1378,12 @@ public:
 
     using Func = std::function<void (MatrixType&, const MatrixType&)>;
 
+    /**
+    * @brief Attaches external custom data to the shell object.
+    * @param[in] func - Custom function describing the matrix multiplication.
+    * @param[in] num_rows - Number of matrix rows.
+    * @param[in] num_cols - Number of matrix columns.
+    */
     void attach(const Func& func, Index num_rows, Index num_cols)
     {
         func_ = &func;
@@ -1372,6 +1392,10 @@ public:
         return;
     };
 
+    /**
+    * @brief Returns the attached custom matrix multiplication function.
+    * @return Custom function describing the matrix multiplication.
+    */
     const Func& func() const { return *func_; };
 
 
@@ -1390,6 +1414,11 @@ namespace Eigen
 namespace internal
 {
 
+/**
+* @brief Defines the underlying implementation of custom matrix products.
+* @tparam Rhs - Type of the matrix with which to multiply.
+* @tparam MatrixType - Type of the shell matrix.
+*/
 template <typename Rhs, typename MatrixType>
 struct generic_product_impl<bem::MatmulMatrix<MatrixType>, Rhs, SparseShape, DenseShape, GemvProduct>:
     generic_product_impl_base<
@@ -1401,6 +1430,13 @@ struct generic_product_impl<bem::MatmulMatrix<MatrixType>, Rhs, SparseShape, Den
 
     typedef typename Product<bem::MatmulMatrix<MatrixType>, Rhs>::Scalar Scalar;
 
+    /**
+    * @brief Defines the custom matrix product implementation.
+    * @param[out] dst - Destination to place the computed matrix product.
+    * @param[in] lhs - Custom matrix to multiply.
+    * @param[in] rhs - Matrix with which to multiply.
+    * @param[in] alpha - Scaling (unused).
+    */
     template <typename Dest>
     static void scaleAndAddTo(
         Dest& dst,

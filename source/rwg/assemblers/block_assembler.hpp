@@ -74,8 +74,8 @@ public:
     * @brief Assembles operator matrices for given operator objects.
     * @param[out] mats - Matrices to store the assembled operator coefficients, with columns corresponding
     * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
-    * @param[in] ops - Operator objects that compute the coefficients to assemble into `mat`.
     * @param[in] k - Complex wavenumber.
+    * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
     template <typename MatrixType, typename ObsIntegratorType = ObsStrategic, typename... Ops>
     void assemble(
@@ -101,6 +101,7 @@ public:
     /**
     * @brief Fills operator values in the matrix.
     * @param[out] mat - Matrix to store the assembled operator coefficients.
+    * @param[in] op - Operator object that computes the coefficients to be assembled into `mat`.
     * @param[in] elem_pair - Observation (first entry) and source (second entry) triangle index pair.
     * @param[in] values - Operator values for each pair of observation and source degrees of freedom.
     */
