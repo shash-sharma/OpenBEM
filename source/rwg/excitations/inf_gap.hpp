@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "types.hpp"
+#include "rwg/function_space.hpp"
 #include "rwg/excitations/base.hpp"
 
 
@@ -49,7 +50,7 @@ const Float INF_GAP_DEFAULT_TOL = 1.0e-6;
 /**
 * @brief Class for setting infinitesimal gap excitation coefficients for RWG-based BEM systems.
 */
-class InfinitesimalGap: public ExcitationBase<3>
+class InfinitesimalGap: public ExcitationBase
 {
 public:
 
@@ -91,6 +92,13 @@ public:
 
 
     /**
+    * @brief Returns the degrees of freedom for the testing function space.
+    * @return Observation degrees of freedom.
+    */
+    OperatorDof obs_dof() const override { return OperatorDof::EDGE; };
+
+
+    /**
     * @brief Returns the number of excitations (right-hand sides) to be generated.
     * @return Number of excitations (right-hand sides).
     */
@@ -112,7 +120,7 @@ public:
     * half-edge so that there is only one triangle associated with the half-RWG, then the physical
     * interpretation of such an excitation is left up to the user.
     */
-    EigMatNX<Complex, 3> compute(const Complex k, const Triangle<3>& obs_tri) override;
+    EigMat<Complex> compute(const Complex k, const Triangle<3>& obs_tri) override;
 
 
 private:

@@ -25,7 +25,7 @@
 #include "geometry/point_cloud.hpp"
 
 #include "matrix/base.hpp"
-#include "matrix/eigen_dense.hpp"
+#include "matrix/eigen_matrix.hpp"
 
 #include "rwg/integral_equations/base.hpp"
 
@@ -39,8 +39,9 @@
 
 #include "rwg/excitations/base.hpp"
 
-#include "rwg/assemblers/operator_matrix.hpp"
-#include "rwg/assemblers/excitation_matrix.hpp"
+#include "rwg/assemblers/operator_assembler.hpp"
+#include "rwg/assemblers/excitation_assembler.hpp"
+#include "rwg/assemblers/projector_assembler.hpp"
 
 
 namespace bem::rwg
@@ -55,7 +56,7 @@ namespace bem::rwg
 * @brief Class defining the RWG-based AEFIE.
 * @tparam MatrixType - Matrix type used for all operators, must derive from `MatrixBase<Complex>`.
 */
-template <typename MatrixType = EigenDenseMatrix<Complex>>
+template <typename MatrixType = EigenMatrix<Complex>>
 class Aefie: public IntegralEquationBase<MatrixType>
 {
 
@@ -71,9 +72,9 @@ public:
     * @param[in] op_K - Object for the vector double-layer potential operator.
     */
     void set_operators(
-        const VectorSingleLayerOp<>& op_La,
-        const ScalarSingleLayerOp<>& op_Lp,
-        const VectorDoubleLayerPvOp<>& op_K
+        const VectorSingleLayerOp& op_La,
+        const ScalarSingleLayerOp& op_Lp,
+        const VectorDoubleLayerPvOp& op_K
         )
     {
         op_La_ = op_La;
@@ -95,7 +96,7 @@ public:
         )
     {
         MatrixType La;
-        assm_edge_.assemble(La, op_La_, material.k(f));
+        assembler_.assemble(La, op_La_, material.k(f));
         La.scale(-J * two_pi * f * material.mu());
         return La;
     };
@@ -112,10 +113,12 @@ public:
         const Material& material
         )
     {
-        MatrixType Dt = div_matrix(f, material);
+        MatrixType Dt;
+        Dt.set_transpose(div_matrix(f, material));
+
         MatrixType Lp = phi_matrix(f, material);
         MatrixType DtLp;
-        DtLp.set_mat_mul(Dt, Lp);
+        DtLp.set_matmul(Dt, Lp);
         return DtLp;
     };
 
@@ -134,7 +137,7 @@ public:
         Complex k = material.k(f);
 
         MatrixType K;
-        assm_edge_.assemble(K, op_K_, k);
+        assembler_.assemble(K, op_K_, k);
 
         K.scale(-one);
         K.add_ax(id_matrix(), -half);
@@ -149,9 +152,9 @@ public:
     */
     MatrixType id_matrix()
     {
-        RotRwgRwgOp<> op_Ir;
+        RotVectorIdentityOp op_Ir;
         MatrixType Ir;
-        assm_edge_.assemble(Ir, op_Ir, 0);
+        assembler_.assemble(Ir, op_Ir, 0);
         if (base::flip_normals_)
             Ir.scale(-one);
         return Ir;
@@ -170,7 +173,7 @@ public:
         )
     {
         MatrixType Lp;
-        assm_face_.assemble(Lp, op_Lp_, material.k(f));
+        assembler_.assemble(Lp, op_Lp_, material.k(f));
         Lp.scale(one / material.eps_eff(f));
         return Lp;
     };
@@ -187,11 +190,10 @@ public:
         const Material& material
         )
     {
-        DivRwgOp op_D;
-        MatrixType D, Dt;
-        assm_div_.assemble(D, op_D, 0);
-        Dt.set_transpose(D);
-        return Dt;
+        DivergenceOp op_D;
+        MatrixType D;
+        assembler_.assemble(D, op_D, 0);
+        return D;
     };
 
 
@@ -205,7 +207,7 @@ public:
     MatrixType exc_matrix(
         const Float f,
         const Material& material,
-        ExcitationBase<3>& exc
+        ExcitationBase& exc
         )
     {
         std::vector<Index> obs_elems_vec (base::elem_pairs_.cols());
@@ -215,7 +217,7 @@ public:
         obs_elems_vec.erase(std::unique(obs_elems_vec.begin(), obs_elems_vec.end()), obs_elems_vec.end());
 
         EigRowVec<Index> obs_elems = EigRowVec<Index>::Map(&obs_elems_vec[0], obs_elems_vec.size());
-        EdgeExcitationAssembler exc_assembler (base::obs_mesh_, obs_elems);
+        ExcitationAssembler exc_assembler (base::obs_mesh_, obs_elems);
 
         Complex k = material.k(f);
         MatrixType inc (base::obs_mesh_.num_edges(), exc.num_excitations());
@@ -241,7 +243,7 @@ public:
         Complex k = material.k(f);
         Complex mu = material.mu();
 
-        EdgeProjectorAssembler<3> edge_proj_assembler (points, base::src_mesh_);
+        ProjectorAssembler<3> edge_proj_assembler (points, base::src_mesh_);
 
         MatrixType La;
         edge_proj_assembler.assemble(La, proj_La_, k);
@@ -267,7 +269,7 @@ public:
         Complex k = material.k(f);
         Complex eps_eff = material.eps_eff(f);
 
-        FaceProjectorAssembler<3> face_proj_assembler (points, base::src_mesh_);
+        ProjectorAssembler<3> face_proj_assembler (points, base::src_mesh_);
 
         MatrixType Lp;
         face_proj_assembler.assemble(Lp, proj_Lp_, k);
@@ -292,7 +294,7 @@ public:
     {
         Complex k = material.k(f);
 
-        EdgeProjectorAssembler<3> proj_assembler (points, base::src_mesh_);
+        ProjectorAssembler<3> proj_assembler (points, base::src_mesh_);
 
         MatrixType K;
         proj_assembler.assemble(K, proj_K_, k);
@@ -305,17 +307,15 @@ public:
 
 protected:
 
-    VectorSingleLayerOp<> op_La_;
-    ScalarSingleLayerOp<> op_Lp_;
-    VectorDoubleLayerPvOp<> op_K_;
+    VectorSingleLayerOp op_La_;
+    ScalarSingleLayerOp op_Lp_;
+    VectorDoubleLayerPvOp op_K_;
 
-    VectorSingleLayerProj<> proj_La_;
-    GradScalarSingleLayerProj<> proj_Lp_;
-    VectorDoubleLayerProj<> proj_K_;
+    VectorSingleLayerProj proj_La_;
+    GradScalarSingleLayerProj proj_Lp_;
+    VectorDoubleLayerProj proj_K_;
 
-    EdgeOperatorAssembler assm_edge_ = EdgeOperatorAssembler(base::obs_mesh_, base::src_mesh_, base::elem_pairs_);
-    FaceOperatorAssembler assm_face_ = FaceOperatorAssembler(base::obs_mesh_, base::src_mesh_, base::elem_pairs_);
-    FaceEdgeOperatorAssembler assm_div_ =  FaceEdgeOperatorAssembler(base::obs_mesh_, base::src_mesh_, base::elem_pairs_);
+    OperatorAssembler assembler_ = OperatorAssembler (base::obs_mesh_, base::src_mesh_, base::elem_pairs_);
 
 };
 

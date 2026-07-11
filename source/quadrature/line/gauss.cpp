@@ -33,18 +33,13 @@ void GaussLineQuadrature<dim>::set_order(const uint8_t order)
             "GaussLineQuadrature::set_order(): order must be less than or equal to "
             + std::to_string(LINE_MAX_ORDER) + "."
             );
-
     base::order_ = order;
-    base::points_.resize(dim, rules_[order - 1].num_nodes);
-    base::weights_.resize(1, rules_[order - 1].num_nodes);
-    base::points_weights_computed_ = false;
-
     return;
 };
 
 
 template <uint8_t dim>
-void GaussLineQuadrature<dim>::compute_points_weights(
+QuadratureData<dim> GaussLineQuadrature<dim>::compute(
     ConstEigRef<EigColVecN<Float, dim>> p1,
     ConstEigRef<EigColVecN<Float, dim>> p2,
     std::function<EigRowVec<Complex> (ConstEigRef<EigMatNX<Float, dim>>)> eval
@@ -53,11 +48,11 @@ void GaussLineQuadrature<dim>::compute_points_weights(
     EigColVecN<Float, dim> p = p2 - p1;
     Float p_len = p.norm();
 
-    base::points_.noalias() = (p * ref_points()).colwise() + p1;
-    base::weights_.noalias() = ref_weights() * p_len;
-    base::points_weights_computed_ = true;
+    QuadratureData<dim> qd;
+    qd.points = (p * ref_points()).colwise() + p1;
+    qd.weights = ref_weights() * p_len;
 
-    return;
+    return qd;
 };
 
 

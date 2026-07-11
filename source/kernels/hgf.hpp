@@ -35,7 +35,6 @@ namespace bem
 */
 class HGF: public ScalarKernelBase<3>
 {
-
 public:
 
     /**
@@ -56,7 +55,7 @@ public:
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
         ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
-        ) const;
+        ) const override;
 
 
     /**
@@ -79,7 +78,7 @@ public:
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
         ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
-        ) const;
+        ) const override;
 
 };
 
@@ -110,7 +109,7 @@ public:
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
         ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
-        ) const;
+        ) const override;
 
 
     /**
@@ -136,7 +135,7 @@ public:
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
         ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
-        ) const;
+        ) const override;
 
 };
 
@@ -173,7 +172,7 @@ public:
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
         ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
-        ) const;
+        ) const override;
 
 
     /**
@@ -207,7 +206,7 @@ public:
         ConstEigRef<EigColVecN<Float, 3>> r_obs,
         ConstEigRef<EigMatNX<Float, 3>> r_src,
         const Complex k
-        ) const;
+        ) const override;
 
 };
 

@@ -25,6 +25,7 @@
 #include <fstream>
 #include <iomanip>
 #include <string>
+#include <memory>
 
 #include "types.hpp"
 
@@ -54,8 +55,8 @@ public:
 
 
     /**
-    * @brief Returns the total number of rows in the matrix.
-    * @return Number of rows.
+    * @brief Returns the total number of columns in the matrix.
+    * @return Number of columns.
     */
     virtual Index num_cols() const = 0;
 
@@ -96,7 +97,7 @@ public:
     * @brief Computes \f$ \mathbf{M} = \mathbf{M} + a\mathbf{X} \f$ where \f$ \mathbf{M} \f$ is this matrix,
     * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ is a matrix.
     * @param[in] x - Matrix to scale and add, must have the same dimensions as this matrix.
-    * @param[in] a - Scalar which which to scale `x`.
+    * @param[in] a - Scalar with which to scale `x`.
     */
     virtual void add_ax(const MatrixBase<T>& x, const T& a = T(1)) = 0;
 
@@ -112,30 +113,6 @@ public:
     * @brief Sets all matrix entries to zero.
     */
     virtual void set_zero() = 0;
-
-
-    /**
-    * @brief Returns a read-only pointer to the underlying raw data.
-    * @return Read-only pointer to the raw data.
-    */
-    virtual const T* data() const = 0;
-
-
-    /**
-    * @brief Returns a writable pointer to the underlying raw data - use with care.
-    * @return Writable pointer to the raw data.
-    */
-    virtual T* data() = 0;
-
-
-    /**
-    * @brief Solves \f$ \mathbf{M}\mathbf{X} = \mathbf{B} \f$ for matrix \f$ \mathbf{X} \f$ with a
-    * direct solver, where \f$ \mathbf{M} \f$ is this matrix, and \f$ \mathbf{B} \f$ is a given
-    * right-hand side matrix.
-    * @param[out] x - Solution.
-    * @param[in] b - Right-hand side matrix, must have the same number of rows as this matrix.
-    */
-    virtual void mat_solve(MatrixBase<T>& x, const MatrixBase<T>& b) = 0;
 
 
     /**
@@ -176,6 +153,210 @@ public:
     * @brief Assembles cached data into the matrix.
     */
     virtual void assemble() {};
+
+
+    /**
+    * @brief Returns a read-only pointer to the underlying raw data.
+    * @return Read-only pointer to the raw data.
+    */
+    virtual const T* data() const
+    { throw std::runtime_error("MatrixBase::data(): Not implemented."); };
+
+
+    /**
+    * @brief Returns a writable pointer to the underlying raw data - use with care.
+    * @return Writable pointer to the raw data.
+    */
+    virtual T* data()
+    { throw std::runtime_error("MatrixBase::data(): Not implemented."); };
+
+
+    /**
+    * @brief Returns a unique pointer to a newly constructed object of the derived type.
+    * @return Unique pointer to the new object.
+    */
+    virtual std::unique_ptr<MatrixBase<T>> clone() const
+    { throw std::runtime_error("MatrixBase::clone(): Not implemented."); };
+
+
+    /**
+    * @brief Sets all matrix entries to a given constant value.
+    * @param[in] a - Constant value to set.
+    */
+    virtual void set_constant(const T& a)
+    { throw std::runtime_error("MatrixBase::set_constant(): Not implemented."); };
+
+
+    /**
+    * @brief Retrieves matrix values on the diagonal.
+    * @param[out] x - Diagonal matrix.
+    */
+    virtual void get_diagonal(MatrixBase<T>& x) const
+    { throw std::runtime_error("MatrixBase::get_diagonal(): Not implemented."); };
+
+
+    /**
+    * @brief Computes \f$ \mathbf{M} = a\mathbf{X}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$ is this matrix,
+    * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
+    * @param[in] x - First matrix to multiply, must have the same number of columns as `y` has rows.
+    * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
+    * @param[in] a - Scalar with which to scale the product of `x` and `y`.
+    */
+    virtual void set_matmul(
+        const MatrixBase<T>& x,
+        const MatrixBase<T>& y,
+        const T& a = T(1)
+        )
+    { throw std::runtime_error("MatrixBase::set_matmul(): Not implemented."); };
+
+
+    /**
+    * @brief Computes \f$ \mathbf{M} = \mathbf{M} + a\mathbf{X}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$
+    * is this matrix, \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
+    * @param[in] x - First matrix to multiply, must have the same number of columns as `y` has rows.
+    * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
+    * @param[in] a - Scalar with which to scale the product of `x` and `y`.
+    */
+    virtual void add_matmul(
+        const MatrixBase<T>& x,
+        const MatrixBase<T>& y,
+        const T& a = T(1)
+        )
+    { throw std::runtime_error("MatrixBase::add_matmul(): Not implemented."); };
+
+
+    /**
+    * @brief Computes \f$ \mathbf{X} = a\mathbf{M}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$ is this matrix,
+    * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
+    * @param[out] x - Multiplication result.
+    * @param[in] y - Matrix with which to multiply, must have the same number of rows as this matrix.
+    * @param[in] a - Scalar with which to scale the product.
+    */
+    virtual void matmul(
+        MatrixBase<T>& x,
+        const MatrixBase<T>& y,
+        const T& a = T(1)
+        ) const
+    { throw std::runtime_error("MatrixBase::matmul(): Not implemented."); };
+
+
+    /**
+    * @brief Computes \f$ \mathbf{X} += a\mathbf{M}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$ is this matrix,
+    * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
+    * @param[out] x - Multiplication result.
+    * @param[in] y - Matrix with which to multiply, must have the same number of rows as this matrix.
+    * @param[in] a - Scalar with which to scale the product.
+    */
+    virtual void matmuladd(
+        MatrixBase<T>& x,
+        const MatrixBase<T>& y,
+        const T& a = T(1)
+        ) const
+    { throw std::runtime_error("MatrixBase::matmul(): Not implemented."); };
+
+
+    /**
+    * @brief Sets a block of this matrix to the values of a given matrix, starting at a given position.
+    * @param[in] x - Matrix to insert.
+    * @param[in] row_start - Starting row index for the block.
+    * @param[in] col_start - Starting column index for the block.
+    * @param[in] a - Scalar to multiply the values of `x` before inserting (optional).
+    */
+    virtual void set_block(
+        const MatrixBase<T>& x,
+        Index row_start,
+        Index col_start,
+        const T& a = T(1)
+        )
+    { throw std::runtime_error("MatrixBase::set_block(): Not implemented."); };
+
+
+    /**
+    * @brief Adds a block to this matrix from the values of a given matrix, starting at a given position.
+    * @param[in] x - Matrix whose values should be added to a block of this matrix.
+    * @param[in] row_start - Starting row index for the block.
+    * @param[in] col_start - Starting column index for the block.
+    * @param[in] a - Scalar to multiply the values of `x` before adding (optional).
+    */
+    virtual void add_block(
+        const MatrixBase<T>& x,
+        Index row_start,
+        Index col_start,
+        const T& a = T(1)
+        )
+    { throw std::runtime_error("MatrixBase::add_block(): Not implemented."); };
+
+
+    /**
+    * @brief Scales a block of this matrix.
+    * @param[in] row_start - Starting row index for the block.
+    * @param[in] col_start - Starting column index for the block.
+    * @param[in] b_rows - Number of rows in the block to scale.
+    * @param[in] b_cols - Number of columns in the block to scale.
+    * @param[in] a - Scaling factor.
+    */
+    virtual void scale_block(
+        Index row_start,
+        Index col_start,
+        Index b_rows,
+        Index b_cols,
+        const T& a
+        )
+    { throw std::runtime_error("MatrixBase::scale_block(): Not implemented."); };
+
+
+    /**
+    * @brief Retrieves a block of values from this matrix.
+    * @param[out] x - Matrix to store the retrieved block of values.
+    * @param[in] row_start - Starting row index for the block.
+    * @param[in] col_start - Starting column index for the block.
+    * @param[in] b_rows - Number of rows in the block to retrieve.
+    * @param[in] b_cols - Number of columns in the block to retrieve.
+    */
+    virtual void get_block(
+        MatrixBase<T>& x,
+        Index row_start,
+        Index col_start,
+        Index b_rows,
+        Index b_cols
+        ) const
+    { throw std::runtime_error("MatrixBase::get_block(): Not implemented."); };
+
+
+    /**
+    * @brief Copies a block of values from this matrix to the corresponding block of another.
+    * @param[out] x - Matrix to store the retrieved values in its corresponding block.
+    * @param[in] row_start - Starting row index for the block.
+    * @param[in] col_start - Starting column index for the block.
+    * @param[in] b_rows - Number of rows in the block to retrieve.
+    * @param[in] b_cols - Number of columns in the block to retrieve.
+    */
+    virtual void copy_block(
+        MatrixBase<T>& x,
+        Index row_start,
+        Index col_start,
+        Index b_rows,
+        Index b_cols
+        ) const
+    { throw std::runtime_error("MatrixBase::copy_block(): Not implemented."); };
+
+
+    /**
+    * @brief Computes and stores a factorization of the matrix.
+    */
+    virtual void factorize()
+    { throw std::runtime_error("MatrixBase::factorize(): Not implemented."); };
+
+
+    /**
+    * @brief Solves \f$ \mathbf{M}\mathbf{X} = \mathbf{B} \f$ for matrix \f$ \mathbf{X} \f$ with a
+    * direct solver, where \f$ \mathbf{M} \f$ is this matrix, and \f$ \mathbf{B} \f$ is a given
+    * right-hand side matrix.
+    * @param[out] x - Solution.
+    * @param[in] b - Right-hand side matrix, must have the same number of rows as this matrix.
+    */
+    virtual void mat_solve(MatrixBase<T>& x, const MatrixBase<T>& b) const
+    { throw std::runtime_error("MatrixBase::mat_solve(): Not implemented."); };
 
 
     /**

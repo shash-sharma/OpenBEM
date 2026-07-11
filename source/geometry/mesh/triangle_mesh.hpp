@@ -120,25 +120,6 @@ public:
 
 
     /**
-    * @brief Returns the vertex indices of a specific edge.
-    * @param[in] idx - Index of the edge.
-    * @return Vertex indices of the specified edge.
-    */
-    EigColVecN<Index, 2> edges(Index idx) const
-    { return edges_.col(idx); };
-
-
-    /**
-    * @brief Returns the index of a specific vertex of a specific edge.
-    * @param[in] vert - Vertex index (0 or 1).
-    * @param[in] edge - Index of the edge.
-    * @return Index of the specified vertex of the specified edge.
-    */
-    Index edges(uint8_t vert, Index edge) const
-    { return edges_(vert, edge); };
-
-
-    /**
     * @brief Returns the edge indices of each element in the mesh.
     * @return Element-wise triplets of edge indices.
     */
@@ -147,22 +128,11 @@ public:
 
 
     /**
-    * @brief Returns the edge indices of a specific element.
-    * @param[in] idx - Index of the element.
-    * @return Edge indices of the specified element.
+    * @brief Returns the element indices of each edge in the mesh.
+    * @return Edge-wise pairs of element indices ordered as (plus, minus) polarity.
     */
-    EigColVecN<Index, 3> elem_edges(Index idx) const
-    { return elem_edges_.col(idx); };
-
-
-    /**
-    * @brief Returns the index of a specific edge of a specific element.
-    * @param[in] edge - Edge index (0, 1, or 2).
-    * @param[in] elem - Index of the element.
-    * @return Index of the specified edge of the specified element.
-    */
-    Index elem_edges(uint8_t edge, Index elem) const
-    { return elem_edges_(edge, elem); };
+    const EigMatNX<Index, 2>& edge_elems() const
+    { return edge_elems_; };
 
 
     /**
@@ -171,25 +141,6 @@ public:
     */
     const EigMatNX<Float, 3>& elem_edge_polarities() const
     { return elem_edge_polarities_; };
-
-
-    /**
-    * @brief Returns the polarities of the edges of a specific element.
-    * @param[in] idx - Index of the element.
-    * @return Polarities of the edges of the specified element.
-    */
-    EigColVecN<Float, 3> elem_edge_polarities(Index idx) const
-    { return elem_edge_polarities_.col(idx); };
-
-
-    /**
-    * @brief Returns the polarity of a specific edge of a specific element.
-    * @param[in] edge - Edge index (0, 1, or 2).
-    * @param[in] elem - Index of the element.
-    * @return Polarity of the specified edge of the specified element.
-    */
-    Float elem_edge_polarities(uint8_t edge, Index elem) const
-    { return elem_edge_polarities_(edge, elem); };
 
 
     /**
@@ -281,7 +232,7 @@ public:
     {
         return Triangle<dim> (
             base::verts()(Eigen::placeholders::all, base::elems(elem)),
-            elem_edge_polarities(elem)
+            elem_edge_polarities().col(elem)
             );
     };
 
@@ -315,6 +266,8 @@ protected:
     EigMatNX<Index, 2> edges_;
     EigMatNX<Index, 3> elem_edges_;
     EigMatNX<Float, 3> elem_edge_polarities_;
+
+    EigMatNX<Index, 2> edge_elems_;
 
     EigRowVec<Index> boundary_elems_;
     EigRowVec<Index> junction_elems_;

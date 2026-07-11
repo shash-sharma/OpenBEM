@@ -18,14 +18,13 @@
 #ifndef BEM_RWG_OPS_DOUBLE_LAYER_H
 #define BEM_RWG_OPS_DOUBLE_LAYER_H
 
-#include <type_traits>
+#include <memory>
 
 #include "types.hpp"
 #include "constants.hpp"
 #include "geometry/primitives/triangle.hpp"
-
+#include "rwg/function_space.hpp"
 #include "rwg/operators/base.hpp"
-
 #include "rwg/integrators/obs/base.hpp"
 #include "rwg/integrators/obs/strategic.hpp"
 
@@ -40,7 +39,6 @@ namespace bem::rwg
 
 /**
 * @brief Class for computing the vector double-layer potential operator in a principal value sense.
-* @tparam ObsIntegratorType - Type of the observation triangle integrator, must derive from `ObsIntegratorBase`.
 * @details
 * Computes
 * \f[
@@ -53,23 +51,32 @@ namespace bem::rwg
 * Rows of the output matrix correspond to observation edges, and columns
 * correspond to source edges.
 */
-template <typename ObsIntegratorType = ObsStrategic<>>
-class VectorDoubleLayerPvOp: public OperatorBase<3, 3>
+class VectorDoubleLayerPvOp: public OperatorBase
 {
-
-    static_assert(
-        std::is_base_of<ObsIntegratorBase, ObsIntegratorType>::value,
-        "VectorDoubleLayerPvOp: `ObsIntegratorType` must derive from `ObsIntegratorBase`"
-        );
-
 public:
 
     /**
     * @brief Constructs a `VectorDoubleLayerPvOp` object with a specified integration object.
+    * @tparam ObsIntegratorType - Type of the observation triangle integrator, derived from `ObsIntegratorBase`.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    VectorDoubleLayerPvOp(const ObsIntegratorType obs_integrator = ObsStrategic<>()):
-        obs_integrator_(obs_integrator) {};
+    template <typename ObsIntegratorType = ObsStrategic>
+    VectorDoubleLayerPvOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
+        obs_integrator_(std::make_shared<ObsIntegratorType> (obs_integrator)) {};
+
+
+    /**
+    * @brief Returns the degrees of freedom for the testing function space.
+    * @return Observation degrees of freedom.
+    */
+    OperatorDof obs_dof() const override { return OperatorDof::EDGE; };
+
+
+    /**
+    * @brief Returns the degrees of freedom for the expansion function space.
+    * @return Source degrees of freedom.
+    */
+    OperatorDof src_dof() const override { return OperatorDof::EDGE; };
 
 
     /**
@@ -82,11 +89,11 @@ public:
     * Rows of the output matrix correspond to observation degrees of freedom, and columns
     * correspond to source degrees of freedom.
     */
-    EigMatMN<Complex, 3, 3> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
-        ) override;
+        ) const override;
 
 
     /**
@@ -97,24 +104,31 @@ public:
     * @param[in] obs_result - Integration result.
     * @return Operator values for each pair of observation and source triangle edges.
     */
-    EigMatMN<Complex, 3, 3> assemble(
+    EigMat<Complex> assemble(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri,
         const ObsResult& obs_result
-        );
+        ) const override;
+
+
+    /**
+    * @brief Returns a unique pointer to a deep copy of this object.
+    * @return Unique pointer to the new object.
+    */
+    std::unique_ptr<OperatorBase> clone() const override
+    { return std::make_unique<VectorDoubleLayerPvOp> (*this); };
 
 
 protected:
 
-    ObsIntegratorType obs_integrator_;
+    std::shared_ptr<ObsIntegratorBase> obs_integrator_;
 
 };
 
 
 /**
 * @brief Class for computing the rotationally-tested vector double-layer potential operator in a principal value sense.
-* @tparam ObsIntegratorType - Type of the observation triangle integrator, must derive from `ObsIntegratorBase`.
 * @details
 * Computes
 * \f[
@@ -127,23 +141,32 @@ protected:
 * Rows of the output matrix correspond to observation edges, and columns
 * correspond to source edges.
 */
-template <typename ObsIntegratorType = ObsStrategic<>>
-class RotVectorDoubleLayerPvOp: public OperatorBase<3, 3>
+class RotVectorDoubleLayerPvOp: public OperatorBase
 {
-
-    static_assert(
-        std::is_base_of<ObsIntegratorBase, ObsIntegratorType>::value,
-        "RotVectorDoubleLayerPvOp: `ObsIntegratorType` must derive from `ObsIntegratorBase`"
-        );
-
 public:
 
     /**
     * @brief Constructs a `RotVectorDoubleLayerPvOp` object with a specified integration object.
+    * @tparam ObsIntegratorType - Type of the observation triangle integrator, derived from `ObsIntegratorBase`.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    RotVectorDoubleLayerPvOp(const ObsIntegratorType obs_integrator = ObsStrategic<>()):
-        obs_integrator_(obs_integrator) {};
+    template <typename ObsIntegratorType = ObsStrategic>
+    RotVectorDoubleLayerPvOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
+        obs_integrator_(std::make_shared<ObsIntegratorType> (obs_integrator)) {};
+
+
+    /**
+    * @brief Returns the degrees of freedom for the testing function space.
+    * @return Observation degrees of freedom.
+    */
+    OperatorDof obs_dof() const override { return OperatorDof::EDGE; };
+
+
+    /**
+    * @brief Returns the degrees of freedom for the expansion function space.
+    * @return Source degrees of freedom.
+    */
+    OperatorDof src_dof() const override { return OperatorDof::EDGE; };
 
 
     /**
@@ -156,11 +179,11 @@ public:
     * Rows of the output matrix correspond to observation degrees of freedom, and columns
     * correspond to source degrees of freedom.
     */
-    EigMatMN<Complex, 3, 3> compute(
+    EigMat<Complex> compute(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri
-        ) override;
+        ) const override;
 
 
     /**
@@ -171,17 +194,25 @@ public:
     * @param[in] obs_result - Integration result.
     * @return Operator values for each pair of observation and source triangle edges.
     */
-    EigMatMN<Complex, 3, 3> assemble(
+    EigMat<Complex> assemble(
         const Complex k,
         const Triangle<3>& obs_tri,
         const Triangle<3>& src_tri,
         const ObsResult& obs_result
-        );
+        ) const override;
+
+
+    /**
+    * @brief Returns a unique pointer to a deep copy of this object.
+    * @return Unique pointer to the new object.
+    */
+    std::unique_ptr<OperatorBase> clone() const override
+    { return std::make_unique<RotVectorDoubleLayerPvOp> (*this); };
 
 
 protected:
 
-    ObsIntegratorType obs_integrator_;
+    std::shared_ptr<ObsIntegratorBase> obs_integrator_;
 
 };
 
@@ -191,6 +222,8 @@ protected:
 
 }
 
-#include "rwg/operators/double_layer.tpp"
+#ifndef BEM_LINKED
+#include "rwg/operators/double_layer.cpp"
+#endif
 
 #endif

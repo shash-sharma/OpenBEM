@@ -35,30 +35,28 @@ void GaussTriangleQuadrature<dim>::set_order(const uint8_t order)
             "GaussTriangleQuadrature::set_order(): order must be less than or equal to "
             + std::to_string(TRI_MAX_ORDER) + "."
             );
-
     base::order_ = order;
-    base::points_.resize(dim, rules_[order - 1].num_nodes);
-    base::weights_.resize(1, rules_[order - 1].num_nodes);
-    base::points_weights_computed_ = false;
     return;
 };
 
 
 template <uint8_t dim>
-void GaussTriangleQuadrature<dim>::compute_points_weights(
+QuadratureData<dim> GaussTriangleQuadrature<dim>::compute(
     const Triangle<dim>& tri,
     std::function<EigRowVec<Complex> (ConstEigRef<EigMatNX<Float, dim>>)> eval
     )
 {
-    base::points_.noalias() =
+    QuadratureData<dim> qd;
+
+    qd.points =
         tri.v().rightCols(2) * ref_points() + tri.v().col(0) * (
             one
             - ref_points().row(0).array()
             - ref_points().row(1).array()
             ).matrix();
-    base::weights_.noalias() = tri.area() * ref_weights() * 2;
-    base::points_weights_computed_ = true;
-    return;
+    qd.weights = tri.area() * ref_weights() * 2;
+
+    return qd;
 };
 
 

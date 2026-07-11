@@ -22,5 +22,7 @@ time ${BUILD_DIR}/test_src_int
 time ${BUILD_DIR}/test_rwg_operators
 time ${BUILD_DIR}/test_operator_matrices
 time ${BUILD_DIR}/test_ops_sphere_rcs
-time ${BUILD_DIR}/test_vector_ops_sphere_rcs
+time ${BUILD_DIR}/test_lineint_sphere_rcs
+time ${BUILD_DIR}/test_op_set_sphere_rcs
+time ${BUILD_DIR}/test_block_assm_sphere_rcs
 

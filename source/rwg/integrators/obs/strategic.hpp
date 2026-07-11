@@ -66,14 +66,11 @@ struct IntegrationSettings
     /** Source triangle line integration order. */
     Float src_line_order = 10;
 
-    /** Electrical distance below which singularity treatment is applied (disabled if negative). */
-    Float threshold_wvl_singularity = 0.1;
-
     /** Physical distance below which singularity treatment is applied (disabled if negative). */
     Float threshold_dist_singularity = -1;
 
-    /** Electrical length of src_tri edge above which line integration is used (disabled if negative). */
-    Float threshold_length_line_int = 1;
+    /** Electrical length of src_tri edge above which line integration is used (default 1 if negative). */
+    Float threshold_length_line_int = -1;
 
     /** Number of skin depths beyond which interactions should be ignored (disabled if negative). */
     Float threshold_skin_depths = 10;
@@ -83,66 +80,65 @@ struct IntegrationSettings
 
 /**
 * @brief Strategic integration over the observation triangle for RWG-based BEM operators. The method of
-* integrationis chosen automatically and strategically based on mesh parameters, materials, and frequency.
-* @tparam ObsTriangleQuadratureType - Type of the observation triangle quadrature object, which must derive from
-* `TriangleQuadratureBase<2>`.
-* @tparam SrcTriangleQuadratureType - Type of the source triangle quadrature object, which must derive from
-* `TriangleQuadratureBase<2>`.
-* @tparam LineQuadratureType - Type of the line quadrature object, which must derive from
-* `LineQuadratureBase<1>`.
+* integration is chosen automatically and strategically based on mesh parameters, materials, and frequency.
 */
-template <
-    typename ObsTriangleQuadratureType = GaussTriangleQuadrature<3>,
-    typename SrcTriangleQuadratureType = GaussTriangleQuadrature<2>,
-    typename LineQuadratureType = GaussLineQuadrature<1>
-    >
 class ObsStrategic: public ObsIntegratorBase
 {
 
     using base = ObsIntegratorBase;
-    static_assert(
-        std::is_base_of<TriangleQuadratureBase<3>, ObsTriangleQuadratureType>::value,
-        "ObsStrategic: `ObsTriangleQuadratureType` must derive from `TriangleQuadratureBase<3>`"
-        );
-    static_assert(
-        std::is_base_of<TriangleQuadratureBase<2>, SrcTriangleQuadratureType>::value,
-        "ObsStrategic: `SrcTriangleQuadratureType` must derive from `TriangleQuadratureBase<2>`"
-        );
-    static_assert(
-        std::is_base_of<LineQuadratureBase<1>, LineQuadratureType>::value,
-        "ObsStrategic: `LineQuadratureType` must derive from `LineQuadratureBase<1>`"
-        );
 
 public:
 
     /**
     * @brief Constructs an `ObsStrategic` integrator with specified line and triangle quadrature objects.
-    * @param[in] obs_tri_quad - Observation triangle quadrature object.
-    * @param[in] src_tri_quad - Source triangle quadrature object.
-    * @param[in] src_line_quad - Source line quadrature object.
+    */
+    ObsStrategic(const IntegrationSettings settings = IntegrationSettings())
+    { set(settings); return; }
+
+
+    /**
+    * @brief Sets specified line and triangle quadrature object types.
+    * @tparam ObsTriangleQuadratureType - Type of the observation triangle quadrature object, which must derive
+    * from `TriangleQuadratureBase<2>`.
+    * @tparam SrcTriangleQuadratureType - Type of the source triangle quadrature object, which must derive from
+    * `TriangleQuadratureBase<2>`.
+    * @tparam LineQuadratureType - Type of the line quadrature object, which must derive from
+    * `LineQuadratureBase<1>`.
     * @param[in] settings - Integration settings for singularity treatment and line integration (optional).
     */
-    ObsStrategic(
-        const IntegrationSettings settings = IntegrationSettings(),
-        const ObsTriangleQuadratureType obs_tri_quad = GaussTriangleQuadrature<3>(),
-        const SrcTriangleQuadratureType src_tri_quad = GaussTriangleQuadrature<2>(),
-        const LineQuadratureType src_line_quad = GaussLineQuadrature<1>()
-        ):
-            settings_(settings),
-            hgf_(obs_tri_quad, SrcQuadrature(src_tri_quad, HGF())),
-            shgf_(obs_tri_quad, SrcSingularity(src_tri_quad, SingularitySubtractedHGF())),
-            sthgf_(obs_tri_quad, SrcSingularity(src_tri_quad, SingularitySubtractedTaylorHGF())),
-            line_(obs_tri_quad, SrcLineIntegrator(src_line_quad))
+    template <
+        typename ObsTriangleQuadratureType = GaussTriangleQuadrature<3>,
+        typename SrcTriangleQuadratureType = GaussTriangleQuadrature<2>,
+        typename LineQuadratureType = GaussLineQuadrature<1>
+        >
+    void set(const IntegrationSettings settings = IntegrationSettings())
     {
-        line_.quadrature_object().set_order(settings_.obs_quad_order_far);
-        sthgf_.quadrature_object().set_order(settings_.obs_quad_order_near);
-        shgf_.quadrature_object().set_order(settings_.obs_quad_order_near);
-        hgf_.quadrature_object().set_order(settings_.obs_quad_order_far);
+        settings_ = settings;
 
-        line_.src_integrator().quadrature_object().set_order(settings_.src_line_order);
-        sthgf_.src_integrator().quadrature_object().set_order(settings_.src_quad_order_near);
-        shgf_.src_integrator().quadrature_object().set_order(settings_.src_quad_order_near);
-        hgf_.src_integrator().quadrature_object().set_order(settings_.src_quad_order_far);
+        ObsTriangleQuadratureType obs_tri_quad;
+        SrcTriangleQuadratureType src_tri_quad;
+
+        SrcTriangleQuadratureType src_tri_quad_near = src_tri_quad;
+        src_tri_quad_near.set_order(settings_.src_quad_order_near);
+
+        SrcTriangleQuadratureType src_tri_quad_far = src_tri_quad;
+        src_tri_quad_far.set_order(settings_.src_quad_order_far);
+
+        ObsTriangleQuadratureType obs_tri_quad_near = obs_tri_quad;
+        obs_tri_quad_near.set_order(settings_.obs_quad_order_near);
+
+        ObsTriangleQuadratureType obs_tri_quad_far = obs_tri_quad;
+        obs_tri_quad_far.set_order(settings_.obs_quad_order_far);
+
+        src_hgf_.set(src_tri_quad_far, HGF());
+        src_shgf_.set(src_tri_quad_near, SingularitySubtractedHGF());
+        src_sthgf_.set(src_tri_quad_near, SingularitySubtractedTaylorHGF());
+        src_line_.set(LineQuadratureType (settings_.src_line_order));
+
+        hgf_.set(obs_tri_quad_far, src_hgf_);
+        shgf_.set(obs_tri_quad_near, src_shgf_);
+        sthgf_.set(obs_tri_quad_near, src_sthgf_);
+        line_.set(obs_tri_quad_far, src_line_);
 
         return;
     };
@@ -153,23 +149,71 @@ public:
     * @param[in] k - Complex wavenumber.
     * @param[in] obs_tri - Observation triangle in the local coordinate system of `src_tri`.
     * @param[in] src_tri - Source triangle in 2D space.
+    * @param[in] g_term - Whether to compute the scalar kernel term (optional).
+    * @param[in] rs_g_terms - Whether to compute the vector kernel termss (optional).
+    * @param[in] grad_g_terms - Whether to compute the gradient kernel terms (optional).
+    * @param[in] rot_grad_g_terms - Whether to compute the rotated gradient kernel terms (optional).
     * @return Integration result.
+    * @details
+    * If `g_term` is true, computes
+    * \f[
+    * \int_{\mathrm{obs\_tri}} d\mathcal{S}\,
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,G(k, \vec{r}, \vec{r}\,')
+    * \f]
+    * for the scalar kernel \f$ G(k, \vec{r}, \vec{r}\,') \f$.
+    * If `rs_g_terms` is true, computes terms related to
+    * \f[
+    * \int_{\mathrm{obs\_tri}} d\mathcal{S}\,\vec{r}\cdot
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,\vec{r}\,'\,G(k, \vec{r}, \vec{r}\,')
+    * \f]
+    * for the scalar kernel \f$ G(k, \vec{r}, \vec{r}\,') \f$.
+    * If `grad_g_terms` is true, computes terms related to
+    * \f[
+    * \int_{\mathrm{obs\_tri}} d\mathcal{S}\,\vec{r}\cdot
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,\nabla G(k, \vec{r}, \vec{r}\,')\times\vec{r}\,'
+    * \f]
+    * for the scalar kernel \f$ G(k, \vec{r}, \vec{r}\,') \f$.
+    * If `rot_grad_g_terms` is true, computes terms related to
+    * \f[
+    * \int_{\mathrm{obs\_tri}} d\mathcal{S}\,\hat{n}\times\vec{r}\cdot
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,\nabla G(k, \vec{r}, \vec{r}\,')\times\vec{r}\,'
+    * \f]
+    * for the scalar kernel \f$ G(k, \vec{r}, \vec{r}\,') \f$.
     */
     ObsResult integrate(
         const Complex k,
         const Triangle<3>& obs_tri,
-        const Triangle<2>& src_tri
+        const Triangle<2>& src_tri,
+        const bool g_term = true,
+        const bool rs_g_terms = true,
+        const bool grad_g_terms = true,
+        const bool rot_grad_g_terms = true
         ) override;
+
+
+    /**
+    * @brief Returns a unique pointer to a newly constructed object of the derived type.
+    * @return Unique pointer to the new object.
+    */
+    std::unique_ptr<ObsIntegratorBase> clone() const override
+    {
+        return std::make_unique<ObsStrategic> (*this);
+    };
 
 
 private:
 
     IntegrationSettings settings_;
 
-    ObsQuadrature<ObsTriangleQuadratureType, SrcQuadrature<SrcTriangleQuadratureType, HGF>> hgf_;
-    ObsQuadrature<ObsTriangleQuadratureType, SrcSingularity<SrcTriangleQuadratureType, SingularitySubtractedHGF>> shgf_;
-    ObsQuadrature<ObsTriangleQuadratureType, SrcSingularity<SrcTriangleQuadratureType, SingularitySubtractedTaylorHGF>> sthgf_;
-    ObsQuadrature<ObsTriangleQuadratureType, SrcLineIntegrator<LineQuadratureType>> line_;
+    SrcQuadrature src_hgf_;
+    SrcSingularity src_shgf_;
+    SrcSingularity src_sthgf_;
+    SrcLineIntegrator src_line_;
+
+    ObsQuadrature hgf_;
+    ObsQuadrature shgf_;
+    ObsQuadrature sthgf_;
+    ObsQuadrature line_;
 
 };
 
@@ -179,6 +223,8 @@ private:
 
 }
 
-#include "rwg/integrators/obs/strategic.tpp"
+#ifndef BEM_LINKED
+#include "rwg/integrators/obs/strategic.cpp"
+#endif
 
 #endif

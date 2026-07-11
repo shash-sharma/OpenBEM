@@ -42,7 +42,7 @@ Citing OpenBEM: [![DOI](https://zenodo.org/badge/1060257425.svg)](https://doi.or
   those associated with lossy conductors [[Qian, Chew, Suaya, 2007]](https://ieeexplore.ieee.org/abstract/document/4359102) and [[Xia _et. al_, 2017]](https://ieeexplore.ieee.org/document/7955080).
 
 - Plane wave, infinitesimal gap, and lumped circuit port excitations
-  [[Gibson 2021]](https://www.taylorfrancis.com/books/mono/10.1201/9780429355509/method-moments-electromagnetics-walton-gibson).
+  [[Gibson 2021]](https://www.taylorfrancis.com/books/mono/10.1201/9780429355509/method-moments-electromagnetics-walton-gibson), [[Wang _et. al_, 2004]](https://ieeexplore.ieee.org/document/1310664).
 
 - Near- and far-field projection for post-processing.
 

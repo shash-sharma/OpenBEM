@@ -35,9 +35,15 @@
 #include "geometry/mesh/mesh_transfer.hpp"
 
 #include "matrix/base.hpp"
-#include "matrix/eigen_base.hpp"
-#include "matrix/eigen_dense.hpp"
-#include "matrix/eigen_sparse.hpp"
+#include "matrix/eigen_matrix.hpp"
+
+#include "quadrature/triangle/gauss.hpp"
+#include "quadrature/triangle/adaptive.hpp"
+#include "quadrature/triangle/iterative_gauss.hpp"
+#include "quadrature/line/gauss.hpp"
+#include "quadrature/line/iterative_gauss.hpp"
+#include "quadrature/line/trapz.hpp"
+#include "quadrature/line/iterative_trapz.hpp"
 
 #include "kernels/base.hpp"
 #include "kernels/hgf.hpp"
@@ -67,8 +73,6 @@
 #include "rwg/operators/double_layer.hpp"
 #include "rwg/operators/gram.hpp"
 #include "rwg/operators/incidence.hpp"
-#include "rwg/operators/generic.hpp"
-#include "rwg/operators/vector_ops.hpp"
 
 #include "rwg/projectors/base.hpp"
 #include "rwg/projectors/single_layer.hpp"
@@ -79,12 +83,12 @@
 #include "rwg/excitations/inf_gap.hpp"
 
 #include "rwg/assemblers/base.hpp"
-#include "rwg/assemblers/operator_matrix.hpp"
-#include "rwg/assemblers/excitation_matrix.hpp"
-#include "rwg/assemblers/projector_matrix.hpp"
+#include "rwg/assemblers/indexing.hpp"
+#include "rwg/assemblers/operator_assembler.hpp"
+#include "rwg/assemblers/block_assembler.hpp"
+#include "rwg/assemblers/excitation_assembler.hpp"
+#include "rwg/assemblers/projector_assembler.hpp"
 
 #include "rwg/lumped_elements/base.hpp"
-#include "rwg/lumped_elements/efie.hpp"
-#include "rwg/lumped_elements/aefie.hpp"
 
 #endif

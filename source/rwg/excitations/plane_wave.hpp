@@ -23,7 +23,7 @@
 
 #include "types.hpp"
 #include "quadrature/triangle/gauss.hpp"
-
+#include "rwg/function_space.hpp"
 #include "rwg/excitations/base.hpp"
 
 
@@ -43,11 +43,9 @@ namespace bem::rwg
 */
 
 /**
-* @brief Class for computing plane wave excitation vector coefficients for RWG-based BEM systems.
-* @tparam obs_num_dof - Number of degrees of freedom associated with each observation triangle.
+* @brief Class for computing plane wave excitation coefficients for RWG-based BEM systems.
 */
-template <uint8_t obs_num_dof>
-class PlaneWaveBase: public ExcitationBase<obs_num_dof>
+class PlaneWaveBase: public ExcitationBase
 {
 public:
 
@@ -137,11 +135,18 @@ protected:
 /**
 * @brief Class for computing plane wave excitation vector coefficients when tested with RWG functions.
 */
-class RwgPlaneWave: public PlaneWaveBase<3>
+class RwgPlaneWave: public PlaneWaveBase
 {
 public:
 
-    using PlaneWaveBase<3>::PlaneWaveBase;
+    using PlaneWaveBase::PlaneWaveBase;
+
+    /**
+    * @brief Returns the degrees of freedom for the testing function space.
+    * @return Observation degrees of freedom.
+    */
+    OperatorDof obs_dof() const override { return OperatorDof::EDGE; };
+
 
     /**
     * @brief Computes the plane wave excitation coefficients when the field is tested with RWG functions.
@@ -151,7 +156,7 @@ public:
     * associated with `obs_tri`, and each column corresponds to each excitation when there is more
     * than one excitation (i.e., more than one right-hand side).
     */
-    EigMatNX<Complex, 3> compute(const Complex k, const Triangle<3>& obs_tri) override;
+    EigMat<Complex> compute(const Complex k, const Triangle<3>& obs_tri) override;
 
 };
 
@@ -159,11 +164,18 @@ public:
 /**
 * @brief Class for computing plane wave excitation vector coefficients when tested with rotated RWG functions.
 */
-class NxRwgPlaneWave: public PlaneWaveBase<3>
+class NxRwgPlaneWave: public PlaneWaveBase
 {
 public:
 
-    using PlaneWaveBase<3>::PlaneWaveBase;
+    using PlaneWaveBase::PlaneWaveBase;
+
+    /**
+    * @brief Returns the degrees of freedom for the testing function space.
+    * @return Observation degrees of freedom.
+    */
+    OperatorDof obs_dof() const override { return OperatorDof::EDGE; };
+
 
     /**
     * @brief Computes the plane wave excitation coefficients when the field is tested with rotated RWG functions.
@@ -173,7 +185,7 @@ public:
     * associated with `obs_tri`, and each column corresponds to each excitation when there is more
     * than one excitation (i.e., more than one right-hand side).
     */
-    EigMatNX<Complex, 3> compute(const Complex k, const Triangle<3>& obs_tri) override;
+    EigMat<Complex> compute(const Complex k, const Triangle<3>& obs_tri) override;
 
 };
 

@@ -20,11 +20,11 @@
 
 #include "types.hpp"
 
-#include "rwg/assemblers/excitation_matrix.hpp"
+#include "rwg/assemblers/excitation_assembler.hpp"
 #include "rwg/excitations/plane_wave.hpp"
 #include "rwg/excitations/inf_gap.hpp"
 
-#include "matrix/eigen_dense.hpp"
+#include "matrix/eigen_matrix.hpp"
 
 #include "geometry/mesh/triangle_mesh.hpp"
 
@@ -83,9 +83,9 @@ void test_unit_cube_plane_wave(Complex k)
     EigMatNX<Complex, 3> pw_vals = pw.compute(k, tri);
     // std::cout << pw_vals << std::endl;
 
-    EigenDenseMatrix<Complex> rhs;
+    EigenMatrix<Complex> rhs;
 
-    EdgeExcitationAssembler pw_mat (mesh);
+    ExcitationAssembler pw_mat (mesh);
     pw_mat.assemble(rhs, pw, k);
     // rhs.print();
 
@@ -145,9 +145,9 @@ void test_unit_cube_inf_gap()
     // std::cout << tri2_vals << std::endl;
     // std::cout << tri7_vals << std::endl;
 
-    EigenDenseMatrix<Complex> rhs;
+    EigenMatrix<Complex> rhs;
 
-    EdgeExcitationAssembler pw_mat (mesh);
+    ExcitationAssembler pw_mat (mesh);
     pw_mat.assemble(rhs, inf_gap, 0);
 
     // rhs.print();

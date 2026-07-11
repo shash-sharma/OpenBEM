@@ -21,6 +21,7 @@
 #include "types.hpp"
 #include "geometry/operations.hpp"
 #include "geometry/primitives/triangle.hpp"
+#include "rwg/function_space.hpp"
 
 
 namespace bem::rwg
@@ -33,15 +34,17 @@ namespace bem::rwg
 
 /**
 * @brief Base class for RWG-based BEM projectors.
-* @tparam src_num_dof - Number of degrees of freedom associated with the source triangle.
 */
-template <uint8_t src_num_dof>
 class ProjectorBase
 {
-
-    static_assert((src_num_dof > 0), "ProjectorBase: `src_num_dof` must be greater than 0.");
-
 public:
+
+    /**
+    * @brief Returns the degrees of freedom for the expansion function space.
+    * @return Source degrees of freedom.
+    */
+    virtual OperatorDof src_dof() const = 0;
+
 
     /**
     * @brief Computes projector values for the given observation and source triangles.
@@ -56,7 +59,7 @@ public:
     * where \f$ (F_{xi}, F_{yi}) \f$ are the components of a two-dimensional vector field \f$ \vec{F} \f$
     * defined at the observation point \f$ (x_i, y_i) \f$.
     */
-    virtual EigMatXN<Complex, src_num_dof> compute(
+    virtual EigMat<Complex> compute(
         const Complex k,
         ConstEigRef<EigMatNX<Float, 3>> obs_points,
         const Triangle<3>& src_tri

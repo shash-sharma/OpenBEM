@@ -30,11 +30,6 @@ namespace bem
 // Forward declarations
 template <typename T> class MatrixBase;
 template <uint8_t dim> class TriangleMesh;
-}
-
-
-namespace bem::rwg
-{
 
 /**
 * \defgroup basis Basis Functions
@@ -44,46 +39,142 @@ namespace bem::rwg
 */
 
 /**
-* @brief Class for operations associated with RWG functions.
+* @brief Enumeration of function space degrees of freedom.
 */
-class Rwg
+class OperatorDof
+{
+public:
+
+    enum Value: uint8_t
+        {
+            EDGE = 3,
+            FACE = 1
+        };
+
+    constexpr OperatorDof(Value value): value_(value) {};
+
+    constexpr operator uint8_t() const { return value_; };
+
+    OperatorDof(uint8_t) = delete;
+
+protected:
+
+    Value value_;
+
+};
+
+
+/**
+* @brief Base class for function spaces.
+*/
+template <typename Derived, uint8_t num_dof, uint8_t num_dim>
+class FunctionSpaceBase
 {
 public:
 
     /**
-    * @brief Defines the normalization factor for each RWG function associated with a given triangle.
-    * @param[in] tri - Triangle for whose edges the RWG function normalization is required.
-    * @return Normalization factor for each RWG function associated with the edges of `tri`.
+    * @brief Number of degrees of freedom per mesh element.
+    */
+    static constexpr uint8_t dof = num_dof;
+
+
+    /**
+    * @brief Dimension of the function.
+    */
+    static constexpr uint8_t dim = num_dim;
+
+
+    /**
+    * @brief Returns the normalization factor for a given triangle.
+    * @param[in] tri - Triangle to which normalization is associated.
+    * @return Normalization factor for each degree of freedom.
+    */
+    static EigRowVecN<Float, dof> normalization(const Triangle<3>& tri)
+    { return Derived::normalization(tri); };
+
+
+    /**
+    * @brief Returns the function evaluated at a set of triangle points for each degree of freedom.
+    * @param[in] tri - Triangle in which to evaluate the function.
+    * @param[in] points - Points in the triangle at which to evaluate the function.
+    * @param[in] idx - Degree of freedom index for which the function value is required.
+    * @return Values of the function at `points` associated with the `idx` degree of freedom.
+    */
+    static EigMatNX<Float, dim> value(
+        const Triangle<3>& tri,
+        ConstEigRef<EigMatNX<Float, 3>> points,
+        uint8_t idx
+        ) { return Derived::value(tri, points, idx); };
+
+
+    /**
+    * @brief Tests a field with the function space associated with a given triangle.
+    * @param[in] tri - Triangle on which to test the field.
+    * @param[in] field_eval - Function or class with `operator()` that evaluates the field
+    * at given set of points in the triangle.
+    * @param[in] tri_quad - Triangle quadrature object to use for integration over the triangle.
+    * @return Tested field for each degree of freedom associated with `tri`.
+    */
+    static EigColVecN<Complex, dof> test_field(
+        const Triangle<3>& tri,
+        std::function<EigMatNX<Complex, dim> (ConstEigRef<EigMatNX<Float, 3>>)> field_eval,
+        TriangleQuadratureBase<3>& tri_quad
+        ) { return Derived::test_field(tri, field_eval, tri_quad); };
+
+
+    /**
+    * @brief Reconstructs a field expressed with the function space on a given triangle mesh.
+    * @param[in] mesh - Triangle mesh on which the field is defined.
+    * @param[in] coeffs - Vector of function space coefficients for each degree of freedom.
+    * @param[in] points - Points on which to sample the field.
+    * @return Field sampled at `points`.
+    */
+    static EigMatNX<Complex, dim> reconstruct_field(
+        const TriangleMesh<3>& mesh,
+        const MatrixBase<Complex>& coeffs,
+        ConstEigRef<EigMatNX<Float, 3>> points
+        ) { return Derived::reconstruct_field(mesh, coeffs, points); };
+
+};
+
+
+/**
+* @brief Class for operations associated with RWG functions.
+*/
+class Rwg: public FunctionSpaceBase<Rwg, 3, 3>
+{
+public:
+
+    /**
+    * @brief Returns the normalization factor for a given triangle.
+    * @param[in] tri - Triangle to which normalization is associated.
+    * @return Normalization factor for each degree of freedom.
     */
     static EigRowVecN<Float, 3> normalization(const Triangle<3>& tri)
     { return tri.edge_polarities() / tri.area() / two; };
 
 
     /**
-    * @brief Evaluates the value of the RWG function associated with a given edge of a given triangle
-    * at a given set of points in that triangle.
-    * @param[in] tri - Triangle for whose edges the RWG function is to be evaluated.
-    * @param[in] edge - Edge index (0, 1, or 2) of the triangle for which the RWG function value is required.
-    * @param[in] points - Points in the triangle at which to evaluate the RWG function.
-    * @param[in] rotated - If true, evaluates the rotated RWG function (nxRWG).
-    * @return Value of the RWG function associated with edge `edge` of `tri` at each of the `points`.
+    * @brief Returns the function evaluated at a set of triangle points for each degree of freedom.
+    * @param[in] tri - Triangle in which to evaluate the function.
+    * @param[in] points - Points in the triangle at which to evaluate the function.
+    * @param[in] idx - Degree of freedom index for which the function value is required.
+    * @return Values of the function at `points` associated with the `idx` degree of freedom.
     */
     static EigMatNX<Float, 3> value(
         const Triangle<3>& tri,
-        uint8_t edge,
         ConstEigRef<EigMatNX<Float, 3>> points,
-        const bool rotated = false
+        uint8_t idx
         );
 
 
     /**
-    * @brief Tests a field on the RWG functions associated with the edges of a given triangle.
-    * @param[in] tri - Triangle for whose edges the RWG function is to be evaluated.
-    * @param[in] field_eval - Function or class with `operator()` that evaluates the vector field
+    * @brief Tests a field with the function space associated with a given triangle.
+    * @param[in] tri - Triangle on which to test the field.
+    * @param[in] field_eval - Function or class with `operator()` that evaluates the field
     * at given set of points in the triangle.
     * @param[in] tri_quad - Triangle quadrature object to use for integration over the triangle.
-    * @param[in] rotated - If true, tests the field with rotated RWG functions (nxRWG).
-    * @return Tested field on each RWG function associated with the edges of `tri`.
+    * @return Tested field for each degree of freedom associated with `tri`.
     * @details
     * Computes
     * \f[
@@ -95,24 +186,90 @@ public:
     static EigColVecN<Complex, 3> test_field(
         const Triangle<3>& tri,
         std::function<EigMatNX<Complex, 3> (ConstEigRef<EigMatNX<Float, 3>>)> field_eval,
-        TriangleQuadratureBase<3>& tri_quad,
-        const bool rotated = false
+        TriangleQuadratureBase<3>& tri_quad
         );
 
 
     /**
-    * @brief Reconstructs a vector field expressed with RWG functions on a given triangle mesh.
+    * @brief Reconstructs a field expressed with the function space on a given triangle mesh.
     * @param[in] mesh - Triangle mesh on which the field is defined.
-    * @param[in] coeffs - Vector of RWG coefficients for each mesh edge.
+    * @param[in] coeffs - Vector of function space coefficients for each degree of freedom.
     * @param[in] points - Points on which to sample the field.
-    * @param[in] rotated - If true, the field is expressed with rotated RWG functions (nxRWG).
-    * @return Vector field sampled at `points`.
+    * @return Field sampled at `points`.
     */
     static EigMatNX<Complex, 3> reconstruct_field(
         const TriangleMesh<3>& mesh,
         const MatrixBase<Complex>& coeffs,
+        ConstEigRef<EigMatNX<Float, 3>> points
+        );
+
+};
+
+
+/**
+* @brief Class for operations associated with rotated RWG functions.
+*/
+class NxRwg: public FunctionSpaceBase<NxRwg, 3, 3>
+{
+public:
+
+    /**
+    * @brief Returns the normalization factor for a given triangle.
+    * @param[in] tri - Triangle to which normalization is associated.
+    * @return Normalization factor for each degree of freedom.
+    */
+    static EigRowVecN<Float, 3> normalization(const Triangle<3>& tri)
+    { return tri.edge_polarities() / tri.area() / two; };
+
+
+    /**
+    * @brief Returns the function evaluated at a set of triangle points for each degree of freedom.
+    * @param[in] tri - Triangle in which to evaluate the function.
+    * @param[in] points - Points in the triangle at which to evaluate the function.
+    * @param[in] idx - Degree of freedom index for which the function value is required.
+    * @return Values of the function at `points` associated with the `idx` degree of freedom.
+    */
+    static EigMatNX<Float, 3> value(
+        const Triangle<3>& tri,
         ConstEigRef<EigMatNX<Float, 3>> points,
-        const bool rotated = false
+        uint8_t idx
+        );
+
+
+    /**
+    * @brief Tests a field with the function space associated with a given triangle.
+    * @param[in] tri - Triangle on which to test the field.
+    * @param[in] field_eval - Function or class with `operator()` that evaluates the field
+    * at given set of points in the triangle.
+    * @param[in] tri_quad - Triangle quadrature object to use for integration over the triangle.
+    * @return Tested field for each degree of freedom associated with `tri`.
+    * @details
+    * Computes
+    * \f[
+    * \int_{\mathrm{tri}} d\mathcal{S}\,\hat{n}\times\vec{f_n}(\vec{r})\cdot \vec{g}(\vec{r})
+    * \f]
+    * for each triangle edge \f$ n \f$, where \f$ \vec{g}(\vec{r}) \f$ is a vector field,
+    * \f$ \vec{f_n}(\vec{r}) \f$ is the RWG function associated with edge \f$ n \f$ of `tri`,
+    * and \f$ \hat{n} \f$ is the unit normal associated with `tri`.
+    */
+    static EigColVecN<Complex, 3> test_field(
+        const Triangle<3>& tri,
+        std::function<EigMatNX<Complex, 3> (ConstEigRef<EigMatNX<Float, 3>>)> field_eval,
+        TriangleQuadratureBase<3>& tri_quad
+        );
+
+
+    /**
+    * @brief Reconstructs a field expressed with the function space on a given triangle mesh.
+    * @param[in] mesh - Triangle mesh on which the field is defined.
+    * @param[in] coeffs - Vector of function space coefficients for each degree of freedom.
+    * @param[in] points - Points on which to sample the field.
+    * @return Field sampled at `points`.
+    */
+    static EigMatNX<Complex, 3> reconstruct_field(
+        const TriangleMesh<3>& mesh,
+        const MatrixBase<Complex>& coeffs,
+        ConstEigRef<EigMatNX<Float, 3>> points
         );
 
 };
@@ -121,39 +278,41 @@ public:
 /**
 * @brief Class for operations associated with pulse functions.
 */
-class Pulse
+class Pulse: public FunctionSpaceBase<Pulse, 1, 1>
 {
 public:
 
     /**
-    * @brief Defines the normalization factor for the pulse function associated with a given triangle.
-    * @param[in] tri - Triangle for which the pulse function normalization is required.
-    * @return Normalization factor for the pulse function associated with `tri`.
+    * @brief Returns the normalization factor for a given triangle.
+    * @param[in] tri - Triangle to which normalization is associated.
+    * @return Normalization factor for each degree of freedom.
     */
-    static Float normalization(const Triangle<3>& tri)
-    { return one / tri.area(); };
+    static EigRowVecN<Float, 1> normalization(const Triangle<3>& tri)
+    { return EigRowVecN<Float, 1>::Constant(1, 1, one / tri.area()); };
 
 
     /**
-    * @brief Evaluates the value of the pulse function associated with a given triangle
-    * at a given set of points in that triangle.
-    * @param[in] tri - Triangle for which the pulse function is to be evaluated.
-    * @param[in] points - Points in the triangle at which to evaluate the pulse function.
-    * @return Value of the pulse function associated with `tri` at each of the `points`.
+    * @brief Returns the function evaluated at a set of triangle points for each degree of freedom.
+    * @param[in] tri - Triangle in which to evaluate the function.
+    * @param[in] points - Points in the triangle at which to evaluate the function.
+    * @param[in] idx - Degree of freedom index for which the function value is required.
+    * @return Values of the function at `points` associated with the `idx` degree of freedom.
     */
-    static EigRowVec<Float> value(const Triangle<3>& tri, ConstEigRef<EigMatNX<Float, 3>> points)
-    {
-        return EigRowVec<Float>::Constant(1, points.cols(), normalization(tri));
-    }
+    static EigMatNX<Float, 1> value(
+        const Triangle<3>& tri,
+        ConstEigRef<EigMatNX<Float, 3>> points,
+        uint8_t idx = 0
+        )
+    { return EigMatNX<Float, 1>::Constant(dim, points.cols(), normalization(tri)[0]); }
 
 
     /**
-    * @brief Tests a field on the pulse function associated with a given triangle.
-    * @param[in] tri - Triangle for which the pulse function is to be evaluated.
-    * @param[in] field_eval - Function or class with `operator()` that evaluates the scalar field
+    * @brief Tests a field with the function space associated with a given triangle.
+    * @param[in] tri - Triangle on which to test the field.
+    * @param[in] field_eval - Function or class with `operator()` that evaluates the field
     * at given set of points in the triangle.
     * @param[in] tri_quad - Triangle quadrature object to use for integration over the triangle.
-    * @return Tested field on the pulse function associated with `tri`.
+    * @return Tested field for each degree of freedom associated with `tri`.
     * @details
     * Computes
     * \f[
@@ -164,19 +323,19 @@ public:
     */
     static Complex test_field(
         const Triangle<3>& tri,
-        std::function<EigRowVec<Complex> (ConstEigRef<EigMatNX<Float, 3>>)> field_eval,
+        std::function<EigMatNX<Complex, 1> (ConstEigRef<EigMatNX<Float, 3>>)> field_eval,
         TriangleQuadratureBase<3>& tri_quad
         );
 
 
     /**
-    * @brief Reconstructs a scalar field expressed with pulse functions on a given triangle mesh.
+    * @brief Reconstructs a field expressed with the function space on a given triangle mesh.
     * @param[in] mesh - Triangle mesh on which the field is defined.
-    * @param[in] coeffs - Vector of pulse coefficients for each mesh edge.
+    * @param[in] coeffs - Vector of function space coefficients for each degree of freedom.
     * @param[in] points - Points on which to sample the field.
-    * @return Scalar field sampled at `points`.
+    * @return Field sampled at `points`.
     */
-    static EigRowVec<Complex> reconstruct_field(
+    static EigMatNX<Complex, 1> reconstruct_field(
         const TriangleMesh<3>& mesh,
         const MatrixBase<Complex>& coeffs,
         ConstEigRef<EigMatNX<Float, 3>> points

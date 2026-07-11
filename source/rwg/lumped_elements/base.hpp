@@ -31,7 +31,7 @@
 #include "geometry/mesh/triangle_mesh.hpp"
 
 #include "matrix/base.hpp"
-#include "matrix/eigen_dense.hpp"
+#include "matrix/eigen_matrix.hpp"
 
 
 namespace bem::rwg
@@ -46,20 +46,20 @@ namespace bem::rwg
 * @brief Base class for generating excitation coefficients and coupling matrices for lumped ports.
 * @tparam MatrixType - Matrix type, must derive from `MatrixBase<Complex>`.
 */
-template <typename MatrixType = EigenDenseMatrix<Complex>>
-class LumpedElementBase
+template <typename MatrixType = EigenMatrix<Complex>>
+class LumpedElement
 {
 public:
 
     /**
-    * @brief Constructs a `LumpedElementBase` object.
+    * @brief Constructs a `LumpedElement` object.
     * @param[in] structure - Structure for which the coupling matrices are to be assembled.
     * @param[in] terminals - Mesh views defining all terminals on `mesh`.
     * @param[in] terminal_components - Lists of components associated with each `terminal`.
     * @param[in] ports - List of index pairs into `terminals` that define each lumped element port.
     * @param[in] impedances - Impedance of each lumped element.
     */
-    LumpedElementBase(
+    LumpedElement(
         const Structure<TriangleMesh<3>>& structure,
         const std::vector<MeshView<TriangleMesh<3>>>& terminals,
         const std::vector<std::vector<Index>>& terminal_components,
@@ -78,14 +78,14 @@ public:
 
 
     /**
-    * @brief Constructs a `LumpedElementBase` object.
+    * @brief Constructs a `LumpedElement` object.
     * @param[in] structure - Structure for which the coupling matrices are to be assembled.
     * @param[in] terminal_polygons - Vertices defining terminal polygons on the `mesh`.
     * @param[in] ports - List of index pairs into `terminals` that define each port.
     * @param[in] impedances - Impedance of each lumped element.
     * @param[in] single_element - If true, only the mesh element closest to the terminal polygon centroid is kept (optional).
     */
-    LumpedElementBase(
+    LumpedElement(
         const Structure<TriangleMesh<3>>& structure,
         const std::vector<EigMatNX<Float, 3>>& terminal_polygons,
         const std::vector<std::array<Index, 2>>& ports,
@@ -176,30 +176,6 @@ public:
 
 
     /**
-    * @brief Returns the matrix the couples the port current to the integral equation.
-    * @param[in] f - Frequency in Hz.
-    * @return Coupling matrix.
-    */
-    virtual MatrixType coupling_matrix(const Float f) const = 0;
-
-
-    /**
-    * @brief Returns the matrix associated with the potential differences between terminals.
-    * @param[in] f - Frequency in Hz.
-    * @return Voltage matrix.
-    */
-    virtual MatrixType voltage_matrix(const Float f) const = 0;
-
-
-    /**
-    * @brief Returns the matrix associated with terminal currents.
-    * @param[in] f - Frequency in Hz.
-    * @return Current matrix.
-    */
-    virtual MatrixType current_matrix(const Float f) const = 0;
-
-
-    /**
     * @brief Returns the right-hand side excitation matrix to set a voltage source at each lumped element.
     * @param[in] f - Frequency in Hz.
     * @return Excitation matrix.
@@ -270,6 +246,22 @@ public:
             }
         }
 
+        mat.assemble();
+
+        return mat;
+    };
+
+
+    /**
+    * @brief Returns the matrix associated with port load impedances.
+    * @return Load matrix.
+    */
+    virtual MatrixType load_mapping_matrix() const
+    {
+        MatrixType mat (num_ports(), num_ports());
+        for (Index ii = 0; ii < num_ports(); ++ii)
+            mat.set_value(ii, ii, impedances()[ii]);
+        mat.assemble();
         return mat;
     };
 
@@ -333,7 +325,7 @@ public:
     /**
     * @brief Virtual destructor.
     */
-    virtual ~LumpedElementBase() = default;
+    virtual ~LumpedElement() = default;
 
 
 protected:
@@ -344,7 +336,9 @@ protected:
     void check_impedances()
     {
         if (ports_.size() != impedances_.size() && impedances_.size() != 1)
-            throw std::invalid_argument("LumpedElementBase(): Number of `impedances` must equal number of `ports`, or be a single value.");
+            throw std::invalid_argument(
+                "LumpedElement(): Number of `impedances` must equal number of `ports`, or be a single value."
+                );
         if (impedances_.size() == 1 && ports_.size() > 1)
         {
             Complex imp = impedances_[0];
@@ -360,7 +354,7 @@ protected:
     * @param[in] single_element - If true, only the mesh element closest to the terminal polygon centroid is kept (optional).
     * @details
     * A triangle is considered part of a terminal if it is coplanar with the terminal polygon, and
-    * any of its vertices lie on or within the terminal boundary.
+    * its centroid lies on or within the terminal boundary.
     */
     void set_terminals_from_polygons(const std::vector<EigMatNX<Float, 3>>& terminal_polygons, const bool single_element = false)
     {
@@ -378,7 +372,10 @@ protected:
 
                 for (Index kk = 0; kk < structure_.components()[jj].mesh_view().elem_inds().size(); ++kk)
                 {
-                    Triangle<3> tri = structure_.mesh().elem_primitive(structure_.components()[jj].mesh_view().elem_inds()[kk]);
+                    Triangle<3> tri = structure_.mesh().elem_primitive(
+                        structure_.components()[jj].mesh_view().elem_inds()[kk]
+                        );
+
                     Triangle<3> poly_tri (terminal_polygons[ii].leftCols(3));
 
                     if (!GeometryOps<3>::check_coplanar_triangles(tri, poly_tri))
@@ -394,7 +391,7 @@ protected:
 
             if (term_elems.size() == 0)
                 throw std::runtime_error(
-                    "LumpedElementBase::set_terminals_from_polygons(): No mesh triangles found for terminal " + std::to_string(ii)
+                    "LumpedElement::set_terminals_from_polygons(): No mesh triangles found for terminal " + std::to_string(ii)
                     );
 
             // Keep only the mesh triangle closest to the terminal polygon centroid
@@ -402,10 +399,15 @@ protected:
             {
                 Float offset = 1e30;
                 Index term_elem;
-                EigColVecN<Float, 3> term_centroid = terminal_polygons[ii].rowwise().sum() / terminal_polygons[ii].cols();
+                EigColVecN<Float, 3> term_centroid =
+                    terminal_polygons[ii].rowwise().sum() / terminal_polygons[ii].cols();
+
                 for (Index jj = 0; jj < term_elems.size(); ++jj)
                 {
-                    Float dist = (structure_.mesh().elem_primitive(term_elems[jj]).centroid() - term_centroid).norm();
+                    Float dist = (
+                        structure_.mesh().elem_primitive(term_elems[jj]).centroid() - term_centroid
+                        ).norm();
+
                     if (dist < offset)
                     {
                         offset = dist;

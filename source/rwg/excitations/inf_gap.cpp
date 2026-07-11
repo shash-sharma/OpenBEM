@@ -25,7 +25,7 @@
 namespace bem::rwg
 {
 
-EigMatNX<Complex, 3> InfinitesimalGap::compute(const Complex k, const Triangle<3>& obs_tri)
+EigMat<Complex> InfinitesimalGap::compute(const Complex k, const Triangle<3>& obs_tri)
 {
     EigMatNX<Complex, 3> result = EigMatNX<Complex, 3>::Zero(3, num_excitations());
 

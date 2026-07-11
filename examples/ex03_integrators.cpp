@@ -219,12 +219,14 @@ int main(int argc, char** argv)
     // system with a given right-hand side matrix, which we'll use here.
 
     MatrixType j_tefie;
+    L.factorize();
     L.mat_solve(j_tefie, inc_e);
 
     // The solution matrix will have as many columns as the number of excitation vectors, which in
     // this case is just one.  Now let's do the same for the NMFIE case.
 
     MatrixType j_nmfie;
+    K.factorize();
     K.mat_solve(j_nmfie, inc_h);
 
     // Having computed the electric surface current density using both approaches, we can now
@@ -287,8 +289,8 @@ int main(int argc, char** argv)
     // First, let's get the far fields that result from the currents computed by solving the TEFIE.
 
     MatrixType e_tefie, h_tefie;
-    e_tefie.set_mat_mul(e_proj, j_tefie);
-    h_tefie.set_mat_mul(h_proj, j_tefie);
+    e_tefie.set_matmul(e_proj, j_tefie);
+    h_tefie.set_matmul(h_proj, j_tefie);
 
     // Note: do not confuse the projectors for the matrix operators. In the above, we are using the
     // TEFIE to solve for the currents, and then we are using the EFIE to get the E-field generated
@@ -300,8 +302,8 @@ int main(int argc, char** argv)
     // currents computing using the NMFIE.
 
     MatrixType e_nmfie, h_nmfie;
-    e_nmfie.set_mat_mul(e_proj, j_nmfie);
-    h_nmfie.set_mat_mul(h_proj, j_nmfie);
+    e_nmfie.set_matmul(e_proj, j_nmfie);
+    h_nmfie.set_matmul(h_proj, j_nmfie);
 
     // Note that since the projected fields are vectorial, we have three field components at each
     // observation point in our point cloud. The components are stored contiguously along matrix

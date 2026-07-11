@@ -22,9 +22,10 @@
 #include "geometry/mesh/triangle_mesh.hpp"
 
 #include "matrix/base.hpp"
-#include "matrix/eigen_dense.hpp"
+#include "matrix/eigen_matrix.hpp"
 
-#include "rwg/assemblers/operator_matrix.hpp"
+#include "rwg/assemblers/indexing.hpp"
+#include "rwg/assemblers/operator_assembler.hpp"
 
 
 namespace bem::rwg
@@ -39,7 +40,7 @@ namespace bem::rwg
 * @brief Base class defining an RWG-based integral equation.
 * @tparam MatrixType - Matrix type used for all operators, must derive from `MatrixBase<Complex>`.
 */
-template <typename MatrixType = EigenDenseMatrix<Complex>>
+template <typename MatrixType = EigenMatrix<Complex>>
 class IntegralEquationBase
 {
 
@@ -83,7 +84,7 @@ public:
         ):
             obs_mesh_(obs_mesh),
             src_mesh_(src_mesh),
-            elem_pairs_(OperatorAssemblerBase<3, 3>::make_pairs(obs_mesh, src_mesh)),
+            elem_pairs_(IndexGenerator::elem_pairs(obs_mesh, src_mesh)),
             flip_normals_(flip_normals) {};
 
 
@@ -116,7 +117,7 @@ public:
         ):
             obs_mesh_(mesh),
             src_mesh_(mesh),
-            elem_pairs_(OperatorAssemblerBase<3, 3>::make_pairs(mesh, mesh)),
+            elem_pairs_(IndexGenerator::elem_pairs(mesh, mesh)),
             flip_normals_(flip_normals) {};
 
 

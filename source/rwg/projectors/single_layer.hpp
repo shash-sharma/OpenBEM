@@ -18,12 +18,13 @@
 #ifndef BEM_RWG_PROJ_SINGLE_LAYER_H
 #define BEM_RWG_PROJ_SINGLE_LAYER_H
 
+#include <memory>
+
 #include "types.hpp"
 #include "geometry/primitives/triangle.hpp"
-
+#include "rwg/function_space.hpp"
 #include "rwg/integrators/src/base.hpp"
 #include "rwg/integrators/obs/quadrature.hpp"
-
 #include "rwg/projectors/base.hpp"
 
 
@@ -38,23 +39,25 @@ namespace bem::rwg
 /**
 * @brief Class for computing the vector single-layer potential projector.
 */
-template <typename SrcIntegratorType = SrcStrategic<>>
-class VectorSingleLayerProj: public ProjectorBase<3>
+class VectorSingleLayerProj: public ProjectorBase
 {
-
-    static_assert(
-        std::is_base_of<SrcIntegratorBase, SrcIntegratorType>::value,
-        "VectorSingleLayerProj: `SrcIntegratorType` must derive from `SrcIntegratorBase`"
-        );
-
 public:
 
     /**
     * @brief Constructs a `VectorSingleLayerProj` object with a specified integration object.
+    * @tparam SrcIntegratorType - Type of the source triangle integrator, derived from `SrcIntegratorBase`.
     * @param[in] src_integrator - Integration object for the source triangle (optional).
     */
-    VectorSingleLayerProj(const SrcIntegratorType src_integrator = SrcStrategic<>()):
-        src_integrator_(src_integrator) {};
+    template <typename SrcIntegratorType = SrcStrategic>
+    VectorSingleLayerProj(const SrcIntegratorType src_integrator = SrcStrategic()):
+        src_integrator_(std::make_shared<SrcIntegratorType> (src_integrator)) {};
+
+
+    /**
+    * @brief Returns the degrees of freedom for the expansion function space.
+    * @return Source degrees of freedom.
+    */
+    OperatorDof src_dof() const override { return OperatorDof::EDGE; };
 
 
     /**
@@ -76,16 +79,16 @@ public:
     * \f$ (F_{xi}, F_{yi}, F_{zi}) \f$ are the components of the projected field \f$ \vec{F} \f$
     * defined at the observation point \f$ (x_i, y_i, z_i) \f$.
     */
-    EigMatXN<Complex, 3> compute(
+    EigMat<Complex> compute(
         const Complex k,
         ConstEigRef<EigMatNX<Float, 3>> obs_points,
         const Triangle<3>& src_tri
         ) override;
 
 
-private:
+protected:
 
-    SrcIntegratorType src_integrator_;
+    std::shared_ptr<SrcIntegratorBase> src_integrator_;
 
 };
 
@@ -93,23 +96,25 @@ private:
 /**
 * @brief Class for computing the scalar single-layer potential projector.
 */
-template <typename SrcIntegratorType = SrcStrategic<>>
-class ScalarSingleLayerProj: public ProjectorBase<1>
+class ScalarSingleLayerProj: public ProjectorBase
 {
-
-    static_assert(
-        std::is_base_of<SrcIntegratorBase, SrcIntegratorType>::value,
-        "ScalarSingleLayerProj: `SrcIntegratorType` must derive from `SrcIntegratorBase`"
-        );
-
 public:
 
     /**
     * @brief Constructs a `ScalarSingleLayerProj` object with a specified integration object.
+    * @tparam SrcIntegratorType - Type of the source triangle integrator, derived from `SrcIntegratorBase`.
     * @param[in] src_integrator - Integration object for the source triangle (optional).
     */
-    ScalarSingleLayerProj(const SrcIntegratorType src_integrator = SrcStrategic<>()):
-        src_integrator_(src_integrator) {};
+    template <typename SrcIntegratorType = SrcStrategic>
+    ScalarSingleLayerProj(const SrcIntegratorType src_integrator = SrcStrategic()):
+        src_integrator_(std::make_shared<SrcIntegratorType> (src_integrator)) {};
+
+
+    /**
+    * @brief Returns the degrees of freedom for the expansion function space.
+    * @return Source degrees of freedom.
+    */
+    OperatorDof src_dof() const override { return OperatorDof::FACE; };
 
 
     /**
@@ -127,16 +132,16 @@ public:
     * pulse function associated with the source triangle. Rows of the output matrix correspond to
     * observation points.
     */
-    EigMatXN<Complex, 1> compute(
+    EigMat<Complex> compute(
         const Complex k,
         ConstEigRef<EigMatNX<Float, 3>> obs_points,
         const Triangle<3>& src_tri
         ) override;
 
 
-private:
+protected:
 
-    SrcIntegratorType src_integrator_;
+    std::shared_ptr<SrcIntegratorBase> src_integrator_;
 
 };
 
@@ -144,23 +149,25 @@ private:
 /**
 * @brief Class for computing the gradient of the scalar single-layer potential projector.
 */
-template <typename SrcIntegratorType = SrcStrategic<>>
-class GradScalarSingleLayerProj: public ProjectorBase<1>
+class GradScalarSingleLayerProj: public ProjectorBase
 {
-
-    static_assert(
-        std::is_base_of<SrcIntegratorBase, SrcIntegratorType>::value,
-        "GradScalarSingleLayerProj: `SrcIntegratorType` must derive from `SrcIntegratorBase`"
-        );
-
 public:
 
     /**
     * @brief Constructs a `GradScalarSingleLayerProj` object with a specified integration object.
+    * @tparam SrcIntegratorType - Type of the source triangle integrator, derived from `SrcIntegratorBase`.
     * @param[in] src_integrator - Integration object for the source triangle (optional).
     */
-    GradScalarSingleLayerProj(const SrcIntegratorType src_integrator = SrcStrategic<>()):
-        src_integrator_(src_integrator) {};
+    template <typename SrcIntegratorType = SrcStrategic>
+    GradScalarSingleLayerProj(const SrcIntegratorType src_integrator = SrcStrategic()):
+        src_integrator_(std::make_shared<SrcIntegratorType> (src_integrator)) {};
+
+
+    /**
+    * @brief Returns the degrees of freedom for the expansion function space.
+    * @return Source degrees of freedom.
+    */
+    OperatorDof src_dof() const override { return OperatorDof::FACE; };
 
 
     /**
@@ -182,15 +189,16 @@ public:
     * \f$ (F_{xi}, F_{yi}, F_{zi}) \f$ are the components of the gradient of the projected scalar field,
     * defined at the observation point \f$ (x_i, y_i, z_i) \f$.
     */
-    EigMatXN<Complex, 1> compute(
+    EigMat<Complex> compute(
         const Complex k,
         ConstEigRef<EigMatNX<Float, 3>> obs_points,
         const Triangle<3>& src_tri
         ) override;
 
-private:
 
-    SrcIntegratorType src_integrator_;
+protected:
+
+    std::shared_ptr<SrcIntegratorBase> src_integrator_;
 
 };
 
@@ -198,23 +206,25 @@ private:
 /**
 * @brief Class for computing the vector hypersingular potential projector.
 */
-template <typename SrcIntegratorType = SrcStrategic<>>
-class VectorHypersingularProj: public ProjectorBase<3>
+class VectorHypersingularProj: public ProjectorBase
 {
-
-    static_assert(
-        std::is_base_of<SrcIntegratorBase, SrcIntegratorType>::value,
-        "VectorHypersingularProj: `SrcIntegratorType` must derive from `SrcIntegratorBase`"
-        );
-
 public:
 
     /**
     * @brief Constructs a `VectorHypersingularProj` object with a specified integration object.
+    * @tparam SrcIntegratorType - Type of the source triangle integrator, derived from `SrcIntegratorBase`.
     * @param[in] src_integrator - Integration object for the source triangle (optional).
     */
-    VectorHypersingularProj(const SrcIntegratorType src_integrator = SrcStrategic<>()):
+    template <typename SrcIntegratorType = SrcStrategic>
+    VectorHypersingularProj(const SrcIntegratorType src_integrator = SrcStrategic()):
         proj_g_(src_integrator), proj_gradg_(src_integrator) {};
+
+
+    /**
+    * @brief Returns the degrees of freedom for the expansion function space.
+    * @return Source degrees of freedom.
+    */
+    OperatorDof src_dof() const override { return OperatorDof::EDGE; };
 
 
     /**
@@ -238,17 +248,17 @@ public:
     * \f$ (F_{xi}, F_{yi}, F_{zi}) \f$ are the components of the projected field \f$ \vec{F} \f$
     * defined at the observation point \f$ (x_i, y_i, z_i) \f$.
     */
-    EigMatXN<Complex, 3> compute(
+    EigMat<Complex> compute(
         const Complex k,
         ConstEigRef<EigMatNX<Float, 3>> obs_points,
         const Triangle<3>& src_tri
         ) override;
 
 
-private:
+protected:
 
-    VectorSingleLayerProj<SrcIntegratorType> proj_g_;
-    GradScalarSingleLayerProj<SrcIntegratorType> proj_gradg_;
+    VectorSingleLayerProj proj_g_;
+    GradScalarSingleLayerProj proj_gradg_;
 
 };
 
@@ -258,6 +268,8 @@ private:
 
 }
 
-#include "rwg/projectors/single_layer.tpp"
+#ifndef BEM_LINKED
+#include "rwg/projectors/single_layer.cpp"
+#endif
 
 #endif

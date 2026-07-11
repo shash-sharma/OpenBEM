@@ -18,10 +18,13 @@
 #ifndef BEM_RWG_OPINT_SRC_LINE_H
 #define BEM_RWG_OPINT_SRC_LINE_H
 
+#include <memory>
+
 #include "types.hpp"
 #include "geometry/primitives/triangle.hpp"
 #include "quadrature/line/base.hpp"
 #include "quadrature/line/gauss.hpp"
+#include "quadrature/line/trapz.hpp"
 #include "rwg/integrators/src/base.hpp"
 
 
@@ -43,15 +46,10 @@ namespace bem::rwg
 * Modeling in Surface Integral Equation," in IEEE Transactions on Microwave Theory and Techniques,
 * vol. 55, no. 11, pp. 2354-2364, Nov. 2007, doi: 10.1109/TMTT.2007.908678.
 */
-template <typename LineQuadratureType = GaussLineQuadrature<1>>
 class SrcLineIntegrator: public SrcIntegratorBase
 {
 
     using base = SrcIntegratorBase;
-    static_assert(
-        std::is_base_of<LineQuadratureBase<1>, LineQuadratureType>::value,
-        "SrcLineIntegrator: `LineQuadratureType` must derive from `LineQuadratureBase<1>`"
-        );
 
 public:
 
@@ -61,8 +59,23 @@ public:
     * `LineQuadratureBase<1>`.
     * @param[in] line_quad - Line quadrature object to use for integration (optional).
     */
-    SrcLineIntegrator(const LineQuadratureType line_quad = GaussLineQuadrature<1>()):
-        line_quad_(line_quad) {};
+    template <typename LineQuadratureType = GaussLineQuadrature<1>>
+    SrcLineIntegrator(const LineQuadratureType line_quad = GaussLineQuadrature<1>())
+    { set(line_quad); return; };
+
+
+    /**
+    * @brief Sets the line quadrature object.
+    * @tparam LineQuadratureType - Type of the line quadrature object, which must derive from
+    * `LineQuadratureBase<1>`.
+    * @param[in] line_quad - Line quadrature object to use for integration.
+    */
+    template <typename LineQuadratureType>
+    void set(const LineQuadratureType& line_quad)
+    {
+        line_quad_ = std::make_shared<LineQuadratureType> (std::move(line_quad));
+        return;
+    };
 
 
     /**
@@ -70,34 +83,45 @@ public:
     * @param[in] k - Complex wavenumber.
     * @param[in] src_tri - Source triangle in 2D space.
     * @param[in] r_obs - Observation points in the local coordinate system of `src_tri`.
+    * @param[in] g_terms - Whether to compute kernel terms (optional).
+    * @param[in] grad_g_terms - Whether to compute kernel gradient terms (optional).
     * @return Integration result.
+    * @details
+    * If `g_terms` is true, the function computes
+    * \f[
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,G(k, \vec{r}, \vec{r}\,')
+    * \f]
+    * and
+    * \f[
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,\vec{r}\,'\,G(k, \vec{r}, \vec{r}\,')
+    * \f]
+    * for the scalar kernel \f$ G(k, \vec{r}, \vec{r}\,') \f$.
+    * If `grad_g_terms` is true, the function computes
+    * \f[
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,\nabla G(k, \vec{r}, \vec{r}\,'),
+    * \f]
+    * \f[
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,x'\,\nabla G(k, \vec{r}, \vec{r}\,'),
+    * \f]
+    * and
+    * \f[
+    * \int_{\mathrm{src\_tri}} d\mathcal{S}'\,y'\,\nabla G(k, \vec{r}, \vec{r}\,'),
+    * \f]
+    * for the scalar kernel \f$ G(k, \vec{r}, \vec{r}\,') \f$, and for local source
+    * triangle coordinates \f$\vec{r}\,' = [x', y']^T\f$.
     */
     SrcResult integrate(
         const Complex k,
         const Triangle<2>& src_tri,
-        ConstEigRef<EigMatNX<Float, 3>> r_obs
+        ConstEigRef<EigMatNX<Float, 3>> r_obs,
+        const bool g_terms = true,
+        const bool grad_g_terms = true
         ) override;
 
 
-    /**
-    * @brief Provides read-only access to the line quadrature object for inspection.
-    * @return Read-only reference to the line quadrature object.
-    */
-    const LineQuadratureType& quadrature_object() const
-    { return line_quad_; };
+protected:
 
-
-    /**
-    * @brief Provides writable access to the line quadrature object.
-    * @return Writable reference to the line quadrature object.
-    */
-    LineQuadratureType& quadrature_object()
-    { return line_quad_; };
-
-
-private:
-
-    LineQuadratureType line_quad_;
+    std::shared_ptr<LineQuadratureBase<1>> line_quad_;
 
 };
 
@@ -107,6 +131,8 @@ private:
 
 }
 
-#include "rwg/integrators/src/line.tpp"
+#ifndef BEM_LINKED
+#include "rwg/integrators/src/line.cpp"
+#endif
 
 #endif

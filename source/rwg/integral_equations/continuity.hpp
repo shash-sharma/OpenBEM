@@ -23,11 +23,11 @@
 #include "materials.hpp"
 
 #include "matrix/base.hpp"
-#include "matrix/eigen_dense.hpp"
+#include "matrix/eigen_matrix.hpp"
 
 #include "rwg/integral_equations/base.hpp"
 #include "rwg/operators/incidence.hpp"
-#include "rwg/assemblers/operator_matrix.hpp"
+#include "rwg/assemblers/operator_assembler.hpp"
 
 
 namespace bem::rwg
@@ -42,7 +42,7 @@ namespace bem::rwg
 * @brief Class defining the RWG-based surface continuity equation.
 * @tparam MatrixType - Matrix type used for all operators, must derive from `MatrixBase<Complex>`.
 */
-template <typename MatrixType = EigenDenseMatrix<Complex>>
+template <typename MatrixType = EigenMatrix<Complex>>
 class Continuity: public IntegralEquationBase<MatrixType>
 {
 
@@ -62,9 +62,9 @@ public:
         const Material& material
         )
     {
-        DivRwgOp op_D;
+        DivergenceOp op_D;
         MatrixType D;
-        assm_div_.assemble(D, op_D, 0);
+        assembler_.assemble(D, op_D, 0);
         return D;
     }
 
@@ -89,9 +89,7 @@ public:
 
 protected:
 
-    FaceEdgeOperatorAssembler assm_div_ = FaceEdgeOperatorAssembler(
-        base::obs_mesh_, base::src_mesh_, base::elem_pairs_
-        );
+    OperatorAssembler assembler_ = OperatorAssembler (base::obs_mesh_, base::src_mesh_, base::elem_pairs_);
 
 };
 
