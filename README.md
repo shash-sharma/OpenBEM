@@ -14,6 +14,8 @@ pertinent to their specific research.
 OpenBEM is written in C++, and its full documentation is available at
 [https://shash-sharma.github.io/OpenBEM/](https://shash-sharma.github.io/OpenBEM/).
 
+Source code is available on [GitHub](https://github.com/shash-sharma/OpenBEM).
+
 As a starting point, it is highly recommended that users go through
 the provided examples in the
 [documentation](https://shash-sharma.github.io/OpenBEM/). To
