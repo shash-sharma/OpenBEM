@@ -1,6 +1,6 @@
 # Changes
 
-## [Unreleased]
+## [1.1.0] - July 11, 2026
 
 ### Added
 
@@ -42,6 +42,6 @@
 - Fixed compiler warnings.
 - Typos fixed in docs.
 
-## [1.0.0] - March 30, 2025
+## [1.0.0] - March 30, 2026
 
 Initial release.
