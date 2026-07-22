@@ -256,11 +256,25 @@ public:
     * @brief Returns the matrix associated with port load impedances.
     * @return Load matrix.
     */
-    virtual MatrixType load_mapping_matrix() const
+    virtual MatrixType impedance_mapping_matrix() const
     {
         MatrixType mat (num_ports(), num_ports());
         for (Index ii = 0; ii < num_ports(); ++ii)
             mat.set_value(ii, ii, impedances()[ii]);
+        mat.assemble();
+        return mat;
+    };
+
+
+    /**
+    * @brief Returns the matrix associated with port load admittances.
+    * @return Load matrix.
+    */
+    virtual MatrixType admittance_mapping_matrix() const
+    {
+        MatrixType mat (num_ports(), num_ports());
+        for (Index ii = 0; ii < num_ports(); ++ii)
+            mat.set_value(ii, ii, one / impedances()[ii]);
         mat.assemble();
         return mat;
     };
@@ -279,6 +293,22 @@ public:
         for (Index ii = 0; ii < view.elem_inds().size(); ++ii)
             mat.set_value(view.elem_inds()[ii], ii, one);
         mat.assemble();
+
+        return mat;
+    };
+
+
+    /**
+    * @brief Returns the matrix that maps ports to mesh triangles, signed based on the terminal.
+    * @return Mapping matrix.
+    */
+    virtual MatrixType port_mapping_matrix() const
+    {
+        MatrixType DtT;
+        DtT.set_transpose(terminal_mapping_matrix());
+
+        MatrixType mat;
+        mat.set_matmul(voltage_mapping_matrix(), DtT);
 
         return mat;
     };
