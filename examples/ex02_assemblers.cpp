@@ -68,11 +68,11 @@ int main(int argc, char** argv)
 
     std::string msh_filename = path + "msh/sphere.msh";
 
-    bem::Structure<bem::TriangleMesh<3>> structure;
+    bem::Structure<3> structure;
     bem::MeshTransfer::read_gmsh_v2(structure, msh_filename);
 
-    std::cout << "Number of vertices: " << structure.mesh().num_verts() << std::endl;
-    std::cout << "Number of triangles: " << structure.mesh().num_elems() << std::endl;
+    std::cout << "Number of vertices: " << structure.mesh().num_vertices() << std::endl;
+    std::cout << "Number of triangles: " << structure.mesh().num_faces() << std::endl;
     std::cout << "Number of edges: " << structure.mesh().num_edges() << std::endl;
 
     // Set the simulation frequency in Hz, and get the background medium (vacuum by default) wave
@@ -275,14 +275,14 @@ int main(int argc, char** argv)
     // for the manually-constructed CFIE case.
 
     MatrixType e_cfie;
-    e_cfie.set_matmul(Lproj, x);
+    Lproj.matmul(e_cfie, x);
 
     // We'll also do the same using the built-in `Tefie` class, as in Example 1, just for
     // comparison.
 
     MatrixType tefie_proj = tefie.j_projector(f, structure.background_material(), projection_points);
     MatrixType e_tefie;
-    e_tefie.set_matmul(tefie_proj, x_tefie);
+    tefie_proj.matmul(e_tefie, x_tefie);
 
     // As in Example 1, the components of the projected fields are stacked consecutively, so we
     // should reshape the projected fields into a more convenient shape.
@@ -326,10 +326,12 @@ int main(int argc, char** argv)
     bem::EigMatNX<bem::Float, 3> j_surf = bem::Rwg::reconstruct_field(
         structure.mesh(), // mesh with which the field is associated
         x, // RWG coefficients computed using the CFIE
-        structure.mesh().elem_centroids() // points at which to compute field values
+        structure.mesh().face_centroids() // points at which to compute field values
         ).array().real(); // Eigen syntax to keep only the real part of the computed currents
 
-    bem::MeshTransfer::write_gmsh_v2_vector_field(structure, path + "msh/ex02_jsurf_cfie", j_surf);
+    bem::MeshTransfer::write_gmsh_v2_vector_field(
+        structure, path + "msh/ex02_jsurf_cfie", j_surf, "jsurf_cfie", "elements"
+        );
 
     // Now you are equipped to set up your own integral equations in any way of combining different
     // operators that you'd like. Enjoy!

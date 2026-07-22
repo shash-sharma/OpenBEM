@@ -57,26 +57,31 @@ public:
 
     /**
     * @brief Constructs a `VectorDoubleLayerPvOp` object with a specified integration object.
-    * @tparam ObsIntegratorType - Type of the observation triangle integrator, derived from `ObsIntegratorBase`.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    template <typename ObsIntegratorType = ObsStrategic>
-    VectorDoubleLayerPvOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
-        obs_integrator_(std::make_shared<ObsIntegratorType> (obs_integrator)) {};
+    VectorDoubleLayerPvOp(const ObsIntegratorBase& obs_integrator = ObsStrategic()):
+        obs_integrator_(obs_integrator.clone()) {};
 
 
     /**
     * @brief Returns the degrees of freedom for the testing function space.
     * @return Observation degrees of freedom.
     */
-    OperatorDof obs_dof() const override { return OperatorDof::EDGE; };
+    DofSpace obs_dof() const override { return DofSpace::EDGE; };
 
 
     /**
     * @brief Returns the degrees of freedom for the expansion function space.
     * @return Source degrees of freedom.
     */
-    OperatorDof src_dof() const override { return OperatorDof::EDGE; };
+    DofSpace src_dof() const override { return DofSpace::EDGE; };
+
+
+    /**
+    * @brief Returns the observation-triangle integrals required.
+    * @return Integrals required.
+    */
+    ObsTerms obs_terms() const override { return { false, false, true, false }; };
 
 
     /**
@@ -147,26 +152,31 @@ public:
 
     /**
     * @brief Constructs a `RotVectorDoubleLayerPvOp` object with a specified integration object.
-    * @tparam ObsIntegratorType - Type of the observation triangle integrator, derived from `ObsIntegratorBase`.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    template <typename ObsIntegratorType = ObsStrategic>
-    RotVectorDoubleLayerPvOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
-        obs_integrator_(std::make_shared<ObsIntegratorType> (obs_integrator)) {};
+    RotVectorDoubleLayerPvOp(const ObsIntegratorBase& obs_integrator = ObsStrategic()):
+        obs_integrator_(obs_integrator.clone()) {};
 
 
     /**
     * @brief Returns the degrees of freedom for the testing function space.
     * @return Observation degrees of freedom.
     */
-    OperatorDof obs_dof() const override { return OperatorDof::EDGE; };
+    DofSpace obs_dof() const override { return DofSpace::EDGE; };
 
 
     /**
     * @brief Returns the degrees of freedom for the expansion function space.
     * @return Source degrees of freedom.
     */
-    OperatorDof src_dof() const override { return OperatorDof::EDGE; };
+    DofSpace src_dof() const override { return DofSpace::EDGE; };
+
+
+    /**
+    * @brief Returns the observation-triangle integrals required.
+    * @return Integrals required.
+    */
+    ObsTerms obs_terms() const override { return { false, false, true, true }; };
 
 
     /**

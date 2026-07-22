@@ -20,6 +20,7 @@
 
 #include <vector>
 #include <memory>
+#include <algorithm>
 #include <type_traits>
 #include <variant>
 #include <functional>
@@ -67,6 +68,19 @@ enum class EigenIterativeSolverType
 
 
 /**
+* @brief Summary of an iterative solve.
+*/
+struct IterativeSolveInfo
+{
+    Eigen::ComputationInfo status = Eigen::Success;
+    Index iterations = 0;
+    Index max_iterations_allowed = 0;
+    Float rtol_requested = 0;
+    Float rtol_achieved = 0;
+};
+
+
+/**
 * @brief Helper Eigen matrix type for custom matrix-vector products in iterative solvers.
 */
 template <typename MatrixType> class MatmulMatrix;
@@ -95,6 +109,14 @@ class EigenMatrix: public MatrixBase<T>
         SparseMatrixType
         >::type;
 
+    using SparseSolverType = Eigen::SparseLU<SparseMatrixType>;
+
+    using DenseSolverType = Eigen::PartialPivLU<DenseMatrixType>;
+    // using DenseSolverType = Eigen::FullPivLU<MatrixType>;
+    // using DenseSolverType = Eigen::HouseholderQr<MatrixType>;
+    // using DenseSolverType = Eigen::ColPivHouseholderQr<MatrixType>;
+    // using DenseSolverType = Eigen::FullPivHouseholderQr<MatrixType>;
+
 public:
 
     /**
@@ -108,6 +130,14 @@ public:
         set_zero();
         return;
     };
+
+
+    /**
+    * @brief Constructs an `EigenMatrix` object by taking ownership of an existing raw Eigen
+    * matrix, without copying.
+    * @param[in] raw - Raw matrix to take ownership of.
+    */
+    EigenMatrix(MatrixType&& raw): matrix_(std::move(raw)) {};
 
 
     /**
@@ -132,6 +162,16 @@ public:
     const MatrixType& raw_matrix() const
     {
         return matrix_;
+    };
+
+
+    /**
+    * @brief Returns the dense direct solver computed by `factorize()`.
+    * @return Dense solver, or `nullptr` if `factorize()` has not been called.
+    */
+    const std::shared_ptr<DenseSolverType>& dense_solver() const
+    {
+        return dense_solver_;
     };
 
 
@@ -164,7 +204,7 @@ public:
 
 
     /**
-    * @brief Returns a unique pointer to a newly constructed object of the derived type.
+    * @brief Returns a unique pointer to an empty object of the derived type.
     * @return Unique pointer to the new object.
     */
     std::unique_ptr<MatrixBase<T>> clone() const override
@@ -206,7 +246,7 @@ public:
 
 
     /**
-    * @brief Resizes the matrix to a new number of rows and columns.
+    * @brief Resizes the matrix and sets it to zeros.
     * @param[in] rows - New number of rows.
     * @param[in] cols - New number of columns.
     */
@@ -224,6 +264,9 @@ public:
     void clear() override
     {
         resize(0, 0);
+        triplets_.clear();
+        assembled_ = false;
+        factorized_ = false;
         return;
     };
 
@@ -474,9 +517,13 @@ public:
     * \f$ \mathbf{X} \f$ is a given matrix, and \f$ \mathbf{X}^T \f$ is its transpose.
     * @param[in] x - Matrix to transpose.
     */
-    void set_transpose(const EigenMatrix<T, type, storage_order>& x)
+    void set_transpose(const MatrixBase<T>& x) override
     {
-        matrix_ = x.raw_matrix().transpose();
+        dispatch(x, [&](auto& xr)
+        {
+            matrix_ = EigenMatrix::template as<MatrixType> (xr.transpose());
+        });
+
         return;
     };
 
@@ -487,14 +534,12 @@ public:
     */
     void get_diagonal(MatrixBase<T>& x) const override
     {
-        auto visitor = [&] (auto* xc)
+        dispatch(x, [&](auto& xr)
         {
-            xc->raw_matrix().resize(num_rows(), num_cols());
-            xc->raw_matrix().setIdentity();
-            xc->raw_matrix().diagonal() = matrix_.diagonal();
-        };
-
-        std::visit(visitor, to_variant(x));
+            xr.resize(num_rows(), num_cols());
+            xr.setIdentity();
+            xr.diagonal() = matrix_.diagonal();
+        });
 
         return;
     };
@@ -514,14 +559,11 @@ public:
         if (!(std::abs(a) > float_eps))
             return;
 
-        auto visitor = [this, a] (const auto* xc)
-        { matrix_ += a * xc->raw_matrix(); };
-
-        if constexpr (type == EigenMatrixType::EIGEN_DENSE)
-            std::visit(visitor, to_variant(x));
-        else
-            matrix_ += a * to_same(x)->raw_matrix();
-
+        dispatch(x, [&](const auto& xr)
+        {
+            matrix_ += EigenMatrix::template as<MatrixType> (a * xr);
+        });
+        
         return;
     };
 
@@ -541,69 +583,10 @@ public:
         const T& b = T(1)
         )
     {
-        auto visitor = [this, a, b] (const auto* xc, const auto* yc)
-        { matrix_ = a * xc->raw_matrix() + b * yc->raw_matrix(); };
-
-        std::visit(visitor, to_variant(x), to_variant(y));
-
-        return;
-    };
-
-
-    /**
-    * @brief Computes \f$ \mathbf{M} = a\mathbf{X}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$ is this matrix,
-    * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
-    * @param[in] x - First matrix to multiply, must have the same number of columns as `y` has rows.
-    * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
-    * @param[in] a - Scalar with which to scale the product of `x` and `y`.
-    */
-    void set_matmul(
-        const MatrixBase<T>& x,
-        const MatrixBase<T>& y,
-        const T& a = T(1)
-        ) override
-    {
-        if (x.num_rows() * x.num_cols() * y.num_rows() * y.num_cols() == 0)
-            return;
-
-        auto visitor = [this, a] (const auto* xc, const auto* yc)
-        { matrix_ = xc->raw_matrix() * yc->raw_matrix() * a; };
-
-        if constexpr (type == EigenMatrixType::EIGEN_DENSE)
-            std::visit(visitor, to_variant(x), to_variant(y));
-        else
-            matrix_ = to_same(x)->raw_matrix() * to_same(y)->raw_matrix() * a;
-
-        return;
-    };
-
-
-    /**
-    * @brief Computes \f$ \mathbf{M} = \mathbf{M} + a\mathbf{X}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$
-    * is this matrix, \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
-    * @param[in] x - First matrix to multiply, must have the same number of columns as `y` has rows.
-    * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
-    * @param[in] a - Scalar with which to scale the product of `x` and `y`.
-    */
-    void add_matmul(
-        const MatrixBase<T>& x,
-        const MatrixBase<T>& y,
-        const T& a = T(1)
-        ) override
-    {
-        if (x.num_rows() * x.num_cols() * y.num_rows() * y.num_cols() == 0)
-            return;
-
-        if (!(std::abs(a) > float_eps))
-            return;
-
-        auto visitor = [this, a] (const auto* xc, const auto* yc)
-        { matrix_ += xc->raw_matrix() * yc->raw_matrix() * a; };
-
-        if constexpr (type == EigenMatrixType::EIGEN_DENSE)
-            std::visit(visitor, to_variant(x), to_variant(y));
-        else
-            matrix_ += to_same(x)->raw_matrix() * to_same(y)->raw_matrix() * a;
+        dispatch(x, y, [&](const auto& xr, const auto& yr)
+        {
+            matrix_ = a * xr + b * yr;
+        });
 
         return;
     };
@@ -615,53 +598,113 @@ public:
     * @param[out] x - Multiplication result.
     * @param[in] y - Matrix with which to multiply, must have the same number of rows as this matrix.
     * @param[in] a - Scalar with which to scale the product.
+    * @param[in] accumulate - Whether to accumulate the product into a pre-existing `x`.
     */
     void matmul(
         MatrixBase<T>& x,
         const MatrixBase<T>& y,
-        const T& a = T(1)
+        const T& a = T(1),
+        const bool accumulate = false
         ) const override
     {
         if (y.num_rows() * y.num_cols() == 0)
             return;
+        
+        if (!(std::abs(a) > float_eps) && accumulate)
+            return;
 
-        auto visitor = [&] (const auto* yc)
-        { to_same(x)->raw_matrix() = matrix_ * yc->raw_matrix() * a; };
-
-        if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
-            to_same(x)->raw_matrix() = matrix_ * to_same(y)->raw_matrix() * a;
-        else
-            std::visit(visitor, to_variant(y));
+        dispatch(x, y, [&](auto& xr, const auto& yr)
+        {
+            if (accumulate)
+                xr += EigenMatrix::template as<std::decay_t<decltype(xr)>> (
+                    (matrix_ * yr * a).eval()
+                    );
+            else
+                xr = EigenMatrix::template as<std::decay_t<decltype(xr)>> (
+                    (matrix_ * yr * a).eval()
+                    );
+        });
 
         return;
     };
 
 
     /**
-    * @brief Computes \f$ \mathbf{X} += a\mathbf{M}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$ is this matrix,
-    * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
-    * @param[out] x - Multiplication result.
-    * @param[in] y - Matrix with which to multiply, must have the same number of rows as this matrix.
+    * @brief Computes \f$ \mathbf{X}_b = a\mathbf{M}\mathbf{Y}_b \f$ where \f$ \mathbf{M} \f$ is this matrix,
+    * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices, and the subscript \f$ b \f$
+    * indicates that the matrix is multiplied into a sub-block of \f$ \mathbf{Y} \f$, and the result is 
+    * placed in a sub-block of \f$ \mathbf{X} \f$.
+    * @param[in,out] x - Destination matrix, with at least as many rows as rows of this matrix. If
+    * `x` is completely unallocated (0x0), it is resized automatically to fit the destination
+    * block; otherwise it must already be at least as large as the destination block requires
+    * (an exception is thrown if it is undersized), and the existing block is updated in place.
+    * @param[in] y - Matrix whose sub-block to multiply, with at least as many rows as columns of this matrix.
+    * @param[in] x_row_start - Starting row index for the destination block.
+    * @param[in] y_row_start - Starting row index for the multiplier block.
     * @param[in] a - Scalar with which to scale the product.
+    * @param[in] accumulate - Whether to accumulate the product into a pre-existing `x`.
     */
-    void matmuladd(
+    virtual void matmul_block(
         MatrixBase<T>& x,
         const MatrixBase<T>& y,
-        const T& a = T(1)
+        const Index x_row_start,
+        const Index y_row_start,
+        const T& a = T(1),
+        const bool accumulate = false
         ) const override
     {
+
         if (y.num_rows() * y.num_cols() == 0)
             return;
 
-        auto visitor = [&] (const auto* yc)
-        { to_same(x)->raw_matrix() += matrix_ * yc->raw_matrix() * a; };
+        if (y.num_rows() < num_cols())
+            throw std::invalid_argument("EigenMatrix::matmul_block(): `y` must have at least as many rows as `this` matrix has columns.");
 
-        if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
-            to_same(x)->raw_matrix() += matrix_ * to_same(y)->raw_matrix() * a;
-        else
-            std::visit(visitor, to_variant(y));
+        if (x.num_rows() == 0 && x.num_cols() == 0)
+        {
+            x.resize(x_row_start + num_rows(), y.num_cols());
+        }
+        else if (x.num_rows() < x_row_start + num_rows() || x.num_cols() < y.num_cols())
+        {
+            throw std::invalid_argument("EigenMatrix::matmul_block(): `x` must be either unallocated or already large enough to hold the destination block.");
+        }
+
+        if (!(std::abs(a) > float_eps) && accumulate)
+            return;
+
+        dispatch(x, y, [&](auto& xr, const auto& yr)
+        {
+            if constexpr (std::is_same_v<std::decay_t<decltype(xr)>, SparseMatrixType>)
+            {
+                EigenMatrix<T, EigenMatrixType::EIGEN_SPARSE, storage_order> temp;
+                temp.raw_matrix() = EigenMatrix::template as<std::decay_t<decltype(xr)>> (
+                    (matrix_ * yr.block(y_row_start, 0, num_cols(), y.num_cols()) * a).eval()
+                    );
+
+                if (accumulate)
+                    x.add_block(temp, x_row_start, 0);
+                else
+                    x.set_block(temp, x_row_start, 0);
+            }
+            else
+            {
+                if (accumulate)
+                    xr.block(
+                        x_row_start, 0, num_rows(), y.num_cols()
+                        ) += EigenMatrix::template as<std::decay_t<decltype(xr)>> (
+                            (matrix_ * yr.block(y_row_start, 0, num_cols(), y.num_cols()) * a).eval()
+                            );
+                else
+                    xr.block(
+                        x_row_start, 0, num_rows(), y.num_cols()
+                        ) = EigenMatrix::template as<std::decay_t<decltype(xr)>> (
+                            (matrix_ * yr.block(y_row_start, 0, num_cols(), y.num_cols()) * a).eval()
+                            );
+            }
+        });
 
         return;
+
     };
 
 
@@ -680,31 +723,51 @@ public:
         ) override
     {
 
-        auto visitor = [&] (auto* xc)
-        { matrix_.block(row_start, col_start, xc->num_rows(), xc->num_cols()) = xc->raw_matrix() * a; };
+        if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
+        {
+            dispatch(x, [&](const auto& xr)
+            {
+                std::vector<Eigen::Triplet<T>> x_triplets;
 
-        if constexpr (type == EigenMatrixType::EIGEN_DENSE)
-            std::visit(visitor, to_variant(x));
+                if constexpr (std::is_same_v<std::decay_t<decltype(xr)>, SparseMatrixType>)
+                {
+                    x_triplets.reserve(xr.nonZeros());
+
+                    for (Index kk = 0; kk < xr.outerSize(); ++kk)
+                        for (typename SparseMatrixType::InnerIterator it (xr, kk); it; ++it)
+                            x_triplets.emplace_back(
+                                Eigen::Triplet<T> (
+                                    row_start + it.row(), col_start + it.col(), it.value() * a
+                                    )
+                                );
+                }
+                else
+                {
+                    x_triplets.reserve(xr.rows() * xr.cols());
+
+                    for (Index ii = 0; ii < xr.rows(); ++ii)
+                        for (Index jj = 0; jj < xr.cols(); ++jj)
+                            x_triplets.emplace_back(
+                                Eigen::Triplet<T> (
+                                    row_start + ii, col_start + jj, xr(ii, jj) * a
+                                    )
+                                );
+                }
+    
+                matrix_.insertFromTriplets(
+                    x_triplets.begin(),
+                    x_triplets.end(),
+                    [] (const T&, const T& b) { return b; }
+                    );
+            });
+        }
         else
         {
-            const auto& xc = *to_same(x);
-
-            std::vector<Eigen::Triplet<T>> x_triplets;
-            x_triplets.reserve(xc.raw_matrix().nonZeros());
-
-            for (Index kk = 0; kk < xc.raw_matrix().outerSize(); ++kk)
-                for (typename MatrixType::InnerIterator it (xc.raw_matrix(), kk); it; ++it)
-                    x_triplets.emplace_back(
-                        Eigen::Triplet<T> (
-                            row_start + it.row(), col_start + it.col(), it.value() * a
-                            )
-                        );
-
-            matrix_.insertFromTriplets(
-                x_triplets.begin(),
-                x_triplets.end(),
-                [] (const T&, const T &b) { return b; }
-                );
+            dispatch(x, [&](const auto& xr)
+            {
+                matrix_.block(row_start, col_start, xr.rows(), xr.cols()) = 
+                    EigenMatrix::template as<MatrixType> (xr * a);
+            });
         }
 
         return;
@@ -730,27 +793,237 @@ public:
         if (!(std::abs(a) > float_eps))
             return;
 
-        auto visitor = [&] (auto* xc)
-        { matrix_.block(row_start, col_start, xc->num_rows(), xc->num_cols()) += xc->raw_matrix() * a; };
+        if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
+        {
+            dispatch(x, [&](const auto& xr)
+            {
+                std::vector<Eigen::Triplet<T>> x_triplets;
 
-        if constexpr (type == EigenMatrixType::EIGEN_DENSE)
-            std::visit(visitor, to_variant(x));
+                if constexpr (std::is_same_v<std::decay_t<decltype(xr)>, SparseMatrixType>)
+                {
+                    x_triplets.reserve(xr.nonZeros());
+
+                    for (Index kk = 0; kk < xr.outerSize(); ++kk)
+                        for (typename SparseMatrixType::InnerIterator it (xr, kk); it; ++it)
+                            x_triplets.emplace_back(
+                                Eigen::Triplet<T> (
+                                    row_start + it.row(), col_start + it.col(), it.value() * a
+                                    )
+                                );
+                }
+                else
+                {
+                    x_triplets.reserve(xr.rows() * xr.cols());
+
+                    for (Index ii = 0; ii < xr.rows(); ++ii)
+                        for (Index jj = 0; jj < xr.cols(); ++jj)
+                            x_triplets.emplace_back(
+                                Eigen::Triplet<T> (
+                                    row_start + ii, col_start + jj, xr(ii, jj) * a
+                                    )
+                                );
+                }
+    
+                matrix_.insertFromTriplets(
+                    x_triplets.begin(),
+                    x_triplets.end()
+                    );
+            });
+        }
         else
         {
-            const auto& xc = *to_same(x);
+            dispatch(x, [&](const auto& xr)
+            {
+                matrix_.block(row_start, col_start, xr.rows(), xr.cols()) += 
+                    EigenMatrix::template as<MatrixType> (xr * a);
+            });
+        }
 
-            std::vector<Eigen::Triplet<T>> x_triplets;
-            x_triplets.reserve(xc.raw_matrix().nonZeros());
+        return;
 
-            for (Index kk = 0; kk < xc.raw_matrix().outerSize(); ++kk)
-                for (typename MatrixType::InnerIterator it (xc.raw_matrix(), kk); it; ++it)
-                    x_triplets.emplace_back(
-                        Eigen::Triplet<T> (
-                            row_start + it.row(), col_start + it.col(), it.value() * a
-                            )
-                        );
+    };
 
-            matrix_.insertFromTriplets(x_triplets.begin(), x_triplets.end());
+
+    /**
+    * @brief Sets a block of this matrix to a block of a given matrix, starting at a given position.
+    * @param[in] x - Matrix to insert.
+    * @param[in] src_row_start - Starting row index for the source block.
+    * @param[in] src_col_start - Starting column index for the source block.
+    * @param[in] dst_row_start - Starting row index for the destination block.
+    * @param[in] dst_col_start - Starting column index for the destination block.
+    * @param[in] b_rows - Number of rows to retrieve.
+    * @param[in] b_cols - Number of columns to retrieve.
+    * @param[in] a - Scalar to multiply the values of `x` before inserting (optional).
+    */
+    virtual void set_block(
+        const MatrixBase<T>& x,
+        Index src_row_start,
+        Index src_col_start,
+        Index dst_row_start,
+        Index dst_col_start,
+        Index b_rows,
+        Index b_cols,
+        const T& a = T(1)
+        ) override
+    { 
+
+        if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
+        {
+            dispatch(x, [&](const auto& xr)
+            {
+                std::vector<Eigen::Triplet<T>> x_triplets;
+
+                if constexpr (std::is_same_v<std::decay_t<decltype(xr)>, SparseMatrixType>)
+                {
+                    x_triplets.reserve(std::min<Index>(b_rows * b_cols, xr.nonZeros()));
+
+                    for (Index kk = src_col_start; kk < src_col_start + b_cols; ++kk)
+                        for (typename SparseMatrixType::InnerIterator it (xr, kk); it; ++it)
+                        {
+                            const Index rr = it.row();
+                            if (rr >= src_row_start && rr < src_row_start + b_rows)
+                            {
+                                x_triplets.emplace_back(
+                                    Eigen::Triplet<T> (
+                                        dst_row_start + (rr - src_row_start),
+                                        dst_col_start + (kk - src_col_start),
+                                        it.value() * a
+                                        )
+                                    );
+                            }
+                        }
+                }
+                else
+                {
+                    x_triplets.reserve(b_rows * b_cols);
+
+                    for (Index ii = 0; ii < b_rows; ++ii)
+                        for (Index jj = 0; jj < b_cols; ++jj)
+                            x_triplets.emplace_back(
+                                Eigen::Triplet<T> (
+                                    dst_row_start + ii,
+                                    dst_col_start + jj,
+                                    xr(src_row_start + ii, src_col_start + jj) * a
+                                    )
+                                );
+                }
+
+                matrix_.insertFromTriplets(
+                    x_triplets.begin(),
+                    x_triplets.end(),
+                    [] (const T&, const T& b) { return b; }
+                    );
+            });
+        }
+        else
+        {
+            dispatch(x, [&](const auto& xr)
+            {
+                matrix_.block(
+                    dst_row_start,
+                    dst_col_start,
+                    b_rows,
+                    b_cols
+                    ) = EigenMatrix::template as<MatrixType> (xr.block(
+                        src_row_start,
+                        src_col_start,
+                        b_rows,
+                        b_cols
+                        ) * a);
+            });
+        }
+
+        return;
+
+    };
+
+
+    /**
+    * @brief Adds a block to this matrix from a block of a given matrix, starting at a given position.
+    * @param[in] x - Matrix whose block should be added to a block of this matrix.
+    * @param[in] src_row_start - Starting row index for the source block.
+    * @param[in] src_col_start - Starting column index for the source block.
+    * @param[in] dst_row_start - Starting row index for the destination block.
+    * @param[in] dst_col_start - Starting column index for the destination block.
+    * @param[in] b_rows - Number of rows to retrieve.
+    * @param[in] b_cols - Number of columns to retrieve.
+    * @param[in] a - Scalar to multiply the values of `x` before inserting (optional).
+    */
+    virtual void add_block(
+        const MatrixBase<T>& x,
+        Index src_row_start,
+        Index src_col_start,
+        Index dst_row_start,
+        Index dst_col_start,
+        Index b_rows,
+        Index b_cols,
+        const T& a = T(1)
+        ) override
+    { 
+        
+        if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
+        {
+            dispatch(x, [&](const auto& xr)
+            {
+                std::vector<Eigen::Triplet<T>> x_triplets;
+
+                if constexpr (std::is_same_v<std::decay_t<decltype(xr)>, SparseMatrixType>)
+                {
+                    x_triplets.reserve(std::min<Index>(b_rows * b_cols, xr.nonZeros()));
+
+                    for (Index kk = src_col_start; kk < src_col_start + b_cols; ++kk)
+                        for (typename SparseMatrixType::InnerIterator it (xr, kk); it; ++it)
+                        {
+                            const Index rr = it.row();
+                            if (rr >= src_row_start && rr < src_row_start + b_rows)
+                            {
+                                x_triplets.emplace_back(
+                                    Eigen::Triplet<T> (
+                                        dst_row_start + (rr - src_row_start),
+                                        dst_col_start + (kk - src_col_start),
+                                        it.value() * a
+                                        )
+                                    );
+                            }
+                        }
+                }
+                else
+                {
+                    x_triplets.reserve(b_rows * b_cols);
+
+                    for (Index ii = 0; ii < b_rows; ++ii)
+                        for (Index jj = 0; jj < b_cols; ++jj)
+                            x_triplets.emplace_back(
+                                Eigen::Triplet<T> (
+                                    dst_row_start + ii,
+                                    dst_col_start + jj,
+                                    xr(src_row_start + ii, src_col_start + jj) * a
+                                    )
+                                );
+                }
+
+                matrix_.insertFromTriplets(
+                    x_triplets.begin(),
+                    x_triplets.end()
+                    );
+            });
+        }
+        else
+        {
+            dispatch(x, [&](const auto& xr)
+            {
+                matrix_.block(
+                    dst_row_start,
+                    dst_col_start,
+                    b_rows,
+                    b_cols
+                    ) += EigenMatrix::template as<MatrixType> (xr.block(
+                        src_row_start,
+                        src_col_start,
+                        b_rows,
+                        b_cols
+                        ) * a);
+            });
         }
 
         return;
@@ -803,40 +1076,13 @@ public:
         Index b_cols
         ) const override
     {
-        auto visitor = [&] (auto* xc)
-        { xc->raw_matrix() = matrix_.block(row_start, col_start, b_rows, b_cols); };
-
-        if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
-            std::visit(visitor, to_variant(x));
-        else
+        dispatch(x, [&](auto& xr)
         {
-            auto& xc = *to_same(x);
-            xc.raw_matrix() = matrix_.block(row_start, col_start, b_rows, b_cols);
-        }
+            xr = EigenMatrix::template as<std::decay_t<decltype(xr)>> (
+                matrix_.block(row_start, col_start, b_rows, b_cols)
+                );
+        });
 
-        return;
-    };
-
-
-    /**
-    * @brief Copies a block of values from this matrix to the corresponding block of another.
-    * @param[out] x - Matrix to store the retrieved values in its corresponding block.
-    * @param[in] row_start - Starting row index for the block.
-    * @param[in] col_start - Starting column index for the block.
-    * @param[in] b_rows - Number of rows in the block to retrieve.
-    * @param[in] b_cols - Number of columns in the block to retrieve.
-    */
-    void copy_block(
-        MatrixBase<T>& x,
-        Index row_start,
-        Index col_start,
-        Index b_rows,
-        Index b_cols
-        ) const override
-    {
-        std::unique_ptr<MatrixBase<T>> temp = x.clone();
-        get_block(*temp, row_start, col_start, b_rows, b_cols);
-        x.set_block(*temp, row_start, col_start);
         return;
     };
 
@@ -855,7 +1101,7 @@ public:
             factorized_ = true;
         }
 
-        if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
+        else if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
         {
             sparse_solver_ = std::make_shared<SparseSolverType> ();
             sparse_solver_->compute(matrix_);
@@ -880,114 +1126,233 @@ public:
         if (!factorized_)
             throw std::runtime_error("EigenMatrix::solve(): Matrix must be factorized first.");
 
-        const auto& bd =
-            dynamic_cast<const EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>&> (b);
-
-        auto& xd =
-            dynamic_cast<EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>&> (x);
-
-        if constexpr (type == EigenMatrixType::EIGEN_DENSE)
+        dispatch(x, b, [&](auto& xr, const auto& br)
         {
-            xd.raw_matrix() = dense_solver_->solve(bd.raw_matrix());
-            if (dense_solver_->info() != Eigen::Success)
-                throw std::runtime_error("EigenMatrix::solve(): Dense solver failed.");
-        }
+            DenseMatrixType rhs = EigenMatrix::template as<DenseMatrixType> (br);
+            DenseMatrixType sol;
 
-        if constexpr (type == EigenMatrixType::EIGEN_SPARSE)
-        {
-            xd.raw_matrix() = sparse_solver_->solve(bd.raw_matrix());
-            if (sparse_solver_->info() != Eigen::Success)
-                throw std::runtime_error("EigenMatrix::solve(): Sparse solver failed.");
-        }
+            if constexpr (type == EigenMatrixType::EIGEN_DENSE)
+            {
+                sol = dense_solver_->solve(rhs);
+                if (dense_solver_->info() != Eigen::Success)
+                    throw std::runtime_error("EigenMatrix::mat_solve(): Dense solver failed.");
+            }
+            else
+            {
+                sol = sparse_solver_->solve(rhs);
+                if (sparse_solver_->info() != Eigen::Success)
+                    throw std::runtime_error("EigenMatrix::mat_solve(): Sparse solver failed.");
+            }
+
+            xr = EigenMatrix::template as<std::decay_t<decltype(xr)>> (sol);
+        });
 
         return;
     };
 
 
     /**
-    * @brief Solves \f$ \mathbf{M}\mathbf{X} = \mathbf{B} \f$ for matrix \f$ \mathbf{X} \f$ with the
-    * GMRES iterative solver, where \f$ \mathbf{M} \f$ is this matrix, and \f$ \mathbf{B} \f$ is a given
-    * right-hand side matrix.
-    * @param[out] x - Solution.
+    * @brief Applies the inverse of `factorize()`'s lower-triangular factor, including its row
+    * permutation: \f$ \mathbf{X} = \mathbf{L}^{-1}\mathbf{P}_r\mathbf{B} \f$, or, if `transpose` is
+    * set, \f$ \mathbf{X} = \mathbf{L}^{-T}\mathbf{P}_r\mathbf{B} \f$.
+    * @param[out] x - Result.
     * @param[in] b - Right-hand side matrix, must have the same number of rows as this matrix.
-    * @param[in] tol - Tolerance for convergence (optional).
-    * @param[in] restart - Restart iteration at which the Krylov subspace is discarded (optional).
+    * @param[in] transpose - Whether to solve with the transpose of the lower-triangular factor
+    * (optional). Sparse matrices do not yet support this.
     */
-    void mat_solve_gmres(
-        EigenMatrix<T, type, storage_order>& x,
-        const EigenMatrix<T, type, storage_order>& b,
-        const Float tol = 1e-4,
-        const Index restart = 100
-        )
+    void mat_solve_lower(MatrixBase<T>& x, const MatrixBase<T>& b, const bool transpose = false) const
     {
-        Eigen::GMRES<MatrixType, Eigen::IdentityPreconditioner> solver;
-        // Eigen::GMRES<MatrixType, Eigen::DiagonalPreconditioner<T>> solver;
+        if (!factorized_)
+            throw std::runtime_error("EigenMatrix::mat_solve_lower(): Matrix must be factorized first.");
 
-        solver.setTolerance(tol);
-        solver.setMaxIterations(1000);
-        solver.set_restart(restart);
+        dispatch(x, b, [&](auto& xr, const auto& br)
+        {
+            DenseMatrixType rhs = EigenMatrix::template as<DenseMatrixType> (br);
+            DenseMatrixType sol;
 
-        solver.compute(raw_matrix());
+            if constexpr (type == EigenMatrixType::EIGEN_DENSE)
+            {
+                DenseMatrixType permuted = dense_solver_->permutationP() * rhs;
 
-        if (solver.info() != Eigen::Success)
-            throw std::runtime_error("EigenMatrix::mat_solve_gmres(): Solver initialization failed.");
+                if (!transpose)
+                    sol = dense_solver_->matrixLU().template triangularView<Eigen::UnitLower>().solve(permuted);
+                else
+                    sol = dense_solver_->matrixLU().template triangularView<Eigen::UnitLower>()
+                        .transpose().solve(permuted);
+            }
+            else
+            {
+                if (transpose)
+                    throw std::runtime_error(
+                        "EigenMatrix::mat_solve_lower(): `transpose` is not yet supported for sparse matrices."
+                        );
 
-        x.raw_matrix() = solver.solve(b.raw_matrix());
+                sol = sparse_solver_->rowsPermutation() * rhs;
+                sparse_solver_->matrixL().solveInPlace(sol);
+            }
 
-        std::cout << "GMRES iterations: "
-                  << solver.iterations()
-                  << " | tolerance: "
-                  << solver.tolerance()
-                  << " | residual: "
-                  << solver.error()
-                  << std::endl;
-
-        if (solver.info() != Eigen::Success)
-            std::cout << "EigenMatrix::mat_solve_gmres(): [Warning] GMRES solve failed." << std::endl;
+            xr = EigenMatrix::template as<std::decay_t<decltype(xr)>> (sol);
+        });
 
         return;
     };
 
 
     /**
-    * @brief Solves \f$ \mathbf{M}\mathbf{X} = \mathbf{B} \f$ for matrix \f$ \mathbf{X} \f$ with the
-    * BiCGSTAB iterative solver, where \f$ \mathbf{M} \f$ is this matrix, and \f$ \mathbf{B} \f$ is a given
-    * right-hand side matrix.
-    * @param[out] x - Solution.
+    * @brief Applies the inverse of `factorize()`'s upper-triangular factor, including its column
+    * permutation where applicable: \f$ \mathbf{X} = \mathbf{P}_c\mathbf{U}^{-1}\mathbf{B} \f$ for a
+    * sparse matrix, \f$ \mathbf{X} = \mathbf{U}^{-1}\mathbf{B} \f$ for a dense one (no column
+    * permutation); or, if `transpose` is set, the same with \f$ \mathbf{U}^{-T} \f$.
+    * @param[out] x - Result.
     * @param[in] b - Right-hand side matrix, must have the same number of rows as this matrix.
-    * @param[in] tol - Tolerance for convergence (optional).
+    * @param[in] transpose - Whether to solve with the transpose of the upper-triangular factor
+    * (optional). Sparse matrices do not yet support this.
     */
-    void mat_solve_bicgstab(
-        EigenMatrix<T, type, storage_order>& x,
-        const EigenMatrix<T, type, storage_order>& b,
-        const Float tol = 1e-4
-        )
+    void mat_solve_upper(MatrixBase<T>& x, const MatrixBase<T>& b, const bool transpose = false) const
     {
-        Eigen::BiCGSTAB<MatrixType, Eigen::IdentityPreconditioner> solver;
-        // Eigen::BiCGSTAB<MatrixType, Eigen::DiagonalPreconditioner<T>> solver;
+        if (!factorized_)
+            throw std::runtime_error("EigenMatrix::mat_solve_upper(): Matrix must be factorized first.");
 
-        solver.setTolerance(tol);
-        solver.setMaxIterations(1000);
+        dispatch(x, b, [&](auto& xr, const auto& br)
+        {
+            DenseMatrixType rhs = EigenMatrix::template as<DenseMatrixType> (br);
+            DenseMatrixType sol;
 
-        solver.compute(raw_matrix());
+            if constexpr (type == EigenMatrixType::EIGEN_DENSE)
+            {
+                if (!transpose)
+                    sol = dense_solver_->matrixLU().template triangularView<Eigen::Upper>().solve(rhs);
+                else
+                    sol = dense_solver_->matrixLU().template triangularView<Eigen::Upper>().transpose().solve(rhs);
+            }
+            else
+            {
+                if (transpose)
+                    throw std::runtime_error(
+                        "EigenMatrix::mat_solve_upper(): `transpose` is not yet supported for sparse matrices."
+                        );
 
-        if (solver.info() != Eigen::Success)
-            throw std::runtime_error("EigenMatrix::mat_solve_bicgstab(): Solver initialization failed.");
+                sol = rhs;
+                sparse_solver_->matrixU().solveInPlace(sol);
+                sol = sparse_solver_->colsPermutation().inverse() * sol;
+            }
 
-        x.raw_matrix() = solver.solve(b.raw_matrix());
-
-        std::cout << "BiCGStab iterations: "
-                  << solver.iterations()
-                  << " | tolerance: "
-                  << solver.tolerance()
-                  << " | residual: "
-                  << solver.error()
-                  << std::endl;
-
-        if (solver.info() != Eigen::Success)
-            std::cout << "EigenMatrix::mat_solve_bicgstab(): [Warning] BiCGStab solve failed." << std::endl;
+            xr = EigenMatrix::template as<std::decay_t<decltype(xr)>> (sol);
+        });
 
         return;
+    };
+
+
+    /**
+    * @brief Factorizes this matrix via a Schur-complement decomposition, using an analytical
+    * inverse for the top-left block if possible, depending on `pattern`.
+    * @param[in] pivot - Size of the top-left block.
+    * @param[in] pattern - Known structure of the top-left block (optional).
+    */
+    void factorize_schur(Index pivot, MatrixStructure pattern = MatrixStructure::NONE) override
+    {
+
+        const Index n2 = matrix_.rows() - pivot;
+
+        schur_pattern_ = pattern;
+
+        B_schur_ = std::make_shared<EigenMatrix<T, type, storage_order>> ();
+        C_schur_ = std::make_shared<EigenMatrix<T, type, storage_order>> ();
+        S_schur_ = std::make_shared<EigenMatrix<T, type, storage_order>> ();
+
+        B_schur_->raw_matrix() = matrix_.block(0, pivot, pivot, n2);
+        C_schur_->raw_matrix() = matrix_.block(pivot, 0, n2, pivot);
+
+        MatrixType D = matrix_.block(pivot, pivot, n2, n2);
+
+        A_inv_schur_.clear();
+
+        if (pattern == MatrixStructure::DIAGONAL_2X2)
+        {
+            const Index h = pivot / 2;
+
+            EigMat<T> a1 = MatrixType(matrix_.block(0, 0, h, h)).diagonal();
+            EigMat<T> a2 = MatrixType(matrix_.block(0, h, h, h)).diagonal();
+            EigMat<T> a3 = MatrixType(matrix_.block(h, 0, h, h)).diagonal();
+            EigMat<T> a4 = MatrixType(matrix_.block(h, h, h, h)).diagonal();
+            EigMat<T> det = a1.array() * a4.array() - a2.array() * a3.array();
+
+            A_inv_schur_.resize(4);
+            A_inv_schur_[0].raw_matrix() = (a4.array() / det.array()).matrix().asDiagonal();
+            A_inv_schur_[1].raw_matrix() = (-a2.array() / det.array()).matrix().asDiagonal();
+            A_inv_schur_[2].raw_matrix() = (-a3.array() / det.array()).matrix().asDiagonal();
+            A_inv_schur_[3].raw_matrix() = (a1.array() / det.array()).matrix().asDiagonal();
+        }
+
+        else if (pattern == MatrixStructure::DIAGONAL)
+        {
+            EigMat<T> a = MatrixType(matrix_.block(0, 0, pivot, pivot)).diagonal();
+
+            A_inv_schur_.resize(1);
+            A_inv_schur_[0].raw_matrix() = a.array().inverse().matrix().asDiagonal();
+        }
+
+        else
+        {
+            A_inv_schur_.resize(1);
+            A_inv_schur_[0].raw_matrix() = matrix_.block(0, 0, pivot, pivot);
+            A_inv_schur_[0].factorize();
+        }
+
+        EigenMatrix<T, type, storage_order> AinvB;
+        apply_ainv_schur(AinvB, *B_schur_);
+
+        S_schur_->raw_matrix() = D - C_schur_->raw_matrix() * AinvB.raw_matrix();
+        S_schur_->factorize();
+
+        schur_factorized_ = true;
+
+        return;
+
+    };
+
+
+    /**
+    * @brief Solves \f$ \mathbf{M}\mathbf{X} = \mathbf{B} \f$ using the factorization computed by
+    * `factorize_schur()`.
+    * @param[out] x - Solution.
+    * @param[in] b - Right-hand side matrix.
+    */
+    void mat_solve_schur(MatrixBase<T>& x, const MatrixBase<T>& b) const override
+    {
+
+        if (!schur_factorized_)
+            throw std::runtime_error("EigenMatrix::mat_solve_schur(): Matrix must be factorized first.");
+
+        const Index pivot = B_schur_->num_rows();
+        const Index n2 = b.num_rows() - pivot;
+
+        EigenMatrix<T, type, storage_order> temp1, temp2;
+
+        b.get_block(temp1, 0, 0, pivot, b.num_cols());
+
+        EigenMatrix<T, type, storage_order> y1;
+        apply_ainv_schur(y1, temp1);
+
+        C_schur_->matmul(temp1, y1);
+
+        b.get_block(temp2, pivot, 0, n2, b.num_cols());
+        temp2.raw_matrix() -= temp1.raw_matrix();
+
+        EigenMatrix<T, type, storage_order> x2;
+        S_schur_->mat_solve(x2, temp2);
+
+        B_schur_->matmul(temp1, x2);
+        apply_ainv_schur(temp2, temp1);
+        temp2.raw_matrix() = y1.raw_matrix() - temp2.raw_matrix();
+
+        x.resize(pivot + n2, b.num_cols());
+        x.set_block(temp2, 0, 0);
+        x.set_block(x2, pivot, 0);
+
+        return;
+
     };
 
 
@@ -1000,79 +1365,17 @@ public:
     * @param[in] solver_type - Type of iterative solver to use (optional).
     * @param[in] tol - Tolerance for convergence (optional).
     * @param[in] restart - Restart iteration at which the Krylov subspace is discarded (optional).
+    * @return Summary of the solve.
     */
-    void mat_solve_iterative(
-        EigenMatrix<T, type, storage_order>& x,
-        const EigenMatrix<T, type, storage_order>& b,
+    IterativeSolveInfo mat_solve_iterative(
+        MatrixBase<T>& x,
+        const MatrixBase<T>& b,
         const EigenIterativeSolverType solver_type = EigenIterativeSolverType::EIGEN_GMRES,
         const Float tol = 1e-4,
         const Index restart = 100
         ) const
     {
-        if (solver_type == EigenIterativeSolverType::EIGEN_GMRES)
-        {
-            mat_solve_iterative<Eigen::GMRES<MatmulMatrix<MatrixType>, Eigen::IdentityPreconditioner>> (
-                x, b, tol, restart
-                );
-        }
-        else if (solver_type == EigenIterativeSolverType::EIGEN_GMRES)
-        {
-            mat_solve_iterative<Eigen::GMRES<MatmulMatrix<MatrixType>, Eigen::IdentityPreconditioner>> (
-                x, b, tol, restart
-                );
-        }
-
-        return;
-    };
-
-
-    /**
-    * @brief Solves \f$ \mathbf{M}\mathbf{X} = \mathbf{B} \f$ for matrix \f$ \mathbf{X} \f$ with an
-    * iterative solver, where \f$ \mathbf{M} \f$ is this matrix, and \f$ \mathbf{B} \f$ is a given
-    * right-hand side matrix.
-    * @param[out] x - Solution.
-    * @param[in] b - Right-hand side matrix, must have the same number of rows as this matrix.
-    * @param[in] tol - Tolerance for convergence (optional).
-    * @param[in] restart - Restart iteration at which the Krylov subspace is discarded (optional).
-    */
-    template<typename Solver = Eigen::GMRES<MatrixType, Eigen::IdentityPreconditioner>>
-    void mat_solve_iterative(
-        EigenMatrix<T, type, storage_order>& x,
-        const EigenMatrix<T, type, storage_order>& b,
-        const Float tol = 1e-4,
-        const Index restart = 100
-        ) const
-    {
-
-        Solver solver;
-
-        solver.setTolerance(tol);
-        solver.setMaxIterations(1000);
-        if constexpr (
-            std::is_same_v<Solver, Eigen::GMRES<MatrixType, Eigen::IdentityPreconditioner>>
-            )
-            solver.set_restart(restart);
-
-        solver.compute(raw_matrix());
-
-        if (solver.info() != Eigen::Success)
-            throw std::runtime_error("EigenMatrix::mat_solve_iterative(): Solver initialization failed.");
-
-        x.raw_matrix() = solver.solve(b.raw_matrix());
-
-        std::cout << "Iterations: "
-                  << solver.iterations()
-                  << " | tolerance: "
-                  << solver.tolerance()
-                  << " | residual: "
-                  << solver.error()
-                  << std::endl;
-
-        if (solver.info() != Eigen::Success)
-            std::cout << "EigenMatrix::mat_solve_iterative(): [Warning] Iterative solve failed." << std::endl;
-
-        return;
-
+        return run_iterative_by_type(raw_matrix(), x, b, solver_type, tol, restart);
     };
 
 
@@ -1083,54 +1386,22 @@ public:
     * @param[out] x - Solution.
     * @param[in] b - Right-hand side matrix, must have the same number of rows as this matrix.
     * @param[in] mat - Custom matrix product object.
+    * @param[in] solver_type - Type of iterative solver to use (optional).
     * @param[in] tol - Tolerance for convergence (optional).
     * @param[in] restart - Restart iteration at which the Krylov subspace is discarded (optional).
+    * @return Summary of the solve.
     */
-    template<
-        typename MatmulMatrixType,
-        typename Solver = Eigen::GMRES<MatmulMatrixType, Eigen::IdentityPreconditioner>
-        >
-    static void mat_solve_iterative(
-        EigenMatrix<T, type, storage_order>& x,
-        const EigenMatrix<T, type, storage_order>& b,
+    template <typename MatmulMatrixType>
+    static IterativeSolveInfo mat_solve_iterative(
+        MatrixBase<T>& x,
+        const MatrixBase<T>& b,
         const MatmulMatrixType& mat,
+        const EigenIterativeSolverType solver_type = EigenIterativeSolverType::EIGEN_GMRES,
         const Float tol = 1e-4,
         const Index restart = 100
         )
     {
-
-        Solver solver;
-
-        solver.setTolerance(tol);
-        solver.setMaxIterations(1000);
-        if constexpr (std::is_same_v<
-                      Solver,
-                      Eigen::GMRES<MatmulMatrixType, Eigen::IdentityPreconditioner>
-                      >)
-        {
-            solver.set_restart(restart);
-        }
-
-        solver.compute(mat);
-
-        if (solver.info() != Eigen::Success)
-            throw std::runtime_error("EigenMatrix::mat_solve_iterative(): Solver initialization failed.");
-
-        x.raw_matrix() = solver.solve(b.raw_matrix());
-
-        std::cout << "Iterations: "
-                  << solver.iterations()
-                  << " | tolerance: "
-                  << solver.tolerance()
-                  << " | residual: "
-                  << solver.error()
-                  << std::endl;
-
-        if (solver.info() != Eigen::Success)
-            std::cout << "EigenMatrix::mat_solve_iterative(): [Warning] Iterative solve failed." << std::endl;
-
-        return;
-
+        return run_iterative_by_type(mat, x, b, solver_type, tol, restart);
     };
 
 
@@ -1209,79 +1480,235 @@ public:
     };
 
 
+    /**
+    * @brief Dispatches a callable object to the appropriate concrete matrix type based on the
+    * dynamic type of a `MatrixBase` read-only reference.
+    * @tparam F - Type of the callable object to apply to the cast matrix.
+    * @param[in] x - Matrix reference to cast.
+    * @param[in] f - Callable object to apply to the cast matrix.
+    * @return Result of applying `f` to the cast matrix.
+    */
+    template <typename F>
+    static decltype(auto) dispatch(const MatrixBase<T>& x, F&& f)
+    {
+        using Dense = EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>;
+        using Sparse = EigenMatrix<T, EigenMatrixType::EIGEN_SPARSE, storage_order>;
+        if (auto* xd = dynamic_cast<const Dense*> (&x)) return f(xd->raw_matrix());
+        if (auto* xs = dynamic_cast<const Sparse*> (&x)) return f(xs->raw_matrix());
+        throw std::invalid_argument("EigenMatrix::dispatch(): incompatible matrix type.");
+    };
+
+
+    /**
+    * @brief Dispatches a callable object to the appropriate concrete matrix type based on the
+    * dynamic type of a `MatrixBase` writable reference.
+    * @tparam F - Type of the callable object to apply to the cast matrix.
+    * @param[in] x - Matrix reference to cast.
+    * @param[in] f - Callable object to apply to the cast matrix.
+    * @return Result of applying `f` to the cast matrix.
+    */
+    template <typename F>
+    static decltype(auto) dispatch(MatrixBase<T>& x, F&& f)
+    {
+        using Dense = EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>;
+        using Sparse = EigenMatrix<T, EigenMatrixType::EIGEN_SPARSE, storage_order>;
+        if (auto* xd = dynamic_cast<Dense*> (&x)) return f(xd->raw_matrix());
+        if (auto* xs = dynamic_cast<Sparse*> (&x)) return f(xs->raw_matrix());
+        throw std::invalid_argument("EigenMatrix::dispatch(): incompatible matrix type.");
+    };
+
+
+    /**
+    * @brief Dispatches a callable object to the appropriate concrete matrix types based on the
+    * dynamic types of two `MatrixBase` read-only references.
+    * @tparam F - Type of the callable object to apply to the cast matrix.
+    * @param[in] x - First matrix reference to cast.
+    * @param[in] y - Second matrix reference to cast.
+    * @param[in] f - Callable object to apply to the cast matrix.
+    * @return Result of applying `f` to the cast matrices.
+    */
+    template <typename F>
+    static decltype(auto) dispatch(const MatrixBase<T>& x, const MatrixBase<T>& y, F&& f)
+    {
+        return dispatch(
+            x,
+            [&] (const auto& xr)
+            { return dispatch(y, [&](const auto& yr) { return f(xr, yr); }); }
+            );
+    };
+
+
+    /**
+    * @brief Dispatches a callable object to the appropriate concrete matrix types based on the
+    * dynamic types of two `MatrixBase` references.
+    * @tparam F - Type of the callable object to apply to the cast matrix.
+    * @param[in] x - First matrix reference to cast.
+    * @param[in] y - Second matrix reference to cast.
+    * @param[in] f - Callable object to apply to the cast matrix.
+    * @return Result of applying `f` to the cast matrices.
+    */
+    template <typename F>
+    static decltype(auto) dispatch(MatrixBase<T>& x, const MatrixBase<T>& y, F&& f)
+    {
+        return dispatch(
+            x,
+            [&] (auto& xr)
+            { return dispatch(y, [&](const auto& yr) { return f(xr, yr); }); }
+            );
+    };
+
+
+    /**
+    * @brief Convertices a given Eigen expression to a target matrix type (dense or sparse).
+    * @tparam Target - Target matrix type to convert to (DenseMatrixType or SparseMatrixType).
+    * @tparam Expr - Type of the Eigen expression to convert.
+    * @param[in] expr - Eigen expression to convert.
+    * @return Converted matrix of the target type.
+    */
+    template <typename Target, typename Expr>
+    static Target as(const Expr& expr)
+    {
+        if constexpr (std::is_same_v<Target, DenseMatrixType>)
+        {
+            return Target(expr); // Eigen assigns dense <- dense or dense <- sparse directly
+        }
+        else // Target == SparseMatrixType
+        {
+            using StorageKind = typename Eigen::internal::traits<Expr>::StorageKind;
+            if constexpr (std::is_same_v<StorageKind, Eigen::Sparse>)
+                return Target(expr); // already sparse
+            else
+                return Target(DenseMatrixType(expr).sparseView()); // dense -> sparse
+        }
+    }
+
+
 protected:
 
-    // Type alias for the matrix variant to support both dense and sparse matrices.
-    using MatrixVariant = std::variant<
-        EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>*,
-        EigenMatrix<T, EigenMatrixType::EIGEN_SPARSE, storage_order>*
-    >;
-
-
-    // Type alias for the matrix variant to support both dense and sparse matrices in read-only mode.
-    using ConstMatrixVariant = std::variant<
-        const EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>*,
-        const EigenMatrix<T, EigenMatrixType::EIGEN_SPARSE, storage_order>*
-    >;
-
-
     /**
-    * @brief Casts a MatrixBase reference to a matching-type read-only matrix pointer.
-    * @param[in] x - Matrix reference to cast.
-    * @return Read-only cast matrix pointer.
+    * @brief Runs an iterative solver based on the given solver and matrix definitions.
+    * @tparam Solver - Type of iterative solver to run.
+    * @tparam Op - Type of the matrix or shell operator.
+    * @param[in] op - Matrix or shell operator.
+    * @param[in] x - Solution.
+    * @param[in] b - Right-hand side.
+    * @param[in] tol - Relative residual error tolerance (optional).
+    * @param[in] restart - GMRES restart iteration (optional).
+    * @return Summary of the solve.
     */
-    const EigenMatrix<T, type, storage_order>* to_same(const MatrixBase<T>& x) const
+    template <typename Solver, typename Op>
+    static IterativeSolveInfo run_iterative(
+        const Op& op,
+        MatrixBase<T>& x,
+        const MatrixBase<T>& b,
+        const Float tol = 1e-4,
+        const Index restart = 100
+        )
     {
-        if (auto xc = dynamic_cast<const EigenMatrix<T, type, storage_order>*> (&x))
-            return xc;
-        else
-            throw std::invalid_argument("EigenMatrix::to_same(): Incompatible matrix types.");
+
+        const Index max_iterations = 1000;
+
+        Solver solver;
+        solver.setTolerance(tol);
+        solver.setMaxIterations(max_iterations);
+        if constexpr (std::is_same_v<Solver, Eigen::GMRES<Op, Eigen::IdentityPreconditioner>>)
+            solver.set_restart(restart);
+
+        solver.compute(op);
+        if (solver.info() != Eigen::Success)
+            throw std::runtime_error("EigenMatrix::mat_solve_iterative(): Solver initialization failed.");
+
+        IterativeSolveInfo info;
+        info.max_iterations_allowed = max_iterations;
+        info.rtol_requested = tol;
+
+        dispatch(x, b, [&](auto& xr, const auto& br)
+        {
+
+            if (br.squaredNorm() < float_eps)
+            {
+                xr.resize(solver.rows(), br.cols());
+                xr.setZero();
+                info.iterations = 0;
+                info.status = Eigen::Success;
+                info.rtol_achieved = 0;
+                return;
+            }
+
+            DenseMatrixType rhs = EigenMatrix::template as<DenseMatrixType> (br);
+            DenseMatrixType sol = solver.solve(rhs);
+            xr = EigenMatrix::template as<std::decay_t<decltype(xr)>> (sol);
+
+            info.iterations = solver.iterations();
+            info.status = solver.info();
+            info.rtol_achieved = solver.error();
+
+        });
+
+        return info;
+
     };
 
 
     /**
-    * @brief Casts a MatrixBase reference to a matching-type writable matrix pointer.
-    * @param[in] x - Matrix reference to cast.
-    * @return Writable cast matrix pointer.
+    * @brief Runs an iterative solver based on the given solver and matrix definitions.
+    * @tparam Op - Type of the matrix or shell operator.
+    * @param[in] op - Matrix or shell operator.
+    * @param[in] x - Solution.
+    * @param[in] b - Right-hand side.
+    * @param[in] solver_type - Iterative solver type to use.
+    * @param[in] tol - Relative residual error tolerance (optional).
+    * @param[in] restart - GMRES restart iteration (optional).
+    * @return Summary of the solve.
     */
-    EigenMatrix<T, type, storage_order>* to_same(MatrixBase<T>& x) const
+    template <typename Op>
+    static IterativeSolveInfo run_iterative_by_type(
+        const Op& op,
+        MatrixBase<T>& x,
+        const MatrixBase<T>& b,
+        const EigenIterativeSolverType solver_type,
+        const Float tol = 1e-4,
+        const Index restart = 100
+        )
     {
-        if (auto xc = dynamic_cast<EigenMatrix<T, type, storage_order>*> (&x))
-            return xc;
+        if (solver_type == EigenIterativeSolverType::EIGEN_GMRES)
+            return run_iterative<Eigen::GMRES<Op, Eigen::IdentityPreconditioner>> (op, x, b, tol, restart);
         else
-            throw std::invalid_argument("EigenMatrix::to_same(): Incompatible matrix types.");
+            return run_iterative<Eigen::BiCGSTAB<Op, Eigen::IdentityPreconditioner>> (op, x, b, tol, restart);
     };
 
 
     /**
-    * @brief Casts a MatrixBase reference to a type-erased writable matrix variant.
-    * @param[in] x - Matrix reference to convert.
-    * @return Variant containing a pointer to the concrete matrix type.
+    * @brief Applies the analytical (or factorized) inverse of `factorize_schur()`'s top-left block.
+    * @param[out] out - Result.
+    * @param[in] in - Matrix to which the inverse is applied.
     */
-    MatrixVariant to_variant(MatrixBase<T>& x) const
+    void apply_ainv_schur(
+        EigenMatrix<T, type, storage_order>& out,
+        const EigenMatrix<T, type, storage_order>& in
+        ) const
     {
-        if (auto xd = dynamic_cast<EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>*> (&x))
-            return xd;
-        else if (auto xs = dynamic_cast<EigenMatrix<T, EigenMatrixType::EIGEN_SPARSE, storage_order>*> (&x))
-            return xs;
-        else
-            throw std::invalid_argument("EigenMatrix::to_variant(): Input matrix type not supported.");
-    };
+        if (schur_pattern_ == MatrixStructure::DIAGONAL_2X2)
+        {
+            const Index h = A_inv_schur_[0].num_rows();
 
+            out.resize(2 * h, in.num_cols());
 
-    /**
-    * @brief Casts a MatrixBase reference to a type-erased read-only matrix variant.
-    * @param[in] x - Matrix reference to convert.
-    * @return Variant containing a pointer to the concrete matrix type.
-    */
-    ConstMatrixVariant to_variant(const MatrixBase<T>& x) const
-    {
-        if (auto xd = dynamic_cast<const EigenMatrix<T, EigenMatrixType::EIGEN_DENSE, storage_order>*> (&x))
-            return xd;
-        else if (auto xs = dynamic_cast<const EigenMatrix<T, EigenMatrixType::EIGEN_SPARSE, storage_order>*> (&x))
-            return xs;
+            A_inv_schur_[0].matmul_block(out, in, 0, 0, T(1), false);
+            A_inv_schur_[1].matmul_block(out, in, 0, h, T(1), true);
+            A_inv_schur_[2].matmul_block(out, in, h, 0, T(1), false);
+            A_inv_schur_[3].matmul_block(out, in, h, h, T(1), true);
+        }
+        else if (schur_pattern_ == MatrixStructure::DIAGONAL)
+        {
+            A_inv_schur_[0].matmul(out, in);
+        }
         else
-            throw std::invalid_argument("EigenMatrix::to_variant(): Input matrix type not supported.");
+        {
+            A_inv_schur_[0].mat_solve(out, in);
+        }
+
+        return;
     };
 
 
@@ -1291,18 +1718,16 @@ protected:
     bool insert_mode_on_ = true;
     bool assembled_ = false;
 
-    using SparseSolverType = Eigen::SparseLU<SparseMatrixType>;
-
-    using DenseSolverType = Eigen::PartialPivLU<DenseMatrixType>;
-    // using DenseSolverType = Eigen::FullPivLU<MatrixType>;
-    // using DenseSolverType = Eigen::HouseholderQr<MatrixType>;
-    // using DenseSolverType = Eigen::ColPivHouseholderQr<MatrixType>;
-    // using DenseSolverType = Eigen::FullPivHouseholderQr<MatrixType>;
-
+    bool factorized_ = false;
     std::shared_ptr<SparseSolverType> sparse_solver_ = nullptr;
     std::shared_ptr<DenseSolverType> dense_solver_ = nullptr;
 
-    bool factorized_ = false;
+    bool schur_factorized_ = false;
+    MatrixStructure schur_pattern_ = MatrixStructure::NONE;
+    std::vector<EigenMatrix<T, type, storage_order>> A_inv_schur_;
+    std::shared_ptr<EigenMatrix<T, type, storage_order>> B_schur_ = nullptr;
+    std::shared_ptr<EigenMatrix<T, type, storage_order>> C_schur_ = nullptr;
+    std::shared_ptr<EigenMatrix<T, type, storage_order>> S_schur_ = nullptr;
 
 };
 
@@ -1345,7 +1770,7 @@ public:
 
     typedef Complex Scalar;
     typedef Float RealScalar;
-    typedef Int StorageIndex;
+    typedef Index StorageIndex;
     enum
     {
         ColsAtCompileTime = Eigen::Dynamic,

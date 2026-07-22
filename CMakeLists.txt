@@ -124,7 +124,7 @@ endif ()
 
 add_compile_options(
     -Wall
-    -Wno-sign-compare # not ideal to disable this; done because Eigen reports sizes as signed ints
+    -Wsign-compare
     # -ffast-math
 )
 
@@ -175,6 +175,10 @@ set(SRC_FILES
     ${SRC_DIR}/quadrature/line/trapz.cpp
     ${SRC_DIR}/quadrature/line/iterative_trapz.cpp
     ${SRC_DIR}/kernels/hgf.cpp
+    ${SRC_DIR}/compression/matrix/low_rank_matrix.cpp
+    ${SRC_DIR}/compression/aca/basic.cpp
+    ${SRC_DIR}/compression/aca/plus.cpp
+    ${SRC_DIR}/compression/assemblers/aca_assembler.cpp
     ${SRC_DIR}/rwg/function_space.cpp
     ${SRC_DIR}/rwg/integrators/src/quadrature.cpp
     ${SRC_DIR}/rwg/integrators/src/singularity.cpp
@@ -194,6 +198,7 @@ set(SRC_FILES
     ${SRC_DIR}/rwg/assemblers/projector_assembler.cpp
     ${SRC_DIR}/rwg/excitations/inf_gap.cpp
     ${SRC_DIR}/rwg/excitations/plane_wave.cpp
+    ${SRC_DIR}/rwg/excitations/lumped_elements.cpp
 )
 
 if (HEADER_ONLY STREQUAL "no")
@@ -229,6 +234,10 @@ if (BUILD_EXAMPLES STREQUAL "yes")
     target_include_directories(ex02 PRIVATE ${INC_DIR})
     target_link_libraries(ex02 ${LINK_LIBS})
 
+    add_executable(ex03 ${EXAMPLE_DIR}/ex03_integrators.cpp)
+    target_include_directories(ex03 PRIVATE ${INC_DIR})
+    target_link_libraries(ex03 ${LINK_LIBS})
+
 endif ()
 
 
@@ -257,6 +266,10 @@ if (BUILD_TESTS STREQUAL "yes")
     add_executable(test_triangle_mesh ${TEST_DIR}/test_triangle_mesh.cpp)
     target_include_directories(test_triangle_mesh PRIVATE ${INC_DIR})
     target_link_libraries(test_triangle_mesh ${LINK_LIBS})
+
+    add_executable(test_mesh_partitioning ${TEST_DIR}/test_mesh_partitioning.cpp)
+    target_include_directories(test_mesh_partitioning PRIVATE ${INC_DIR})
+    target_link_libraries(test_mesh_partitioning ${LINK_LIBS})
 
     add_executable(test_materials ${TEST_DIR}/test_materials.cpp)
     target_include_directories(test_materials PRIVATE ${INC_DIR})

@@ -143,7 +143,7 @@ EigMatNX<Float, 3> make_obs_pts_corner_cases(Float start, Float stop, uint32_t n
     // rs.insert(rs.begin(), 0);
 
     EigMatNX<Float, 3> rs_obs = EigMatNX<Float, 3>::Zero(3, rs.size() * 7);
-    for (int ii = 0; ii < rs.size(); ++ii)
+    for (Index ii = 0; ii < (Index) rs.size(); ++ii)
     {
         Float r = rs[ii];
         rs_obs.col(ii * 7 + 0) = EigColVecN<Float, 3> ({ 0.02, 0.03, r * LAMBDA });
@@ -534,7 +534,7 @@ int test_src_reg(Complex k, Float tol = 1e-3, bool print_anyway = false)
     offset.col(0) = EigColVecN<Float, 3> ({ LAMBDA * (Float)0.8, LAMBDA * (Float)2.4, LAMBDA * (Float)5.1 });
     offset.col(1) = EigColVecN<Float, 3> ({ LAMBDA * (Float)0.7, LAMBDA * (Float)2.3, LAMBDA * (Float)5.0 });
     offset.col(2) = EigColVecN<Float, 3> ({ LAMBDA * (Float)1.1, LAMBDA * (Float)2.2, LAMBDA * (Float)4.8 });
-    obs_tri.set_v(obs_tri.v() + offset);
+    obs_tri.set_data(obs_tri.v() + offset);
 
     int src_line_order = 10;
 
@@ -587,7 +587,7 @@ int test_src_far(Complex k, Float tol = 1e-3, bool print_anyway = false)
     offset.col(0) = EigColVecN<Float, 3> ({ LAMBDA * (Float)110, LAMBDA * (Float)24, LAMBDA * (Float)58 });
     offset.col(1) = EigColVecN<Float, 3> ({ LAMBDA * (Float)110.1, LAMBDA * (Float)23.8, LAMBDA * (Float)58 });
     offset.col(2) = EigColVecN<Float, 3> ({ LAMBDA * (Float)109.9, LAMBDA * (Float)24.1, LAMBDA * (Float)58.3 });
-    obs_tri.set_v(obs_tri.v() + offset);
+    obs_tri.set_data(obs_tri.v() + offset);
 
     int src_line_order = 10;
 

@@ -25,7 +25,7 @@ namespace bem
 {
 
 template <uint8_t dim>
-void Edge<dim>::set_v(ConstEigRef<EigMatMN<Float, dim, 2>> v)
+void Edge<dim>::set_data(ConstEigRef<EigMatMN<Float, dim, 2>> v)
 {
     v_ = v;
     edge_vec_ = compute_edge_vec();

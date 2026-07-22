@@ -43,7 +43,7 @@ public:
     * @brief Returns the degrees of freedom for the expansion function space.
     * @return Source degrees of freedom.
     */
-    virtual OperatorDof src_dof() const = 0;
+    virtual DofSpace src_dof() const = 0;
 
 
     /**
@@ -88,11 +88,13 @@ public:
             obs_points, local_origin, local_uvw
             );
 
-        src_tri_local.set_v(
+        src_tri_local.set_data(
             GeometryOps<3>::transform_coordinate_system(
                 src_tri.v(), local_origin, local_uvw
                 ).topRows(2),
-            src_tri.edge_polarities()
+            src_tri.edge_polarities(),
+            src_tri.tag(),
+            src_tri.idx()
         );
 
         return;

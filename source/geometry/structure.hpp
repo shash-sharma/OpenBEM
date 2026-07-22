@@ -21,15 +21,15 @@
 #include <string>
 #include <vector>
 
+#include "types.hpp"
 #include "materials.hpp"
+#include "geometry/component.hpp"
+#include "geometry/mesh/triangle_mesh.hpp"
+#include "geometry/mesh/triangle_mesh_view.hpp"
 
 
 namespace bem
 {
-
-// Forward declarations
-template <typename MeshType> class Component;
-template <typename MeshType> class MeshView;
 
 /**
 * \ingroup geom
@@ -38,9 +38,9 @@ template <typename MeshType> class MeshView;
 
 /**
 * @brief Class that defines a structure.
-* @tparam MeshType - Type of the mesh for representing the structure.
+* @tparam dim - The dimension of the mesh (2 or 3).
 */
-template <typename MeshType>
+template <uint8_t dim>
 class Structure
 {
 public:
@@ -60,16 +60,37 @@ public:
     * @param[in] background_material - Background material in which the structure is embedded (optional).
     */
     Structure(
-        const MeshType& mesh,
+        const TriangleMesh<dim>& mesh,
         const Material background_material = PerfectDielectricMaterial(1, 1)
         ): mesh_(mesh), background_material_(background_material) {};
+
+
+    /**
+    * @brief Constructs a `Structure` from a single component of another structure.
+    * @param[in] parent - Structure that holds the component.
+    * @param[in] idx - Index of the component in `parent`.
+    */
+    Structure(
+        const Structure<dim>& parent,
+        const Index idx
+        ):
+            mesh_(parent.components_.at(idx).mesh_view().parent_mesh().partition_by_faces(
+                parent.components_.at(idx).mesh_view().face_inds(), true
+                )),
+            background_material_(parent.background_material_)
+        {
+            components_.push_back(
+                Component<dim> (TriangleMeshView<dim> (mesh_), parent.components_[idx])
+                );
+            return;
+        };
 
 
     /**
     * @brief Adds a component to the structure.
     * @param[in] component - Component to add.
     */
-    void add_component(const Component<MeshType>& component)
+    void add_component(const Component<dim>& component)
     {
         components_.push_back(component);
         return;
@@ -80,7 +101,7 @@ public:
     * @brief Adds a meta`Component` to the structure which corresponds to a given subset of the mesh.
     * @param[in] metacomponent - Metacomponent to add.
     */
-    void add_metacomponent(const Component<MeshType>& metacomponent)
+    void add_metacomponent(const Component<dim>& metacomponent)
     {
         metacomponents_.push_back(metacomponent);
         return;
@@ -91,7 +112,7 @@ public:
     * @brief Returns the mesh associated with the structure in editable form.
     * @return Mesh associated with the structure.
     */
-    MeshType& mesh()
+    TriangleMesh<dim>& mesh()
     { return mesh_; };
 
 
@@ -99,7 +120,7 @@ public:
     * @brief Returns the mesh associated with the structure in read-only form.
     * @return Mesh associated with the structure.
     */
-    const MeshType& mesh() const
+    const TriangleMesh<dim>& mesh() const
     { return mesh_; };
 
 
@@ -115,7 +136,7 @@ public:
     * @brief Returns an editable list of the components in the structure.
     * @return Components.
     */
-    std::vector<Component<MeshType>>& components()
+    std::vector<Component<dim>>& components()
     { return components_; };
 
 
@@ -123,7 +144,7 @@ public:
     * @brief Returns a read-only list of the components in the structure.
     * @return Components.
     */
-    const std::vector<Component<MeshType>>& components() const
+    const std::vector<Component<dim>>& components() const
     { return components_; };
 
 
@@ -131,7 +152,7 @@ public:
     * @brief Returns an editable list of the metacomponents in the structure.
     * @return Metacomponents.
     */
-    std::vector<Component<MeshType>>& metacomponents()
+    std::vector<Component<dim>>& metacomponents()
     { return metacomponents_; };
 
 
@@ -139,45 +160,17 @@ public:
     * @brief Returns a read-only list of the metacomponents in the structure.
     * @return Metacomponents.
     */
-    const std::vector<Component<MeshType>>& metacomponents() const
+    const std::vector<Component<dim>>& metacomponents() const
     { return metacomponents_; };
-
-
-    /**
-    * @brief Returns a list of the components whose name contains a given string.
-    * @param[in] name - Search string.
-    * @param[in] search_metacomponents - Whether to search the metacomponents instead of components (optional).
-    * @param[in] case_sensitive - Whether the search should be case sensitive (optional).
-    * @return Named components.
-    */
-    std::vector<Component<MeshType>> components_by_name(
-        const std::string name,
-        const bool search_metacomponents = false,
-        const bool case_sensitive = false
-        );
-
-
-    /**
-    * @brief Returns a list of mesh views associated with components whose name contains a given string.
-    * @param[in] name - Search string.
-    * @param[in] search_metacomponents - Whether to search the metacomponents instead of components (optional).
-    * @param[in] case_sensitive - Whether the search should be case sensitive (optional).
-    * @return Named mesh views.
-    */
-    std::vector<MeshView<MeshType>> mesh_views_by_name(
-        const std::string name,
-        const bool search_metacomponents = false,
-        const bool case_sensitive = false
-        );
 
 
 private:
 
-    MeshType mesh_;
+    TriangleMesh<dim> mesh_;
     Material background_material_ = PerfectDielectricMaterial(1, 1);
 
-    std::vector<Component<MeshType>> components_;
-    std::vector<Component<MeshType>> metacomponents_;
+    std::vector<Component<dim>> components_;
+    std::vector<Component<dim>> metacomponents_;
 
 };
 
@@ -186,7 +179,5 @@ private:
 */
 
 }
-
-#include "geometry/structure.tpp"
 
 #endif

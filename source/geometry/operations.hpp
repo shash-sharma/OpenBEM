@@ -60,6 +60,14 @@ public:
 
 
     /**
+    * @brief Transforms Cartesian coordinates to polar (2D) or spherical (3D) coordinates.
+    * @param[in] points - Cartesian coordinates.
+    * @return Polar (\f$r\f$, \f$\phi\f$) or spherical (\f$r\f$, \f$\phi\f$, \f$\theta\f$) coordinates.
+    */
+    static EigMatNX<Float, dim> cartesian_to_polar(ConstEigRef<EigMatNX<Float, dim>> points);
+
+
+    /**
     * @brief Transforms a vector field in Cartesian space to polar (2D) or spherical (3D) space.
     * @param[in] points - Cartesian coordinates at which the field is defined.
     * @param[in] field - Vector field values at the given coordinates.

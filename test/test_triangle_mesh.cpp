@@ -54,9 +54,9 @@ TriangleMesh<3> test_unit_cube_triangles()
 
     TriangleMesh<3> mesh (vertices, tri_vertices);
 
-    for (Index ii = 0; ii < mesh.elems().cols(); ++ii)
+    for (Index ii = 0; ii < mesh.faces().cols(); ++ii)
     {
-        EigMatMN<Float, 3, 3> coords = mesh.verts()(Eigen::placeholders::all, mesh.elems(ii));
+        EigMatMN<Float, 3, 3> coords = mesh.vertices()(Eigen::placeholders::all, mesh.faces().col(ii));
         Triangle<3> tri (coords);
         if (std::abs(tri.area() - 0.5) > tol)
             std::cout << "Fail: triangle idx: " << ii << ", vertices:\n" << coords << std::endl;
@@ -67,8 +67,8 @@ TriangleMesh<3> test_unit_cube_triangles()
     // std::vector<TriangleMesh<3>> meshes = mesh.partitions_by_tags(tags);
     // for (std::size_t ii = 0; ii < meshes.size(); ++ii)
     // {
-    //     if (meshes[ii].elems().cols() != 1)
-    //         std::cout << "Fail: mesh idx: " << ii << ", cols: " << meshes[ii].elems().cols() << std::endl;
+    //     if (meshes[ii].faces().cols() != 1)
+    //         std::cout << "Fail: mesh idx: " << ii << ", cols: " << meshes[ii].faces().cols() << std::endl;
     //     if (meshes[ii].face_tags(0) != tags[ii])
     //         std::cout << "Fail: mesh idx: " << ii << ", tags:\n" << meshes[ii].face_tags() << std::endl;
     // }
@@ -78,10 +78,9 @@ TriangleMesh<3> test_unit_cube_triangles()
         -0.5, 1.2,
         -1e-4, 1e-4;
 
-    TriangleMesh<3> mesh_bbox;
-    mesh.partition_by_bbox(mesh_bbox, bbox);
-    if (!(mesh_bbox.verts()(2, Eigen::placeholders::all).array() <= tol).all())
-        std::cout << "Fail: mesh bbox, vertices:\n" << mesh_bbox.verts() << std::endl;
+    TriangleMesh<3> mesh_bbox = mesh.partition_by_bbox(bbox);
+    if (!(mesh_bbox.vertices()(2, Eigen::placeholders::all).array() <= tol).all())
+        std::cout << "Fail: mesh bbox, vertices:\n" << mesh_bbox.vertices() << std::endl;
 
     return mesh;
 
@@ -146,29 +145,28 @@ TriangleMesh<3> test_two_unit_cubes_triangles()
     // IndexEigRowVec tags (1);
     // tags << 0;
     // std::vector<TriangleMesh<3>> mesh0_tags = mesh.partitions_by_tags(tags);
-    TriangleMesh<3> mesh0_bbox;
-    mesh.partition_by_bbox(mesh0_bbox, bbox);
+    TriangleMesh<3> mesh0_bbox = mesh.partition_by_bbox(bbox);
 
     // if (mesh0_tags.size() != 1)
     //     std::cout << "Fail: mesh0_test size: " << mesh0_tags.size() << std::endl;
 
     // if (!(
-    //     mesh0_tags[0].verts().rowwise().maxCoeff().array() <
+    //     mesh0_tags[0].vertices().rowwise().maxCoeff().array() <
     //     bbox.rowwise().maxCoeff().array()
     //     ).all() || !(
-    //     mesh0_tags[0].verts().rowwise().minCoeff().array() >
+    //     mesh0_tags[0].vertices().rowwise().minCoeff().array() >
     //     bbox.rowwise().minCoeff().array()
     //     ).all())
-    //     std::cout << "Fail: mesh0_tags verts:\n" << mesh0_tags[0].verts() << std::endl;
+    //     std::cout << "Fail: mesh0_tags vertices:\n" << mesh0_tags[0].vertices() << std::endl;
 
     if (!(
-            mesh0_bbox.verts().rowwise().maxCoeff().array() <
+            mesh0_bbox.vertices().rowwise().maxCoeff().array() <
             bbox.rowwise().maxCoeff().array()
             ).all() || !(
-                mesh0_bbox.verts().rowwise().minCoeff().array() >
+                mesh0_bbox.vertices().rowwise().minCoeff().array() >
                 bbox.rowwise().minCoeff().array()
                 ).all())
-        std::cout << "Fail: mesh0_bbox verts:\n" << mesh0_bbox.verts() << std::endl;
+        std::cout << "Fail: mesh0_bbox vertices:\n" << mesh0_bbox.vertices() << std::endl;
 
     return mesh;
 

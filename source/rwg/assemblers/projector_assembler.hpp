@@ -61,19 +61,19 @@ public:
     * @brief Constructs a `ProjectorAssembler` for given observation points and source mesh.
     * @param[in] obs_cloud - Observation point cloud on which to project fields.
     * @param[in] mesh - Source triangle mesh for which the projector matrix is to be assembled.
-    * @param[in] elems - Source triangle indices for which the projector matrix is to be assembled.
+    * @param[in] faces - Source triangle indices for which the projector matrix is to be assembled.
     */
     ProjectorAssembler(
         const PointCloud<3>& obs_cloud,
         const TriangleMesh<3>& mesh,
-        EigRowVec<Index> elems = EigRowVec<Index>::Zero(1, 0)
+        EigRowVec<Index> faces = EigRowVec<Index>::Zero(1, 0)
         ):
             obs_cloud_(obs_cloud),
             mesh_(mesh),
-            elems_(elems)
+            faces_(faces)
     {
-        if (elems_.cols() == 0)
-            elems_ = EigRowVec<Index>::LinSpaced(mesh_.num_elems(), 0, mesh_.num_elems() - 1);
+        if (faces_.cols() == 0)
+            faces_ = EigRowVec<Index>::LinSpaced(mesh_.num_faces(), 0, mesh_.num_faces() - 1);
         return;
     };
 
@@ -96,7 +96,7 @@ protected:
 
     const PointCloud<3>& obs_cloud_;
     const TriangleMesh<3>& mesh_;
-    EigRowVec<Index> elems_;
+    EigRowVec<Index> faces_;
 
 };
 

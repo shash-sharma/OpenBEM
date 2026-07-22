@@ -50,11 +50,8 @@ namespace bem
 /** @brief Complex floating point number. */
 using Complex = std::complex<Float>;
 
-/** @brief Unsigned integer type for indices and container sizes. */
-using Index = std::size_t;
-
-/** @brief Signed integer type. */
-using Int = int;
+/** @brief Integer type for indices and container sizes. */
+using Index = std::int64_t;
 
 /**@}*/
 
@@ -100,6 +97,23 @@ using ConstEigRef = const Eigen::Ref<const EigObj>;
 /** @brief Writable reference to an Eigen object. */
 template <class EigObj>
 using EigRef = Eigen::Ref<EigObj>;
+
+/**
+* @}
+*/
+
+/**
+* @name Enumerations.
+* @{
+*/
+
+/**
+* @brief Degree-of-freedom space.
+*/
+enum class DofSpace
+{
+    VERTEX, EDGE, FACE, PORT, MIXED
+};
 
 /**
 * @}

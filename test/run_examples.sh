@@ -13,4 +13,5 @@ export OMP_NUM_THREADS=4
 
 time ${BUILD_DIR}/ex01
 time ${BUILD_DIR}/ex02
+time ${BUILD_DIR}/ex03
 

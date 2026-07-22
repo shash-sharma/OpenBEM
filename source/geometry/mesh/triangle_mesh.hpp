@@ -19,7 +19,6 @@
 #define GEOM_TRIANGLE_MESH_H
 
 #include "types.hpp"
-#include "geometry/mesh/base.hpp"
 #include "geometry/primitives/triangle.hpp"
 
 
@@ -32,14 +31,12 @@ namespace bem
 */
 
 /**
-* @brief Class defining a mesh with triangle elements.
+* @brief Class defining a mesh with triangle faces.
 * @tparam dim - The dimension of the mesh (2 or 3).
 */
 template <uint8_t dim>
-class TriangleMesh: public MeshBase<dim, 3>
+class TriangleMesh
 {
-
-    using base = MeshBase<dim, 3>;
 
     static_assert((dim == 2 || dim == 3), "TriangleMesh: `dim` must be 2 or 3.");
 
@@ -52,63 +49,91 @@ public:
 
 
     /**
-    * @brief Constructs a `TriangleMesh` with given vertex and element data.
-    * @param[in] verts - Coordinates of the mesh vertices.
-    * @param[in] elems - Element-wise triplets of vertex indices.
-    * @param[in] decoupled_edges - If true, edges are unique to each element (optional).
+    * @brief Constructs a `TriangleMesh` with given vertex and face data.
+    * @param[in] vertices - Coordinates of the mesh vertices.
+    * @param[in] faces - Face-wise triplets of vertex indices.
+    * @param[in] decoupled_edges - If true, edges are unique to each face (optional).
     */
     TriangleMesh(
-        ConstEigRef<EigMatNX<Float, dim>> verts,
-        ConstEigRef<EigMatNX<Index, 3>> elems,
+        ConstEigRef<EigMatNX<Float, dim>> vertices,
+        ConstEigRef<EigMatNX<Index, 3>> faces,
         const bool decoupled_edges = false
         )
     {
-        EigRowVec<Index> elem_tags = EigRowVec<Index>::Zero(1, elems.cols());
-        set_data(verts, elems, elem_tags, decoupled_edges);
+        EigRowVec<Index> face_tags = EigRowVec<Index>::Zero(1, faces.cols());
+        set_data(vertices, faces, face_tags, decoupled_edges);
         return;
     };
 
 
     /**
-    * @brief Constructs a `TriangleMesh` with given vertex and element data, and element tags.
-    * @param[in] verts - Coordinates of the mesh vertices.
-    * @param[in] elems - Element-wise triplets of vertex indices.
-    * @param[in] elem_tags - Element-wise tags.
-    * @param[in] decoupled_edges - If true, edges are unique to each element (optional).
+    * @brief Constructs a `TriangleMesh` with given vertex and face data, and face tags.
+    * @param[in] vertices - Coordinates of the mesh vertices.
+    * @param[in] faces - Face-wise triplets of vertex indices.
+    * @param[in] face_tags - Face-wise tags.
+    * @param[in] decoupled_edges - If true, edges are unique to each face (optional).
     * @details
-    * Elements that have the same tag are considered to be part of the same region, for the purpose
-    * of defining edges. I.e., an edge between two elements is formed only if they have the same
+    * Faces that have the same tag are considered to be part of the same region, for the purpose
+    * of defining edges. I.e., an edge between two faces is formed only if they have the same
     * tag.
     */
     TriangleMesh(
-        ConstEigRef<EigMatNX<Float, dim>> verts,
-        ConstEigRef<EigMatNX<Index, 3>> elems,
-        ConstEigRef<EigRowVec<Index>> elem_tags,
+        ConstEigRef<EigMatNX<Float, dim>> vertices,
+        ConstEigRef<EigMatNX<Index, 3>> faces,
+        ConstEigRef<EigRowVec<Index>> face_tags,
         const bool decoupled_edges = false
         )
     {
-        set_data(verts, elems, elem_tags, decoupled_edges);
+        set_data(vertices, faces, face_tags, decoupled_edges);
         return;
     };
 
 
     /**
     * @brief Sets the mesh data.
-    * @param[in] verts - Coordinates of the mesh vertices.
-    * @param[in] elems - Element-wise triplets of vertex indices.
-    * @param[in] elem_tags - Element-wise tags.
-    * @param[in] decoupled_edges - If true, edges are unique to each element (optional).
+    * @param[in] vertices - Coordinates of the mesh vertices.
+    * @param[in] faces - Face-wise triplets of vertex indices.
+    * @param[in] face_tags - Face-wise tags.
+    * @param[in] decoupled_edges - If true, edges are unique to each face (optional).
     * @details
-    * Elements that have the same tag are considered to be part of the same region, for the purpose
-    * of defining edges. I.e., an edge between two elements is formed only if they have the same
+    * Faces that have the same tag are considered to be part of the same region, for the purpose
+    * of defining edges. I.e., an edge between two faces is formed only if they have the same
     * tag.
     */
     void set_data(
-        ConstEigRef<EigMatNX<Float, dim>> verts,
-        ConstEigRef<EigMatNX<Index, 3>> elems,
-        ConstEigRef<EigRowVec<Index>> elem_tags,
+        ConstEigRef<EigMatNX<Float, dim>> vertices,
+        ConstEigRef<EigMatNX<Index, 3>> faces,
+        ConstEigRef<EigRowVec<Index>> face_tags,
         const bool decoupled_edges = false
         );
+
+
+    /**
+    * @brief Returns the coordinates of the mesh vertices.
+    * @return Vertex coordinates.
+    */
+    const EigMatNX<Float, dim>& vertices() const
+    { return vertices_; };
+
+
+    /**
+    * @brief Returns the vertex indices of each face.
+    * @return Face-wise triplets of vertex indices.
+    */
+    const EigMatNX<Index, 3>& faces() const
+    { return faces_; };
+
+
+    /**
+    * @brief Returns the face tags.
+    * @return Face-wise tags.
+    * @details
+    * Faces that have the same tag are considered to be part of the same region, for the purpose
+    * of defining edges. I.e., an edge between two faces is formed only if they have the same
+    * tag.
+    */
+    const EigRowVec<Index>& face_tags() const
+    { return face_tags_; };
 
 
     /**
@@ -120,51 +145,51 @@ public:
 
 
     /**
-    * @brief Returns the edge indices of each element in the mesh.
-    * @return Element-wise triplets of edge indices.
+    * @brief Returns the edge indices of each face in the mesh.
+    * @return Face-wise triplets of edge indices.
     */
-    const EigMatNX<Index, 3>& elem_edges() const
-    { return elem_edges_; };
+    const EigMatNX<Index, 3>& face_edges() const
+    { return face_edges_; };
 
 
     /**
-    * @brief Returns the element indices of each edge in the mesh.
-    * @return Edge-wise pairs of element indices ordered as (plus, minus) polarity.
+    * @brief Returns the face indices of each edge in the mesh.
+    * @return Edge-wise pairs of face indices ordered as (plus, minus) polarity.
     */
-    const EigMatNX<Index, 2>& edge_elems() const
-    { return edge_elems_; };
+    const EigMatNX<Index, 2>& edge_faces() const
+    { return edge_faces_; };
 
 
     /**
-    * @brief Returns the polarities of the edges of each element.
-    * @return Element-wise triplets of edge polarities.
+    * @brief Returns the polarities of the edges of each face.
+    * @return Face-wise triplets of edge polarities.
     */
-    const EigMatNX<Float, 3>& elem_edge_polarities() const
-    { return elem_edge_polarities_; };
+    const EigMatNX<Float, 3>& face_edge_polarities() const
+    { return face_edge_polarities_; };
 
 
     /**
-    * @brief Returns the indices of boundary elements in the mesh.
-    * @return Indices of boundary elements.
+    * @brief Returns the indices of boundary faces in the mesh.
+    * @return Indices of boundary faces.
     */
-    const EigRowVec<Index>& boundary_elems() const
-    { return boundary_elems_; };
+    const EigRowVec<Index>& boundary_faces() const
+    { return boundary_faces_; };
 
 
     /**
-    * @brief Returns the indices of junction elements in the mesh.
-    * @return Indices of junction elements.
+    * @brief Returns the indices of junction faces in the mesh.
+    * @return Indices of junction faces.
     */
-    const EigRowVec<Index>& junction_elems() const
-    { return junction_elems_; };
+    const EigRowVec<Index>& junction_faces() const
+    { return junction_faces_; };
 
 
     /**
-    * @brief Returns the indices of internal elements in the mesh.
-    * @return Indices of internal elements.
+    * @brief Returns the indices of internal faces in the mesh.
+    * @return Indices of internal faces.
     */
-    const EigRowVec<Index>& internal_elems() const
-    { return internal_elems_; };
+    const EigRowVec<Index>& internal_faces() const
+    { return internal_faces_; };
 
 
     /**
@@ -192,6 +217,22 @@ public:
 
 
     /**
+    * @brief Returns the number of vertices in the mesh.
+    * @return Number of vertices.
+    */
+    Index num_vertices() const
+    { return vertices_.cols(); };
+
+
+    /**
+    * @brief Returns the number of faces in the mesh.
+    * @return Number of faces.
+    */
+    Index num_faces() const
+    { return faces_.cols(); };
+
+
+    /**
     * @brief Returns the number of edges in the mesh.
     * @return Number of edges.
     */
@@ -200,82 +241,200 @@ public:
 
 
     /**
-    * @brief Returns a sub-mesh that contains only specified elements of this mesh.
-    * @param[out] partition - Partitioned mesh object containing the specified elements.
-    * @param[in] elem_inds - Indices of elements to keep in the sub-mesh.
+    * @brief Returns a sub-mesh that contains only specified faces of this mesh.
+    * @param[in] face_inds - Indices of faces to keep in the sub-mesh.
+    * @param[in] reset_tags - If true, every face of the sub-mesh is tagged 0 (optional).
+    * @return Partitioned mesh containing the specified faces.
     */
-    void partition_by_elems(
-        MeshBase<dim, 3>& partition,
-        ConstEigRef<EigRowVec<Index>> elem_inds
+    TriangleMesh<dim> partition_by_faces(
+        ConstEigRef<EigRowVec<Index>> face_inds,
+        const bool reset_tags = false
         ) const;
 
 
     /**
-    * @brief Returns a sub-mesh that contains only elements of this mesh that lie within a given bounding box.
-    * @param[out] partition - Partitioned mesh object containing elements within the given bounding box.
+    * @brief Returns a sub-mesh that contains only faces of this mesh that lie within a given bounding box.
     * @param[in] bbox - Bounding box defined by two corners (min and max).
-    * @param[in] strict - If true, only elements fully contained within the bounding box are included (optional).
+    * @param[in] strict - If true, only faces fully contained within the bounding box are included (optional).
+    * @return Partitioned mesh containing faces within the given bounding box.
     */
-    void partition_by_bbox(
-        MeshBase<dim, 3>& partition,
+    TriangleMesh<dim> partition_by_bbox(
         ConstEigRef<EigMatMN<Float, dim, 2>> bbox,
         const bool strict = true
         ) const;
 
 
     /**
-    * @brief Returns a `Triangle` primitive object representing a specific element of the mesh.
-    * @param[in] elem - Index of the element.
-    * @return `Triangle` object representing the specified element.
+    * @brief Computes and returns the centroid of each face.
+    * @return Face-wise centroids.
     */
-    Triangle<dim> elem_primitive(Index elem) const
+    EigMatNX<Float, dim> face_centroids() const
+    {
+        EigMatNX<Float, dim> centroids = EigMatNX<Float, dim>::Zero(dim, faces_.cols());
+        for (Index ii = 0; ii < faces_.cols(); ++ii)
+        {
+            EigMatMN<Float, dim, 3> coords = vertices_(
+                Eigen::placeholders::all, faces_.col(ii)
+                );
+            centroids(Eigen::placeholders::all, ii) = coords.rowwise().mean();
+        }
+        return centroids;
+    };
+
+
+    /**
+    * @brief Computes and returns the mean length of the edges in the mesh.
+    * @return Mean edge length.
+    */
+    Float mean_edge_length() const
+    {
+        Float total = 0;
+        for (Index ee = 0; ee < edges_.cols(); ++ee)
+            total += (vertices_.col(edges_(0, ee)) - vertices_.col(edges_(1, ee))).norm();
+        return total / ((Float) edges_.cols());
+    };
+
+
+    /**
+    * @brief Returns a `Triangle` primitive object representing a specific face of the mesh.
+    * @param[in] face - Index of the face.
+    * @return `Triangle` object representing the specified face.
+    */
+    Triangle<dim> face_primitive(Index face) const
     {
         return Triangle<dim> (
-            base::verts()(Eigen::placeholders::all, base::elems(elem)),
-            elem_edge_polarities().col(elem)
+            vertices_(Eigen::placeholders::all, faces_.col(face)),
+            face_edge_polarities_.col(face),
+            face_tags_[face],
+            root_face(face)
             );
     };
 
 
     /**
-    * @brief Reverses the orientation of each element.
+    * @brief Returns whether this mesh is a partition of another mesh.
+    * @return True if this mesh was produced by `partition_by_faces()`/`partition_by_bbox()`,
+    * false if it was built directly via a constructor or `set_data()`.
     */
-    virtual void reverse_orientation()
-    {
-        base::elems_ = base::elems_.colwise().reverse().eval();
-        generate_edges();
-        return;
-    };
+    bool is_partition() const
+    { return root_faces_.size() > 0; };
+
+
+    /**
+    * @brief Returns, for each face of this mesh, its index in the root mesh this is a partition of.
+    * @return Face-wise root indices. Empty if this mesh is not a partition.
+    */
+    const EigRowVec<Index>& root_faces() const
+    { return root_faces_; };
+
+
+    /**
+    * @brief Returns, for each edge of this mesh, its index in the root mesh this is a partition of.
+    * @return Edge-wise root indices. Empty if this mesh is not a partition.
+    */
+    const EigRowVec<Index>& root_edges() const
+    { return root_edges_; };
+
+
+    /**
+    * @brief Returns, for each vertex of this mesh, its index in the root mesh this is a partition of.
+    * @return Vertex-wise root indices. Empty if this mesh is not a partition.
+    */
+    const EigRowVec<Index>& root_vertices() const
+    { return root_vertices_; };
+
+
+    /**
+    * @brief Returns the index of a given face in the root mesh this is a partition of.
+    * @param[in] face - Index of the face in this mesh.
+    * @return Index of the face in the root mesh, or `face` unchanged if this mesh is not a partition.
+    */
+    Index root_face(Index face) const
+    { return is_partition() ? root_faces_[face] : face; };
+
+
+    /**
+    * @brief Returns the index of a given edge in the root mesh this is a partition of.
+    * @param[in] edge - Index of the edge in this mesh.
+    * @return Index of the edge in the root mesh, or `edge` unchanged if this mesh is not a partition.
+    */
+    Index root_edge(Index edge) const
+    { return is_partition() ? root_edges_[edge] : edge; };
+
+
+    /**
+    * @brief Returns the index of a given vertex in the root mesh this is a partition of.
+    * @param[in] vert - Index of the vertex in this mesh.
+    * @return Index of the vertex in the root mesh, or `vert` unchanged if this mesh is not a partition.
+    */
+    Index root_vertex(Index vert) const
+    { return is_partition() ? root_vertices_[vert] : vert; };
+
+
+    /**
+    * @brief Returns the sorted, unique edge indices associated with a given set of faces.
+    * @param[in] face_inds - Indices of faces of this mesh.
+    * @return Sorted, unique indices into this mesh's own `edges()` touching `face_inds`.
+    */
+    EigRowVec<Index> compute_face_edges(
+        ConstEigRef<EigRowVec<Index>> face_inds
+        ) const;
 
 
 protected:
 
     /**
-    * @brief Generates edges for the mesh based on element vertices.
+    * @brief Generates edges for the mesh based on face vertices.
     * @details
     * Edges are generated tag-wise. Tags represent distinct mesh regions, and edges cannot be
-    * associated with two elements that belong to different mesh regions. For example, if two mesh
+    * associated with two faces that belong to different mesh regions. For example, if two mesh
     * regions are in contact with one another, each region will have its own edges, rather than
     * creating artificial junctions at the point of contact.
     */
     void generate_edges();
 
 
+    /**
+    * @brief Computes, for every edge of this mesh, the pair of faces on either side of it.
+    * @return Edge-wise pairs of face indices ordered as (plus, minus) polarity, derived from this
+    * mesh's current `face_edges()`/`face_edge_polarities()`.
+    */
+    EigMatNX<Index, 2> compute_edge_faces() const;
+
+
+    /**
+    * @brief Classifies edges and faces as boundary, junction, or internal, and sets the
+    * corresponding members.
+    * @details
+    * Computes, for every edge of this mesh, how many faces reference it (via this mesh's
+    * current `face_edges()`), then classifies accordingly.
+    */
+    void classify_edges_and_faces();
+
+
+    EigMatNX<Float, dim> vertices_;
+    EigMatNX<Index, 3> faces_;
+    EigRowVec<Index> face_tags_;
+
     bool decoupled_edges_ = false;
 
     EigMatNX<Index, 2> edges_;
-    EigMatNX<Index, 3> elem_edges_;
-    EigMatNX<Float, 3> elem_edge_polarities_;
+    EigMatNX<Index, 3> face_edges_;
+    EigMatNX<Float, 3> face_edge_polarities_;
 
-    EigMatNX<Index, 2> edge_elems_;
+    EigMatNX<Index, 2> edge_faces_;
 
-    EigRowVec<Index> boundary_elems_;
-    EigRowVec<Index> junction_elems_;
-    EigRowVec<Index> internal_elems_;
+    EigRowVec<Index> boundary_faces_;
+    EigRowVec<Index> junction_faces_;
+    EigRowVec<Index> internal_faces_;
 
     EigRowVec<Index> boundary_edges_;
     EigRowVec<Index> junction_edges_;
     EigRowVec<Index> internal_edges_;
+
+    EigRowVec<Index> root_faces_;
+    EigRowVec<Index> root_edges_;
+    EigRowVec<Index> root_vertices_;
 
 };
 

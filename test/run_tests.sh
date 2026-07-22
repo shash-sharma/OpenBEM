@@ -15,6 +15,7 @@ time ${BUILD_DIR}/test_compile
 time ${BUILD_DIR}/test_materials
 time ${BUILD_DIR}/test_point_cloud
 time ${BUILD_DIR}/test_triangle_mesh
+time ${BUILD_DIR}/test_mesh_partitioning
 time ${BUILD_DIR}/test_excitations
 time ${BUILD_DIR}/test_projectors
 time ${BUILD_DIR}/test_quadrature

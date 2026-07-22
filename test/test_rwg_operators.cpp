@@ -164,7 +164,7 @@ void test_parallel_above(
     offset_parallel << a / 4, 0, b * 2,
         a / 4, 0, b * 2,
         a / 4, 0, b * 2;
-    obs_tri.set_v(obs_tri.v() + offset_parallel.transpose());
+    obs_tri.set_data(obs_tri.v() + offset_parallel.transpose());
 
     int src_quad_order = 4;
     int obs_quad_order = 4;
@@ -195,7 +195,7 @@ void test_parallel_below(
     offset_parallel << a / 4, 0, b * 2,
         a / 4, 0, b * 2,
         a / 4, 0, b * 2;
-    obs_tri.set_v(obs_tri.v() - offset_parallel.transpose());
+    obs_tri.set_data(obs_tri.v() - offset_parallel.transpose());
 
     int src_quad_order = 4;
     int obs_quad_order = 4;
@@ -227,7 +227,7 @@ void test_parallel_exact(
     offset_parallel_exact.col(0) = src_tri.normal() * offset_factor;
     offset_parallel_exact.col(1) = src_tri.normal() * offset_factor;
     offset_parallel_exact.col(2) = src_tri.normal() * offset_factor;
-    obs_tri.set_v(obs_tri.v() + offset_parallel_exact);
+    obs_tri.set_data(obs_tri.v() + offset_parallel_exact);
 
     int src_quad_order = 4;
     int obs_quad_order = 4;
@@ -259,7 +259,7 @@ void test_coplanar(
     offset_coplanar.col(0) = edge_vec;
     offset_coplanar.col(1) = edge_vec;
     offset_coplanar.col(2) = edge_vec;
-    obs_tri.set_v(obs_tri.v() + offset_coplanar);
+    obs_tri.set_data(obs_tri.v() + offset_coplanar);
 
     int src_quad_order = 4;
     int obs_quad_order = 4;
@@ -291,7 +291,7 @@ void test_perpendicular(
     v.col(1) = src_tri.v(1);
     v.col(2) = (src_tri.v(0) + src_tri.v(1)) / 2;
     v.col(2)[2] = a / 1.5;
-    obs_tri.set_v(v);
+    obs_tri.set_data(v);
 
     int src_quad_order = 4;
     int obs_quad_order = 4;
@@ -325,7 +325,7 @@ void test_proj_on_vertex(
     v_proj_vertex.row(0) += src_tri.normal().transpose() * a / 5;
     v_proj_vertex.row(1) += src_tri.normal().transpose() * a / 5;
     v_proj_vertex.row(2) += src_tri.normal().transpose() * a / 5;
-    obs_tri.set_v(v_proj_vertex.transpose());
+    obs_tri.set_data(v_proj_vertex.transpose());
 
     int src_quad_order = 4;
     int obs_quad_order = 1;
@@ -364,7 +364,7 @@ void test_proj_on_edge(
     v_proj_edge.row(0) += (src_tri.v(1) - src_tri.v(0)).transpose() * a / 5;
     v_proj_edge.row(1) += (src_tri.v(1) - src_tri.v(0)).transpose() * a / 5;
     v_proj_edge.row(2) += (src_tri.v(1) - src_tri.v(0)).transpose() * a / 5;
-    obs_tri.set_v(v_proj_edge.transpose());
+    obs_tri.set_data(v_proj_edge.transpose());
 
     int src_quad_order = 4;
     int obs_quad_order = 4;
@@ -427,7 +427,7 @@ void test_partial_overlap(
     offset_overlap.col(0) = edge_vec * 0.05;
     offset_overlap.col(1) = edge_vec * 0.05;
     offset_overlap.col(2) = edge_vec * 0.05;
-    obs_tri.set_v(obs_tri.v() + offset_overlap + offset_parallel_exact * 0);
+    obs_tri.set_data(obs_tri.v() + offset_overlap + offset_parallel_exact * 0);
 
     int src_quad_order = 4;
     int obs_quad_order = 4;
@@ -458,7 +458,7 @@ void test_reg(
     offset.col(0) = EigColVecN<Float, 3> ({ LAMBDA * (Float)0.8, LAMBDA * (Float)2.4, LAMBDA * (Float)5.1 });
     offset.col(1) = EigColVecN<Float, 3> ({ LAMBDA * (Float)0.7, LAMBDA * (Float)2.3, LAMBDA * (Float)5.0 });
     offset.col(2) = EigColVecN<Float, 3> ({ LAMBDA * (Float)1.1, LAMBDA * (Float)2.2, LAMBDA * (Float)4.8 });
-    obs_tri.set_v(obs_tri.v() + offset);
+    obs_tri.set_data(obs_tri.v() + offset);
 
     int src_quad_order = 4;
     int obs_quad_order = 4;
@@ -489,7 +489,7 @@ void test_far(
     offset.col(0) = EigColVecN<Float, 3> ({ LAMBDA * (Float)110, LAMBDA * (Float)24, LAMBDA * (Float)58 });
     offset.col(1) = EigColVecN<Float, 3> ({ LAMBDA * (Float)110.1, LAMBDA * (Float)23.8, LAMBDA * (Float)58 });
     offset.col(2) = EigColVecN<Float, 3> ({ LAMBDA * (Float)109.9, LAMBDA * (Float)24.1, LAMBDA * (Float)58.3 });
-    obs_tri.set_v(obs_tri.v() + offset);
+    obs_tri.set_data(obs_tri.v() + offset);
 
     int src_quad_order = 4;
     int obs_quad_order = 4;

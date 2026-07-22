@@ -55,19 +55,19 @@ public:
     * @brief Constructs an `IntegralEquationBase` object.
     * @param[in] obs_mesh - Observation triangle mesh for which the operators are to be assembled.
     * @param[in] src_mesh - Source triangle mesh for which the operators are to be assembled.
-    * @param[in] elem_pairs - Observation (first row) and source (second row) triangle index pairs
+    * @param[in] face_pairs - Observation (first row) and source (second row) triangle index pairs
     * for which the operators are to be assembled.
     * @param[in] flip_normals - Whether to flip the surface normals so they point inwards (optional).
     */
     IntegralEquationBase(
         const TriangleMesh<3>& obs_mesh,
         const TriangleMesh<3>& src_mesh,
-        ConstEigRef<EigMatNX<Index, 2>> elem_pairs,
+        ConstEigRef<EigMatNX<Index, 2>> face_pairs,
         const bool flip_normals = false
         ):
             obs_mesh_(obs_mesh),
             src_mesh_(src_mesh),
-            elem_pairs_(elem_pairs),
+            face_pairs_(face_pairs),
             flip_normals_(flip_normals) {};
 
 
@@ -84,25 +84,25 @@ public:
         ):
             obs_mesh_(obs_mesh),
             src_mesh_(src_mesh),
-            elem_pairs_(IndexGenerator::elem_pairs(obs_mesh, src_mesh)),
+            face_pairs_(IndexGenerator::face_pairs(obs_mesh, src_mesh)),
             flip_normals_(flip_normals) {};
 
 
     /**
     * @brief Constructs an `IntegralEquationBase` object.
     * @param[in] mesh - Source and observation triangle mesh for which the operators are to be assembled.
-    * @param[in] elem_pairs - Observation (first row) and source (second row) triangle index pairs
+    * @param[in] face_pairs - Observation (first row) and source (second row) triangle index pairs
     * for which the operators are to be assembled.
     * @param[in] flip_normals - Whether to flip the surface normals so they point inwards (optional).
     */
     IntegralEquationBase(
         const TriangleMesh<3>& mesh,
-        ConstEigRef<EigMatNX<Index, 2>> elem_pairs,
+        ConstEigRef<EigMatNX<Index, 2>> face_pairs,
         const bool flip_normals = false
         ):
             obs_mesh_(mesh),
             src_mesh_(mesh),
-            elem_pairs_(elem_pairs),
+            face_pairs_(face_pairs),
             flip_normals_(flip_normals) {};
 
 
@@ -117,7 +117,7 @@ public:
         ):
             obs_mesh_(mesh),
             src_mesh_(mesh),
-            elem_pairs_(IndexGenerator::elem_pairs(mesh, mesh)),
+            face_pairs_(IndexGenerator::face_pairs(mesh, mesh)),
             flip_normals_(flip_normals) {};
 
 
@@ -131,7 +131,7 @@ protected:
 
     const TriangleMesh<3>& obs_mesh_;
     const TriangleMesh<3>& src_mesh_;
-    const EigMatNX<Index, 2> elem_pairs_;
+    const EigMatNX<Index, 2> face_pairs_;
     const bool flip_normals_ = false;
 
 };

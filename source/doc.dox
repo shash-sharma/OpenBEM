@@ -36,6 +36,11 @@
 */
 
 /**
+* \defgroup compression Compression
+* @brief Classes for compression of matrix blocks.
+*/
+
+/**
 * \defgroup quad Quadrature
 * @brief Classes for computing numerical integration via quadrature over geometry primitives.
 */

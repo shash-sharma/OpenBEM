@@ -30,7 +30,7 @@
 #include "geometry/primitives/edge.hpp"
 #include "geometry/primitives/triangle.hpp"
 
-#include "geometry/mesh/base.hpp"
+#include "geometry/mesh/triangle_mesh_view.hpp"
 #include "geometry/mesh/triangle_mesh.hpp"
 #include "geometry/mesh/mesh_transfer.hpp"
 
@@ -47,6 +47,14 @@
 
 #include "kernels/base.hpp"
 #include "kernels/hgf.hpp"
+
+#include "compression/matrix/low_rank_matrix.hpp"
+
+#include "compression/aca/base.hpp"
+#include "compression/aca/basic.hpp"
+#include "compression/aca/plus.hpp"
+
+#include "compression/assemblers/aca_assembler.hpp"
 
 #include "rwg/function_space.hpp"
 
@@ -81,6 +89,7 @@
 #include "rwg/excitations/base.hpp"
 #include "rwg/excitations/plane_wave.hpp"
 #include "rwg/excitations/inf_gap.hpp"
+#include "rwg/excitations/lumped_elements.hpp"
 
 #include "rwg/assemblers/base.hpp"
 #include "rwg/assemblers/indexing.hpp"
@@ -88,7 +97,5 @@
 #include "rwg/assemblers/block_assembler.hpp"
 #include "rwg/assemblers/excitation_assembler.hpp"
 #include "rwg/assemblers/projector_assembler.hpp"
-
-#include "rwg/lumped_elements/base.hpp"
 
 #endif

@@ -8,6 +8,9 @@
 
 #include <vector>
 #include <unordered_map>
+#include <utility>
+#include <memory>
+#include <mutex>
 
 #include "types.hpp"
 #include "geometry/mesh/triangle_mesh.hpp"
@@ -28,6 +31,27 @@ namespace bem::rwg
 */
 
 /**
+* @brief Hash for a pair of face indices, used to key `BlockAssembler`'s per-face-pair
+* integration cache.
+*/
+struct FacePairHash
+{
+    std::size_t operator()(const std::pair<Index, Index>& p) const noexcept
+    {
+        std::size_t h1 = std::hash<Index>{}(p.first);
+        std::size_t h2 = std::hash<Index>{}(p.second);
+
+        if constexpr (sizeof(std::size_t) >= 8)
+            h2 += 0x9e3779b97f4a7c15ULL;
+        else
+            h2 += 0x9e3779b9U;
+
+        return h1 ^ (h2 + (h1 << 6) + (h1 >> 2));
+    }
+};
+
+
+/**
 * @brief Class for assembling matrix sub-blocks for RWG observation and source functions.
 */
 class BlockAssembler: public OperatorAssemblerBase
@@ -37,29 +61,46 @@ public:
     /**
     * @brief Constructs a `BlockAssembler` for a given mesh.
     * @param[in] mesh - Triangle mesh for which the operator matrix is to be assembled.
-    * @param[in] index_set - Block index definition.
+    * @param[in] index_set - Block index definition (optional).
+    * @param[in] use_integration_cache - Whether to cache and reuse triangle-pair integrals (optional).
+    * @param[in] self_terms_only - Whether to assemble only each degree of freedom's self term,
+    * leaving every other entry at zero (optional).
+    * @details
+    * When `use_integration_cache` is `true`, cached values are reused whenever `op and `k` are
+    * unchanged from the previous call. An operator that is otherwise reconfigured between calls
+    * should clear the cache in between using `clear_cache()`. If no `index_set` is provided,
+    * nothing is assembled until `set_indices()` is called with a valid block definition.
+    * `self_terms_only` keeps the entries where the observation and source degrees of freedom
+    * coincide.
     */
     BlockAssembler(
         const TriangleMesh<3>& mesh,
-        const IndexSet& index_set
+        const IndexSet& index_set = IndexSet(EigRowVec<Index>(), EigRowVec<Index>()),
+        const bool use_integration_cache = false,
+        const bool self_terms_only = false
         ):
         mesh_(mesh),
-        index_set_(index_set)
+        index_set_(index_set),
+        use_integration_cache_(use_integration_cache),
+        self_terms_only_(self_terms_only)
     {
-        for (Index ii = 0; ii < index_set_.num_rows(); ++ii)
-            row_map_.insert({ index_set_.rows()[ii], ii });
-
-        for (Index ii = 0; ii < index_set_.num_cols(); ++ii)
-            col_map_.insert({ index_set_.cols()[ii], ii });
-
+        set_indices(index_set_);
         return;
     };
 
 
     /**
-    * @brief Assembles the operator matrix blocks for a given operator object.
-    * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
-    * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
+    * @brief Rescopes this assembler to a new index set.
+    * @param[in] index_set - New block index definition.
+    */
+    void set_indices(const IndexSet& index_set) override;
+
+
+    /**
+    * @brief Assembles the operator matrix block for a given operator object.
+    * @param[out] mat - Matrix to store the assembled operator block, sized to the block
+    * defined by `index_set_`, with columns corresponding to source degrees of freedom, and rows
+    * corresponding to observation degrees of freedom.
     * @param[in] op - Operator object that computes the coefficients to be assembled into `mat`.
     * @param[in] k - Complex wavenumber.
     */
@@ -71,30 +112,61 @@ public:
 
 
     /**
-    * @brief Assembles operator matrices for given operator objects.
-    * @param[out] mats - Matrices to store the assembled operator coefficients, with columns corresponding
-    * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
+    * @brief Assembles a sub-block of the operator matrix block for a given operator object.
+    * @param[out] mat - Matrix to store the assembled operator sub-block, sized to exactly
+    * `local_rows.size() x local_cols.size()`.
+    * @param[in] op - Operator object that computes the coefficients to be assembled into `mat`.
     * @param[in] k - Complex wavenumber.
-    * @param[in] obs_integrator - Integration object for the observation triangle (optional).
+    * @param[in] local_rows - Local row indices (positions within `index_set_.rows()`) to assemble.
+    * @param[in] local_cols - Local column indices (positions within `index_set_.cols()`) to assemble.
+    * @details
+    * Out-of-bounds entries in `local_rows`, `local_cols` are ignored (the corresponding row/column
+    * of `mat` is left zero). A selection whose size equals `index_set_.num_rows()` (or `num_cols()`)
+    * is assumed, not verified, to be `[0, 1, ..., n-1]`.
     */
-    template <typename MatrixType, typename ObsIntegratorType = ObsStrategic, typename... Ops>
     void assemble(
-        std::vector<MatrixType>& mats,
+        MatrixBase<Complex>& mat,
+        const OperatorBase& op,
         const Complex k,
-        const ObsIntegratorType obs_integrator = ObsStrategic()
+        ConstEigRef<EigRowVec<Index>> local_rows,
+        ConstEigRef<EigRowVec<Index>> local_cols
         );
 
 
     /**
-    * @brief Computes and retrieves a block of operator matrix values for a given operator object.
-    * @param[out] mat - Block of values for requested row and column indices.
-    * @param[in] op - Operator object that computes the coefficients to be assembled into `mat`.
-    * @param[in] k - Complex wavenumber.
+    * @brief Discards cached triangle-pair integrals and resets the cache.
     */
-    void get_block(
-        EigMat<Complex>& mat,
+    void clear_cache()
+    {
+        std::lock_guard<std::mutex> lock (integration_cache_mutex_);
+
+        integration_cache_.clear();
+        integration_cache_op_ = nullptr;
+        integration_cache_k_ = 0;
+
+        return;
+    };
+
+
+protected:
+
+    using OperatorAssemblerBase::assemble;
+
+
+    /**
+    * @brief Computes face pairs from `obs_faces` and `src_faces`, evaluates `op` for each,
+    * and places results in `mat` (`out_rows x out_cols`) via `active_row_map`, `active_col_map`.
+    */
+    void assemble_from_faces(
+        MatrixBase<Complex>& mat,
         const OperatorBase& op,
-        const Complex k
+        const Complex k,
+        ConstEigRef<EigRowVec<Index>> obs_faces,
+        ConstEigRef<EigRowVec<Index>> src_faces,
+        const std::unordered_map<Index, Index>& active_row_map,
+        const std::unordered_map<Index, Index>& active_col_map,
+        const Index out_rows,
+        const Index out_cols
         );
 
 
@@ -102,34 +174,37 @@ public:
     * @brief Fills operator values in the matrix.
     * @param[out] mat - Matrix to store the assembled operator coefficients.
     * @param[in] op - Operator object that computes the coefficients to be assembled into `mat`.
-    * @param[in] elem_pair - Observation (first entry) and source (second entry) triangle index pair.
-    * @param[in] values - Operator values for each pair of observation and source degrees of freedom.
+    * @param[in] face_pair - Observation (first entry) and source (second entry) triangle index pair.
+    * @param[in] values - Operator values for each pair of observation and source degrees of
+    * freedom. An empty matrix means the operator declined this triangle pair, and nothing is filled.
+    * @param[in] active_row_map - Map from global observation indices to local row indices in `mat`.
+    * @param[in] active_col_map - Map from global source indices to local column indices in `mat`.
     */
     void fill_matrix(
-        EigMat<Complex>& mat,
+        MatrixBase<Complex>& mat,
         const OperatorBase& op,
-        ConstEigRef<EigColVecN<Index, 2>> elem_pair,
-        ConstEigRef<EigMat<Complex>> values
+        ConstEigRef<EigColVecN<Index, 2>> face_pair,
+        ConstEigRef<EigMat<Complex>> values,
+        const std::unordered_map<Index, Index>& active_row_map,
+        const std::unordered_map<Index, Index>& active_col_map
         );
 
 
-protected:
-
     const TriangleMesh<3>& mesh_;
-    const IndexSet index_set_;
+    IndexSet index_set_;
     std::unordered_map<Index, Index> row_map_;
     std::unordered_map<Index, Index> col_map_;
 
-};
+    EigRowVec<Index> row_faces_from_edges_;
+    EigRowVec<Index> col_faces_from_edges_;
 
+    const bool use_integration_cache_ = true;
+    std::unordered_map<std::pair<Index, Index>, EigMat<Complex>, FacePairHash> integration_cache_;
+    const OperatorBase* integration_cache_op_ = nullptr;
+    Complex integration_cache_k_ = 0;
+    std::mutex integration_cache_mutex_;
 
-template <typename MatrixType, typename ObsIntegratorType, typename... Ops>
-void BlockAssembler::assemble(
-    std::vector<MatrixType>& mats,
-    const Complex k,
-    ObsIntegratorType obs_integrator
-    )
-{
+    const bool self_terms_only_ = false;
 
 };
 

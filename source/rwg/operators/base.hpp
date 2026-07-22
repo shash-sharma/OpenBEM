@@ -36,6 +36,18 @@ namespace bem::rwg
 */
 
 /**
+* @brief Integration terms that will be requested from the observation triangle integrator.
+*/
+struct ObsTerms
+{
+    bool g = true;
+    bool rs_g = true;
+    bool grad_g = true;
+    bool rot_grad_g = true;
+};
+
+
+/**
 * @brief Base class for RWG-based BEM operators.
 */
 class OperatorBase
@@ -46,14 +58,21 @@ public:
     * @brief Returns the degrees of freedom for the testing function space.
     * @return Observation degrees of freedom.
     */
-    virtual OperatorDof obs_dof() const = 0;
+    virtual DofSpace obs_dof() const = 0;
 
 
     /**
     * @brief Returns the degrees of freedom for the expansion function space.
     * @return Source degrees of freedom.
     */
-    virtual OperatorDof src_dof() const = 0;
+    virtual DofSpace src_dof() const = 0;
+
+
+    /**
+    * @brief Returns the observation-triangle integrals this operator requires.
+    * @return Integrals required; all of them are computed by default.
+    */
+    virtual ObsTerms obs_terms() const { return {}; };
 
 
     /**
@@ -107,17 +126,21 @@ public:
         EigMatMN<Float, 3, 3> local_uvw = src_tri.local_coordinate_basis();
         EigColVecN<Float, 3> local_origin = src_tri.local_origin();
 
-        obs_tri_local.set_v(
+        obs_tri_local.set_data(
             GeometryOps<3>::transform_coordinate_system(
                 obs_tri.v(), local_origin, local_uvw
                 ),
-            obs_tri.edge_polarities()
+            obs_tri.edge_polarities(),
+            obs_tri.tag(),
+            obs_tri.idx()
         );
-        src_tri_local.set_v(
+        src_tri_local.set_data(
             GeometryOps<3>::transform_coordinate_system(
                 src_tri.v(), local_origin, local_uvw
                 ).topRows(2),
-            src_tri.edge_polarities()
+            src_tri.edge_polarities(),
+            src_tri.tag(),
+            src_tri.idx()
         );
 
         return;
@@ -125,8 +148,8 @@ public:
 
 
     /**
-    * @brief Returns a unique pointer to a newly constructed object of the derived type.
-    * @return Unique pointer to the new object.
+    * @brief Returns a unique pointer to a copy of this object.
+    * @return Unique pointer to a copy of the object.
     */
     virtual std::unique_ptr<OperatorBase> clone() const
     { throw std::runtime_error("OperatorBase::clone(): Not implemented."); };

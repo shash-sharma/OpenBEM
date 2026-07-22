@@ -12,7 +12,7 @@
 
 /**
 * @file
-* Base class for for matrix algebra containers.
+* Base class for matrix algebra containers.
 */
 
 #ifndef MATRIX_BASE_HPP
@@ -39,7 +39,27 @@ namespace bem
 */
 
 /**
-* @brief Base class for for matrix algebra containers.
+* @brief Enumeration of special structures a matrix may have.
+*/
+enum class MatrixStructure
+{
+    NONE,
+    DIAGONAL,
+    DIAGONAL_2X2
+};
+
+
+/**
+* @brief Side of a matrix that an operation acts on.
+*/
+enum class MatrixSide
+{
+    LEFT, RIGHT
+};
+
+
+/**
+* @brief Base class for matrix algebra containers.
 * @tparam T - Data type to be stored in the matrix (e.g., float, double, std::complex).
 */
 template <typename T>
@@ -172,7 +192,7 @@ public:
 
 
     /**
-    * @brief Returns a unique pointer to a newly constructed object of the derived type.
+    * @brief Returns a unique pointer to an empty object of the derived type.
     * @return Unique pointer to the new object.
     */
     virtual std::unique_ptr<MatrixBase<T>> clone() const
@@ -188,6 +208,15 @@ public:
 
 
     /**
+    * @brief Computes \f$ \mathbf{M} = \mathbf{X}^T \f$ where \f$ \mathbf{M} \f$ is this matrix,
+    * \f$ \mathbf{X} \f$ is a given matrix, and \f$ \mathbf{X}^T \f$ is its transpose.
+    * @param[in] x - Matrix to transpose.
+    */
+    virtual void set_transpose(const MatrixBase<T>& x)
+    { throw std::runtime_error("MatrixBase::set_transpose(): Not implemented."); };
+
+
+    /**
     * @brief Retrieves matrix values on the diagonal.
     * @param[out] x - Diagonal matrix.
     */
@@ -196,63 +225,82 @@ public:
 
 
     /**
-    * @brief Computes \f$ \mathbf{M} = a\mathbf{X}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$ is this matrix,
-    * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
-    * @param[in] x - First matrix to multiply, must have the same number of columns as `y` has rows.
-    * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
-    * @param[in] a - Scalar with which to scale the product of `x` and `y`.
-    */
-    virtual void set_matmul(
-        const MatrixBase<T>& x,
-        const MatrixBase<T>& y,
-        const T& a = T(1)
-        )
-    { throw std::runtime_error("MatrixBase::set_matmul(): Not implemented."); };
-
-
-    /**
-    * @brief Computes \f$ \mathbf{M} = \mathbf{M} + a\mathbf{X}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$
-    * is this matrix, \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
-    * @param[in] x - First matrix to multiply, must have the same number of columns as `y` has rows.
-    * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
-    * @param[in] a - Scalar with which to scale the product of `x` and `y`.
-    */
-    virtual void add_matmul(
-        const MatrixBase<T>& x,
-        const MatrixBase<T>& y,
-        const T& a = T(1)
-        )
-    { throw std::runtime_error("MatrixBase::add_matmul(): Not implemented."); };
-
-
-    /**
     * @brief Computes \f$ \mathbf{X} = a\mathbf{M}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$ is this matrix,
     * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
     * @param[out] x - Multiplication result.
     * @param[in] y - Matrix with which to multiply, must have the same number of rows as this matrix.
     * @param[in] a - Scalar with which to scale the product.
+    * @param[in] accumulate - Whether to accumulate the product into a pre-existing `x`.
     */
     virtual void matmul(
         MatrixBase<T>& x,
         const MatrixBase<T>& y,
-        const T& a = T(1)
+        const T& a = T(1),
+        const bool accumulate = false
         ) const
     { throw std::runtime_error("MatrixBase::matmul(): Not implemented."); };
 
 
     /**
-    * @brief Computes \f$ \mathbf{X} += a\mathbf{M}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$ is this matrix,
-    * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
-    * @param[out] x - Multiplication result.
-    * @param[in] y - Matrix with which to multiply, must have the same number of rows as this matrix.
+    * @brief Computes \f$ \mathbf{X}_b = a\mathbf{M}\mathbf{Y}_b \f$ where \f$ \mathbf{M} \f$ is this matrix,
+    * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices, and the subscript \f$ b \f$
+    * indicates that the matrix is multiplied into a sub-block of \f$ \mathbf{Y} \f$, and the result is 
+    * placed in a sub-block of \f$ \mathbf{X} \f$.
+    * @param[in,out] x - Destination matrix, with at least as many rows as rows of this matrix.
+    * @param[in] y - Matrix whose sub-block to multiply, with at least as many rows as columns of this matrix.
+    * @param[in] x_row_start - Starting row index for the destination block.
+    * @param[in] y_row_start - Starting row index for the multiplier block.
     * @param[in] a - Scalar with which to scale the product.
+    * @param[in] accumulate - Whether to accumulate the product into a pre-existing `x`.
     */
-    virtual void matmuladd(
+    virtual void matmul_block(
         MatrixBase<T>& x,
         const MatrixBase<T>& y,
-        const T& a = T(1)
+        const Index x_row_start,
+        const Index y_row_start,
+        const T& a = T(1),
+        const bool accumulate = false
         ) const
-    { throw std::runtime_error("MatrixBase::matmul(): Not implemented."); };
+    { throw std::runtime_error("MatrixBase::matmul_block(): Not implemented."); };
+
+
+    /**
+    * @brief Computes \f$ \mathbf{X} = \mathbf{L}\mathbf{M}\mathbf{R} \f$ where \f$ \mathbf{M} \f$ is
+    * this matrix, and \f$ \mathbf{L} \f$ and \f$ \mathbf{R} \f$ are given matrices.
+    * @param[out] x - Multiplication result.
+    * @param[in] left - Matrix with which to multiply on the left, or empty for the identity.
+    * @param[in] right - Matrix with which to multiply on the right, or empty for the identity.
+    */
+    virtual void matmul_triple(
+        MatrixBase<T>& x,
+        const MatrixBase<T>& left,
+        const MatrixBase<T>& right
+        ) const
+    {
+        const bool skip_left = (left.size() == 0);
+        const bool skip_right = (right.size() == 0);
+
+        if (skip_left && skip_right)
+            throw std::invalid_argument("MatrixBase::matmul_triple(): `left` and `right` cannot both be empty.");
+
+        if (skip_left)
+        {
+            matmul(x, right);
+            return;
+        }
+
+        if (skip_right)
+        {
+            left.matmul(x, *this);
+            return;
+        }
+
+        std::unique_ptr<MatrixBase<T>> temp = clone();
+        left.matmul(*temp, *this);
+        temp->matmul(x, right);
+
+        return;
+    };
 
 
     /**
@@ -282,6 +330,54 @@ public:
         const MatrixBase<T>& x,
         Index row_start,
         Index col_start,
+        const T& a = T(1)
+        )
+    { throw std::runtime_error("MatrixBase::add_block(): Not implemented."); };
+
+
+    /**
+    * @brief Sets a block of this matrix to a block of a given matrix, starting at a given position.
+    * @param[in] x - Matrix to insert.
+    * @param[in] src_row_start - Starting row index for the source block.
+    * @param[in] src_col_start - Starting column index for the source block.
+    * @param[in] dst_row_start - Starting row index for the destination block.
+    * @param[in] dst_col_start - Starting column index for the destination block.
+    * @param[in] b_rows - Number of rows to retrieve.
+    * @param[in] b_cols - Number of columns to retrieve.
+    * @param[in] a - Scalar to multiply the values of `x` before inserting (optional).
+    */
+    virtual void set_block(
+        const MatrixBase<T>& x,
+        Index src_row_start,
+        Index src_col_start,
+        Index dst_row_start,
+        Index dst_col_start,
+        Index b_rows,
+        Index b_cols,
+        const T& a = T(1)
+        )
+    { throw std::runtime_error("MatrixBase::set_block(): Not implemented."); };
+
+
+    /**
+    * @brief Adds a block to this matrix from a block of a given matrix, starting at a given position.
+    * @param[in] x - Matrix whose block should be added to a block of this matrix.
+    * @param[in] src_row_start - Starting row index for the source block.
+    * @param[in] src_col_start - Starting column index for the source block.
+    * @param[in] dst_row_start - Starting row index for the destination block.
+    * @param[in] dst_col_start - Starting column index for the destination block.
+    * @param[in] b_rows - Number of rows to retrieve.
+    * @param[in] b_cols - Number of columns to retrieve.
+    * @param[in] a - Scalar to multiply the values of `x` before inserting (optional).
+    */
+    virtual void add_block(
+        const MatrixBase<T>& x,
+        Index src_row_start,
+        Index src_col_start,
+        Index dst_row_start,
+        Index dst_col_start,
+        Index b_rows,
+        Index b_cols,
         const T& a = T(1)
         )
     { throw std::runtime_error("MatrixBase::add_block(): Not implemented."); };
@@ -324,24 +420,6 @@ public:
 
 
     /**
-    * @brief Copies a block of values from this matrix to the corresponding block of another.
-    * @param[out] x - Matrix to store the retrieved values in its corresponding block.
-    * @param[in] row_start - Starting row index for the block.
-    * @param[in] col_start - Starting column index for the block.
-    * @param[in] b_rows - Number of rows in the block to retrieve.
-    * @param[in] b_cols - Number of columns in the block to retrieve.
-    */
-    virtual void copy_block(
-        MatrixBase<T>& x,
-        Index row_start,
-        Index col_start,
-        Index b_rows,
-        Index b_cols
-        ) const
-    { throw std::runtime_error("MatrixBase::copy_block(): Not implemented."); };
-
-
-    /**
     * @brief Computes and stores a factorization of the matrix.
     */
     virtual void factorize()
@@ -357,6 +435,26 @@ public:
     */
     virtual void mat_solve(MatrixBase<T>& x, const MatrixBase<T>& b) const
     { throw std::runtime_error("MatrixBase::mat_solve(): Not implemented."); };
+
+
+    /**
+    * @brief Factorizes this matrix via a Schur-complement decomposition, using an analytical
+    * inverse for the top-left block if possible, depending on `pattern`.
+    * @param[in] pivot - Size of the top-left block.
+    * @param[in] pattern - Known structure of the top-left block (optional).
+    */
+    virtual void factorize_schur(Index pivot, MatrixStructure pattern = MatrixStructure::NONE)
+    { throw std::runtime_error("MatrixBase::factorize_schur(): Not implemented."); };
+
+
+    /**
+    * @brief Solves \f$ \mathbf{M}\mathbf{X} = \mathbf{B} \f$ using the factorization computed by
+    * `factorize_schur()`.
+    * @param[out] x - Solution.
+    * @param[in] b - Right-hand side matrix.
+    */
+    virtual void mat_solve_schur(MatrixBase<T>& x, const MatrixBase<T>& b) const
+    { throw std::runtime_error("MatrixBase::mat_solve_schur(): Not implemented."); };
 
 
     /**

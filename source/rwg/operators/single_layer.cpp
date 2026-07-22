@@ -37,8 +37,9 @@ EigMat<Complex> VectorSingleLayerOp::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
+    const auto [g, rs_g, grad_g, rot_grad_g] = obs_terms();
     const ObsResult obs_result = obs_integrator_->integrate(
-        k, obs_tri_local, src_tri_local, false, true, false, false
+        k, obs_tri_local, src_tri_local, g, rs_g, grad_g, rot_grad_g
         );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
@@ -93,8 +94,9 @@ EigMat<Complex> RotVectorSingleLayerOp::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
+    const auto [g, rs_g, grad_g, rot_grad_g] = obs_terms();
     const ObsResult obs_result = obs_integrator_->integrate(
-        k, obs_tri_local, src_tri_local, false, true, false, false
+        k, obs_tri_local, src_tri_local, g, rs_g, grad_g, rot_grad_g
         );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
@@ -157,8 +159,9 @@ EigMat<Complex> ScalarSingleLayerOp::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
+    const auto [g, rs_g, grad_g, rot_grad_g] = obs_terms();
     const ObsResult obs_result = obs_integrator_->integrate(
-        k, obs_tri_local, src_tri_local, true, false, false, false
+        k, obs_tri_local, src_tri_local, g, rs_g, grad_g, rot_grad_g
         );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
@@ -181,6 +184,72 @@ EigMat<Complex> ScalarSingleLayerOp::assemble(
 };
 
 
+EigMat<Complex> ScalarSingleLayerDivOp::compute(
+    const Complex k,
+    const Triangle<3>& obs_tri,
+    const Triangle<3>& src_tri
+    ) const
+{
+    Triangle<3> obs_tri_local;
+    Triangle<2> src_tri_local;
+    transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
+
+    const auto [g, rs_g, grad_g, rot_grad_g] = obs_terms();
+    const ObsResult obs_result = obs_integrator_->integrate(
+        k, obs_tri_local, src_tri_local, g, rs_g, grad_g, rot_grad_g
+        );
+
+    return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
+};
+
+
+EigMat<Complex> ScalarSingleLayerDivOp::assemble(
+    const Complex k,
+    const Triangle<3>& obs_tri,
+    const Triangle<3>& src_tri,
+    const ObsResult& obs_result
+    ) const
+{
+    const Complex g_term = op_g_.assemble(k, obs_tri, src_tri, obs_result)(0, 0);
+    EigMatMN<Complex, 1, 3> result = g_term * 
+        two * Rwg::normalization(src_tri) / Pulse::normalization(src_tri)[0];
+    return result;
+};
+
+
+EigMat<Complex> GradScalarSingleLayerOp::compute(
+    const Complex k,
+    const Triangle<3>& obs_tri,
+    const Triangle<3>& src_tri
+    ) const
+{
+    Triangle<3> obs_tri_local;
+    Triangle<2> src_tri_local;
+    transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
+
+    const auto [g, rs_g, grad_g, rot_grad_g] = obs_terms();
+    const ObsResult obs_result = obs_integrator_->integrate(
+        k, obs_tri_local, src_tri_local, g, rs_g, grad_g, rot_grad_g
+        );
+
+    return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
+};
+
+
+EigMat<Complex> GradScalarSingleLayerOp::assemble(
+    const Complex k,
+    const Triangle<3>& obs_tri,
+    const Triangle<3>& src_tri,
+    const ObsResult& obs_result
+    ) const
+{
+    const Complex g_term = op_g_.assemble(k, obs_tri, src_tri, obs_result)(0, 0);
+    EigMatMN<Complex, 3, 1> result = g_term * 
+        two * Rwg::normalization(obs_tri).transpose() / Pulse::normalization(obs_tri)[0];
+    return result;
+};
+
+
 EigMat<Complex> RotGradScalarSingleLayerOp::compute(
     const Complex k,
     const Triangle<3>& obs_tri,
@@ -191,8 +260,9 @@ EigMat<Complex> RotGradScalarSingleLayerOp::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
+    const auto [g, rs_g, grad_g, rot_grad_g] = obs_terms();
     const ObsResult obs_result = obs_integrator_->integrate(
-        k, obs_tri_local, src_tri_local, false, false, true, false
+        k, obs_tri_local, src_tri_local, g, rs_g, grad_g, rot_grad_g
         );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
@@ -253,8 +323,9 @@ EigMat<Complex> VectorHypersingularOp::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
+    const auto [g, rs_g, grad_g, rot_grad_g] = obs_terms();
     const ObsResult obs_result = obs_integrator_->integrate(
-        k, obs_tri_local, src_tri_local, true, true, false, false
+        k, obs_tri_local, src_tri_local, g, rs_g, grad_g, rot_grad_g
         );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
@@ -270,7 +341,9 @@ EigMat<Complex> VectorHypersingularOp::assemble(
 {
     EigMatMN<Complex, 3, 3> result = op_g_.assemble(k, obs_tri, src_tri, obs_result);
     Complex hessg_term = op_hessg_.assemble(k, obs_tri, src_tri, obs_result)(0, 0) / k / k;
-    result -= hessg_term * obs_tri.edge_polarities().transpose() * src_tri.edge_polarities();
+    result -= hessg_term * 
+        (two * Rwg::normalization(obs_tri).transpose() / Pulse::normalization(obs_tri)[0]) *
+        (two * Rwg::normalization(src_tri) / Pulse::normalization(src_tri)[0]);
     return result;
 };
 
@@ -285,8 +358,9 @@ EigMat<Complex> RotVectorHypersingularOp::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
+    const auto [g, rs_g, grad_g, rot_grad_g] = obs_terms();
     const ObsResult obs_result = obs_integrator_->integrate(
-        k, obs_tri_local, src_tri_local, false, true, true, false
+        k, obs_tri_local, src_tri_local, g, rs_g, grad_g, rot_grad_g
         );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
@@ -302,7 +376,8 @@ EigMat<Complex> RotVectorHypersingularOp::assemble(
 {
     EigMatMN<Complex, 3, 3> result = op_g_.assemble(k, obs_tri, src_tri, obs_result);
     EigMatMN<Complex, 3, 1> hessg_term = op_hessg_.assemble(k, obs_tri, src_tri, obs_result) / k / k;
-    result += hessg_term * src_tri.edge_polarities();
+    result += hessg_term * 
+        (two * Rwg::normalization(src_tri) / Pulse::normalization(src_tri)[0]);
     return result;
 };
 

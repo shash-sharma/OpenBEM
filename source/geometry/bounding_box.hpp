@@ -18,6 +18,8 @@
 #ifndef BEM_BBOX_H
 #define BEM_BBOX_H
 
+#include <algorithm>
+
 #include "types.hpp"
 
 
@@ -116,17 +118,32 @@ public:
     */
     Float percent_overlap(const BoundingBox& other) const
     {
-        EigColVecN<Float, dim> maxs = min().cwiseMax(other.min());
-        EigColVecN<Float, dim> mins = max().cwiseMin(other.max());
 
-        if ((mins.array() < maxs.array()).any())
+        EigColVecN<Float, dim> lower = min().cwiseMax(other.min());
+        EigColVecN<Float, dim> upper = max().cwiseMin(other.max());
+
+        if ((upper.array() < lower.array()).any())
             return 0;
 
-        Float intersection = (mins - maxs).prod();
-        Float region1 = (max() - min()).prod();
-        Float region2 = (other.max() - other.min()).prod();
+        Float overlap1 = 1, overlap2 = 1, region1 = 1, region2 = 1;
 
-        return intersection / (region1 + region2 - intersection) * 100.0;
+        for (Index ii = 0; ii < dim; ++ii)
+        {
+            if (max()[ii] - min()[ii] > 0)
+            {
+                overlap1 *= upper[ii] - lower[ii];
+                region1 *= max()[ii] - min()[ii];
+            }
+
+            if (other.max()[ii] - other.min()[ii] > 0)
+            {
+                overlap2 *= upper[ii] - lower[ii];
+                region2 *= other.max()[ii] - other.min()[ii];
+            }
+        }
+
+        return std::max(overlap1 / region1, overlap2 / region2) * 100.0;
+
     };
 
 

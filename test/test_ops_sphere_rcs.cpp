@@ -60,7 +60,7 @@ void test_efie_pec()
 
     std::string msh_filename = path + "/msh/sphere.msh";
 
-    Structure<TriangleMesh<3>> structure;
+    Structure<3> structure;
     MeshTransfer::read_gmsh_v2(structure, msh_filename);
     TriangleMesh<3>& mesh = structure.mesh();
 
@@ -121,7 +121,7 @@ void test_efie_pec()
 
 
     EigenMatrix<Complex> Escat;
-    Escat.set_matmul(T_proj, Jsurf);
+    T_proj.matmul(Escat, Jsurf);
 
     EigenMatrix<Float> Escatmag;
     Escatmag.raw_matrix() = Escat.raw_matrix().reshaped(3, 100).colwise().norm();
@@ -170,7 +170,7 @@ void test_nmfie_pec()
 
     std::string msh_filename = path + "/msh/sphere.msh";
 
-    Structure<TriangleMesh<3>> structure;
+    Structure<3> structure;
     MeshTransfer::read_gmsh_v2(structure, msh_filename);
     TriangleMesh<3>& mesh = structure.mesh();
 
@@ -232,7 +232,7 @@ void test_nmfie_pec()
 
 
     EigenMatrix<Complex> Escat;
-    Escat.set_matmul(T_proj, Jsurf);
+    T_proj.matmul(Escat, Jsurf);
 
     EigenMatrix<Float> Escatmag;
     Escatmag.raw_matrix() = Escat.raw_matrix().reshaped(3, 100).colwise().norm();

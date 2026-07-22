@@ -14,11 +14,32 @@
 #include "matrix/eigen_matrix.hpp"
 #include "rwg/operators/base.hpp"
 #include "rwg/assemblers/indexing.hpp"
-#include "rwg/assemblers/operator_assembler.hpp"
 
 
 namespace bem::rwg
 {
+
+void BlockAssembler::set_indices(const IndexSet& index_set)
+{
+
+    index_set_ = index_set;
+
+    row_map_.clear();
+    col_map_.clear();
+
+    for (Index ii = 0; ii < index_set_.num_rows(); ++ii)
+        row_map_.insert({ index_set_.rows()[ii], ii });
+
+    for (Index ii = 0; ii < index_set_.num_cols(); ++ii)
+        col_map_.insert({ index_set_.cols()[ii], ii });
+
+    row_faces_from_edges_ = IndexGenerator::faces_from_edges(mesh_, index_set_.rows());
+    col_faces_from_edges_ = IndexGenerator::faces_from_edges(mesh_, index_set_.cols());
+
+    return;
+
+};
+
 
 void BlockAssembler::assemble(
     MatrixBase<Complex>& mat,
@@ -27,26 +48,210 @@ void BlockAssembler::assemble(
     )
 {
 
-    EigMatNX<Index, 2> elem_pairs = IndexGenerator::elem_pairs(
-        mesh_, index_set_, op.obs_dof(), op.src_dof()
+    clear_cache();
+
+    ConstEigRef<EigRowVec<Index>> obs_faces = (op.obs_dof() == DofSpace::EDGE) ?
+        row_faces_from_edges_ : index_set_.rows();
+
+    ConstEigRef<EigRowVec<Index>> src_faces = (op.src_dof() == DofSpace::EDGE) ?
+        col_faces_from_edges_ : index_set_.cols();
+
+    assemble_from_faces(
+        mat, op, k,
+        obs_faces, src_faces,
+        row_map_, col_map_,
+        index_set_.num_rows(), index_set_.num_cols()
         );
 
-    std::unique_ptr<MatrixBase<Complex>> temp = mat.clone();
+    return;
 
-    OperatorAssembler assm (mesh_, elem_pairs);
-    assm.assemble(*temp, op, k);
+};
 
-    mat.resize(temp->num_rows(), temp->num_cols());
 
-#pragma omp parallel for collapse(2)
-    for (Index ci = 0; ci < index_set_.num_cols(); ++ci)
+void BlockAssembler::assemble(
+    MatrixBase<Complex>& mat,
+    const OperatorBase& op,
+    const Complex k,
+    ConstEigRef<EigRowVec<Index>> local_rows,
+    ConstEigRef<EigRowVec<Index>> local_cols
+    )
+{
+
+    bool all_rows = (local_rows.size() == index_set_.num_rows());
+    bool all_cols = (local_cols.size() == index_set_.num_cols());
+
+    EigRowVec<Index> obs_faces;
+    std::unordered_map<Index, Index> local_row_map;
+
+    if (all_rows)
     {
-        for (Index ri = 0; ri < index_set_.num_rows(); ++ri)
+        if (op.obs_dof() == DofSpace::EDGE)
+            obs_faces = row_faces_from_edges_;
+        else if (op.obs_dof() == DofSpace::FACE)
+            obs_faces = index_set_.rows();
+    }
+    else
+    {
+        std::vector<Index> rows_global_vec;
+        rows_global_vec.reserve(local_rows.size());
+        for (Index ii = 0; ii < local_rows.size(); ++ii)
         {
-            Index row = index_set_.rows()[ri];
-            Index col = index_set_.cols()[ci];
+            if (local_rows[ii] >= index_set_.num_rows())
+                continue;
+            Index global_idx = index_set_.rows()[local_rows[ii]];
+            rows_global_vec.push_back(global_idx);
+            local_row_map.insert({ global_idx, ii });
+        }
+        EigRowVec<Index> rows_global = Eigen::Map<const EigRowVec<Index>> (
+            rows_global_vec.data(), rows_global_vec.size()
+            );
+        if (op.obs_dof() == DofSpace::EDGE)
+            obs_faces = IndexGenerator::faces_from_edges(mesh_, rows_global);
+        else if (op.obs_dof() == DofSpace::FACE)
+            obs_faces = rows_global;
+    }
 
-            mat.set_value(row, col, temp->value(row, col));
+    EigRowVec<Index> src_faces;
+    std::unordered_map<Index, Index> local_col_map;
+
+    if (all_cols)
+    {
+        if (op.src_dof() == DofSpace::EDGE)
+            src_faces = col_faces_from_edges_;
+        else if (op.src_dof() == DofSpace::FACE)
+            src_faces = index_set_.cols();
+    }
+    else
+    {
+        std::vector<Index> cols_global_vec;
+        cols_global_vec.reserve(local_cols.size());
+        for (Index ii = 0; ii < local_cols.size(); ++ii)
+        {
+            if (local_cols[ii] >= index_set_.num_cols())
+                continue;
+            Index global_idx = index_set_.cols()[local_cols[ii]];
+            cols_global_vec.push_back(global_idx);
+            local_col_map.insert({ global_idx, ii });
+        }
+        EigRowVec<Index> cols_global = Eigen::Map<const EigRowVec<Index>> (
+            cols_global_vec.data(), cols_global_vec.size()
+            );
+        if (op.src_dof() == DofSpace::EDGE)
+            src_faces = IndexGenerator::faces_from_edges(mesh_, cols_global);
+        else if (op.src_dof() == DofSpace::FACE)
+            src_faces = cols_global;
+    }
+
+    assemble_from_faces(
+        mat, op, k,
+        obs_faces, src_faces,
+        all_rows ? row_map_ : local_row_map,
+        all_cols ? col_map_ : local_col_map,
+        local_rows.size(), local_cols.size()
+        );
+
+    return;
+
+};
+
+
+void BlockAssembler::assemble_from_faces(
+    MatrixBase<Complex>& mat,
+    const OperatorBase& op,
+    const Complex k,
+    ConstEigRef<EigRowVec<Index>> obs_faces,
+    ConstEigRef<EigRowVec<Index>> src_faces,
+    const std::unordered_map<Index, Index>& active_row_map,
+    const std::unordered_map<Index, Index>& active_col_map,
+    const Index out_rows,
+    const Index out_cols
+    )
+{
+
+    EigMatNX<Index, 2> face_pairs = IndexGenerator::face_pairs(obs_faces, src_faces);
+
+    if (self_terms_only_)
+    {
+        Index kept = 0;
+
+        for (Index ii = 0; ii < face_pairs.cols(); ++ii)
+        {
+            bool keep = false;
+
+            if (op.obs_dof() == DofSpace::EDGE && op.src_dof() == DofSpace::EDGE)
+            {
+                for (uint8_t ee = 0; ee < 3; ++ee)
+                    for (uint8_t ff = 0; ff < 3; ++ff)
+                        if (mesh_.face_edges()(ee, face_pairs(0, ii)) ==
+                            mesh_.face_edges()(ff, face_pairs(1, ii)))
+                            keep = true;
+            }
+            else
+                keep = (face_pairs(0, ii) == face_pairs(1, ii));
+
+            if (keep)
+            {
+                face_pairs.col(kept) = face_pairs.col(ii);
+                kept += 1;
+            }
+        }
+
+        face_pairs.conservativeResize(2, kept);
+    }
+
+    mat.resize(out_rows, out_cols);
+
+    if (use_integration_cache_)
+    {
+        std::lock_guard<std::mutex> lock (integration_cache_mutex_);
+        if (integration_cache_op_ != &op || integration_cache_k_ != k)
+        {
+            integration_cache_.clear();
+            integration_cache_op_ = &op;
+            integration_cache_k_ = k;
+        }
+    }
+
+    std::mutex mat_mutex;
+
+#pragma omp parallel for
+    for (Index ii = 0; ii < face_pairs.cols(); ++ii)
+    {
+        EigMat<Complex> values;
+        bool cached = false;
+
+        std::pair<Index, Index> pair_key (face_pairs(0, ii), face_pairs(1, ii));
+
+        if (use_integration_cache_)
+        {
+            std::lock_guard<std::mutex> lock (integration_cache_mutex_);
+            auto it = integration_cache_.find(pair_key);
+            if (it != integration_cache_.end())
+            {
+                values = it->second;
+                cached = true;
+            }
+        }
+
+        if (!cached)
+        {
+            Triangle<3> obs_tri = mesh_.face_primitive(face_pairs(0, ii));
+            Triangle<3> src_tri = mesh_.face_primitive(face_pairs(1, ii));
+
+            values = op.compute(
+                k, obs_tri, src_tri
+                );
+
+            if (use_integration_cache_)
+            {
+                std::lock_guard<std::mutex> lock (integration_cache_mutex_);
+                integration_cache_.insert({ pair_key, values });
+            }
+        }
+
+        {
+            std::lock_guard<std::mutex> lock (mat_mutex);
+            fill_matrix(mat, op, face_pairs.col(ii), values, active_row_map, active_col_map);
         }
     }
 
@@ -57,97 +262,73 @@ void BlockAssembler::assemble(
 };
 
 
-void BlockAssembler::get_block(
-    EigMat<Complex>& mat,
-    const OperatorBase& op,
-    const Complex k
-    )
-{
-
-    EigMatNX<Index, 2> elem_pairs = IndexGenerator::elem_pairs(
-        mesh_, index_set_, op.obs_dof(), op.src_dof()
-        );
-
-    mat.resize(index_set_.num_rows(), index_set_.num_cols());
-    mat.setZero();
-
-#pragma omp parallel for
-    for (Index ii = 0; ii < elem_pairs.cols(); ++ii)
-    {
-        Triangle<3> obs_tri = mesh_.elem_primitive(elem_pairs(0, ii));
-        Triangle<3> src_tri = mesh_.elem_primitive(elem_pairs(1, ii));
-
-        EigMat<Complex> values = op.compute(
-            k, obs_tri, src_tri
-            );
-
-#pragma omp critical
-        fill_matrix(mat, op, elem_pairs.col(ii), values);
-    }
-
-    return;
-
-};
-
-
 void BlockAssembler::fill_matrix(
-    EigMat<Complex>& mat,
+    MatrixBase<Complex>& mat,
     const OperatorBase& op,
-    ConstEigRef<EigColVecN<Index, 2>> elem_pair,
-    ConstEigRef<EigMat<Complex>> values
+    ConstEigRef<EigColVecN<Index, 2>> face_pair,
+    ConstEigRef<EigMat<Complex>> values,
+    const std::unordered_map<Index, Index>& active_row_map,
+    const std::unordered_map<Index, Index>& active_col_map
     )
 {
 
-    if (op.obs_dof() == OperatorDof::EDGE && op.src_dof() == OperatorDof::EDGE)
+    if (values.size() == 0)
+        return;
+
+    if (op.obs_dof() == DofSpace::EDGE && op.src_dof() == DofSpace::EDGE)
     {
         for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
         {
-            Index col = mesh_.elem_edges()(src_edge, elem_pair[1]);
-            auto icol = col_map_.find(col);
-            if (icol != col_map_.end())
+            Index col = mesh_.face_edges()(src_edge, face_pair[1]);
+            auto icol = active_col_map.find(col);
+            if (icol != active_col_map.end())
                 for (uint8_t obs_edge = 0; obs_edge < 3; ++obs_edge)
                 {
-                    Index row = mesh_.elem_edges()(obs_edge, elem_pair[0]);
-                    auto irow = row_map_.find(row);
-                    if (irow != row_map_.end())
+                    Index row = mesh_.face_edges()(obs_edge, face_pair[0]);
+
+                    if (self_terms_only_ && row != col)
+                        continue;
+
+                    auto irow = active_row_map.find(row);
+                    if (irow != active_row_map.end())
 // #pragma omp critical
-                        mat(irow->second, icol->second) += values(obs_edge, src_edge);
+                        mat.add_value(irow->second, icol->second, values(obs_edge, src_edge));
                 }
         }
     }
 
-    else if (op.obs_dof() == OperatorDof::FACE && op.src_dof() == OperatorDof::EDGE)
+    else if (op.obs_dof() == DofSpace::FACE && op.src_dof() == DofSpace::EDGE)
     {
-        Index row = row_map_.at(elem_pair[0]);
+        Index row = active_row_map.at(face_pair[0]);
         for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
         {
-            Index col = mesh_.elem_edges()(src_edge, elem_pair[1]);
-            auto icol = col_map_.find(col);
-            if (icol != col_map_.end())
+            Index col = mesh_.face_edges()(src_edge, face_pair[1]);
+            auto icol = active_col_map.find(col);
+            if (icol != active_col_map.end())
 // #pragma omp critical
-                mat(row, icol->second) += values(0, src_edge);
+                mat.add_value(row, icol->second, values(0, src_edge));
         }
     }
 
-    else if (op.obs_dof() == OperatorDof::EDGE && op.src_dof() == OperatorDof::FACE)
+    else if (op.obs_dof() == DofSpace::EDGE && op.src_dof() == DofSpace::FACE)
     {
-        Index col = col_map_.at(elem_pair[1]);
+        Index col = active_col_map.at(face_pair[1]);
         for (uint8_t obs_edge = 0; obs_edge < 3; ++obs_edge)
         {
-            Index row = mesh_.elem_edges()(obs_edge, elem_pair[0]);
-            auto irow = row_map_.find(row);
-            if (irow != row_map_.end())
+            Index row = mesh_.face_edges()(obs_edge, face_pair[0]);
+            auto irow = active_row_map.find(row);
+            if (irow != active_row_map.end())
 // #pragma omp critical
-                mat(irow->second, col) += values(obs_edge, 0);
+                mat.add_value(irow->second, col, values(obs_edge, 0));
         }
     }
 
-    else if (op.obs_dof() == OperatorDof::FACE && op.src_dof() == OperatorDof::FACE)
+    else if (op.obs_dof() == DofSpace::FACE && op.src_dof() == DofSpace::FACE)
     {
-        Index row = row_map_.at(elem_pair[0]);
-        Index col = col_map_.at(elem_pair[1]);
+        Index row = active_row_map.at(face_pair[0]);
+        Index col = active_col_map.at(face_pair[1]);
 // #pragma omp critical
-        mat(row, col) = values(0, 0);
+        mat.set_value(row, col, values(0, 0));
     }
 
     return;

@@ -20,13 +20,13 @@
 #include <map>
 #include <utility>
 #include <algorithm>
+#include <numeric>
 #include <vector>
 #include <array>
 #include <set>
 #include <stdexcept>
 
 #include "types.hpp"
-#include "geometry/mesh/base.hpp"
 
 
 namespace bem
@@ -34,15 +34,30 @@ namespace bem
 
 template <uint8_t dim>
 void TriangleMesh<dim>::set_data(
-    ConstEigRef<EigMatNX<Float, dim>> verts,
-    ConstEigRef<EigMatNX<Index, 3>> elems,
-    ConstEigRef<EigRowVec<Index>> elem_tags,
+    ConstEigRef<EigMatNX<Float, dim>> vertices,
+    ConstEigRef<EigMatNX<Index, 3>> faces,
+    ConstEigRef<EigRowVec<Index>> face_tags,
     const bool decoupled_edges
     )
 {
-    base::verts_ = verts;
-    base::elems_ = elems;
-    base::elem_tags_ = elem_tags;
+    root_faces_.resize(1, 0);
+    root_edges_.resize(1, 0);
+    root_vertices_.resize(1, 0);
+
+    std::vector<Index> order (face_tags.size());
+    std::iota(order.begin(), order.end(), 0);
+    std::stable_sort(order.begin(), order.end(),
+        [&] (Index a, Index b) { return face_tags[a] < face_tags[b]; });
+
+    vertices_ = vertices;
+    faces_.resize(3, faces.cols());
+    face_tags_.resize(1, face_tags.size());
+    for (Index new_pos = 0; new_pos < (Index) order.size(); ++new_pos)
+    {
+        faces_.col(new_pos) = faces.col(order[new_pos]);
+        face_tags_[new_pos] = face_tags[order[new_pos]];
+    }
+
     decoupled_edges_ = decoupled_edges;
     generate_edges();
     return;
@@ -50,68 +65,115 @@ void TriangleMesh<dim>::set_data(
 
 
 template <uint8_t dim>
-void TriangleMesh<dim>::partition_by_elems(
-    MeshBase<dim, 3>& partition,
-    ConstEigRef<EigRowVec<Index>> elem_inds
+TriangleMesh<dim> TriangleMesh<dim>::partition_by_faces(
+    ConstEigRef<EigRowVec<Index>> face_inds,
+    const bool reset_tags
     ) const
 {
 
-    Index num_new_verts = 0;
+    Index num_new_vertices = 0;
     std::map<Index, Index> new_vert_map;
 
-    for (Index jj = 0; jj < elem_inds.size(); ++jj)
+    for (Index jj = 0; jj < face_inds.size(); ++jj)
     {
         for (uint8_t kk = 0; kk < 3; ++kk)
         {
             bool inserted = new_vert_map.insert(
-                std::make_pair(base::elems_(kk, elem_inds[jj]), num_new_verts)
+                std::make_pair(faces_(kk, face_inds[jj]), num_new_vertices)
                 ).second;
             if (inserted)
-                num_new_verts++;
+                num_new_vertices++;
         }
     }
 
-    EigMatNX<Float, dim> new_verts = EigMatNX<Float, dim>::Zero(dim, num_new_verts);
+    EigMatNX<Float, dim> new_vertices = EigMatNX<Float, dim>::Zero(dim, num_new_vertices);
     for (auto const& x: new_vert_map)
-        new_verts.col(x.second) = base::verts_.col(x.first);
+        new_vertices.col(x.second) = vertices_.col(x.first);
 
-    EigMatNX<Index, 3> new_elems = EigMatNX<Index, 3>::Zero(3, elem_inds.size());
+    EigMatNX<Index, 3> new_faces = EigMatNX<Index, 3>::Zero(3, face_inds.size());
 
-    EigRowVec<Index> new_elem_tags = EigRowVec<Index>::Zero(1, elem_inds.size());
+    EigRowVec<Index> new_face_tags = EigRowVec<Index>::Zero(1, face_inds.size());
 
-    for (Index jj = 0; jj < elem_inds.size(); ++jj)
+    for (Index jj = 0; jj < face_inds.size(); ++jj)
     {
         for (uint8_t kk = 0; kk < 3; ++kk)
         {
-            new_elems(kk, jj) = new_vert_map[
-                base::elems_(kk, elem_inds[jj])
+            new_faces(kk, jj) = new_vert_map[
+                faces_(kk, face_inds[jj])
                 ];
         }
-        new_elem_tags[jj] = base::elem_tags_[elem_inds[jj]];
+        if (reset_tags)
+            new_face_tags[jj] = 0;
+        else
+            new_face_tags[jj] = face_tags_[face_inds[jj]];
     }
 
-    TriangleMesh<dim>& partition_cast = dynamic_cast<TriangleMesh<dim>&> (partition);
-    partition_cast.set_data(new_verts, new_elems, new_elem_tags, decoupled_edges_);
+    EigRowVec<Index> kept_edges = compute_face_edges(face_inds);
 
-    return;
+    std::map<Index, Index> edge_reverse_map;
+    for (Index ee = 0; ee < kept_edges.size(); ++ee)
+        edge_reverse_map[kept_edges[ee]] = ee;
+
+    EigMatNX<Index, 2> new_edges (2, kept_edges.size());
+    for (Index ee = 0; ee < kept_edges.size(); ++ee)
+    {
+        new_edges(0, ee) = new_vert_map[edges_(0, kept_edges[ee])];
+        new_edges(1, ee) = new_vert_map[edges_(1, kept_edges[ee])];
+    }
+
+    EigMatNX<Index, 3> new_face_edges(3, face_inds.size());
+    EigMatNX<Float, 3> new_face_edge_polarities(3, face_inds.size());
+
+    for (Index jj = 0; jj < face_inds.size(); ++jj)
+    {
+        for (uint8_t kk = 0; kk < 3; ++kk)
+        {
+            new_face_edges(kk, jj) = edge_reverse_map[face_edges_(kk, face_inds[jj])];
+            new_face_edge_polarities(kk, jj) = face_edge_polarities_(kk, face_inds[jj]);
+        }
+    }
+
+    TriangleMesh<dim> partition;
+    partition.vertices_ = new_vertices;
+    partition.faces_ = new_faces;
+    partition.face_tags_ = new_face_tags;
+    partition.decoupled_edges_ = decoupled_edges_;
+    partition.edges_ = new_edges;
+    partition.face_edges_ = new_face_edges;
+    partition.face_edge_polarities_ = new_face_edge_polarities;
+    partition.edge_faces_ = partition.compute_edge_faces();
+    partition.classify_edges_and_faces();
+
+    partition.root_faces_.resize(1, face_inds.size());
+    for (Index jj = 0; jj < face_inds.size(); ++jj)
+        partition.root_faces_[jj] = root_face(face_inds[jj]);
+
+    partition.root_edges_.resize(1, kept_edges.size());
+    for (Index ee = 0; ee < kept_edges.size(); ++ee)
+        partition.root_edges_[ee] = root_edge(kept_edges[ee]);
+
+    partition.root_vertices_.resize(1, num_new_vertices);
+    for (auto const& x: new_vert_map)
+        partition.root_vertices_[x.second] = root_vertex(x.first);
+
+    return partition;
 
 };
 
 
 template <uint8_t dim>
-void TriangleMesh<dim>::partition_by_bbox(
-    MeshBase<dim, 3>& partition,
+TriangleMesh<dim> TriangleMesh<dim>::partition_by_bbox(
     ConstEigRef<EigMatMN<Float, dim, 2>> bbox,
     const bool strict
     ) const
 {
 
-    std::vector<Index> elems_in_bbox;
+    std::vector<Index> faces_in_bbox;
 
-    for (Index ii = 0; ii < base::elems_.cols(); ++ii)
+    for (Index ii = 0; ii < faces_.cols(); ++ii)
     {
-        EigMatMN<Float, dim, 3> coords = base::verts_(
-            Eigen::placeholders::all, base::elems_.col(ii)
+        EigMatMN<Float, dim, 3> coords = vertices_(
+            Eigen::placeholders::all, faces_.col(ii)
             );
         EigColVecN<Float, dim> centroid = coords.rowwise().mean();
         bool centroid_in_bbox =
@@ -121,7 +183,7 @@ void TriangleMesh<dim>::partition_by_bbox(
         if (centroid_in_bbox)
         {
             if (!strict)
-                elems_in_bbox.push_back(ii);
+                faces_in_bbox.push_back(ii);
             else
             {
                 bool fully_in_bbox =
@@ -131,17 +193,14 @@ void TriangleMesh<dim>::partition_by_bbox(
                     ).all();
 
                 if (fully_in_bbox)
-                    elems_in_bbox.push_back(ii);
+                    faces_in_bbox.push_back(ii);
             }
         }
     }
 
-    partition_by_elems(
-        partition,
-        Eigen::Map<EigRowVec<Index>> (elems_in_bbox.data(), elems_in_bbox.size())
+    return partition_by_faces(
+        Eigen::Map<EigRowVec<Index>> (faces_in_bbox.data(), faces_in_bbox.size())
         );
-
-    return;
 
 };
 
@@ -150,78 +209,123 @@ template <uint8_t dim>
 void TriangleMesh<dim>::generate_edges()
 {
 
-    Index num_edges = 0;
-    std::vector<std::pair<Index, uint8_t>> edge_counts;
+    Index num_edges_found = 0;
     std::vector<std::pair<std::pair<Index, Index>, Index>> edges;
 
-    elem_edges_.resize(3, base::elems_.cols());
-    elem_edge_polarities_.resize(3, base::elems_.cols());
+    face_edges_.resize(3, faces_.cols());
+    face_edge_polarities_.resize(3, faces_.cols());
 
-    std::set<Index> unique_tags { base::elem_tags_.begin(), base::elem_tags_.end() };
+    std::set<Index> unique_tags { face_tags_.begin(), face_tags_.end() };
 
     for (Index tag: unique_tags)
     {
         std::map<std::pair<Index, Index>, Index> unique_edges;
 
-        for (Index elem = 0; elem < base::elems_.cols(); ++elem)
+        for (Index face = 0; face < faces_.cols(); ++face)
         {
-            if (base::elem_tags_[elem] != tag)
+            if (face_tags_[face] != tag)
                 continue;
 
             for (uint8_t edge = 0; edge < 3; ++edge)
             {
-                std::pair<Index, Index> verts = std::make_pair(
-                    base::elems_(edge, elem),
-                    base::elems_((edge + 1) % 3, elem)
+                std::pair<Index, Index> vertices = std::make_pair(
+                    faces_(edge, face),
+                    faces_((edge + 1) % 3, face)
                     );
 
-                if (!decoupled_edges_ && verts.first > verts.second)
-                    std::swap(verts.first, verts.second);
+                if (!decoupled_edges_ && vertices.first > vertices.second)
+                    std::swap(vertices.first, vertices.second);
 
-                bool inserted = unique_edges.insert(std::make_pair(verts, num_edges)).second;
+                bool inserted = unique_edges.insert(std::make_pair(vertices, num_edges_found)).second;
 
                 if (inserted)
                 {
-                    elem_edges_(edge, elem) = num_edges;
-                    elem_edge_polarities_(edge, elem) = 1;
-                    edge_counts.push_back(std::make_pair(num_edges, 1));
-                    edges.push_back(std::make_pair(verts, num_edges));
-                    num_edges++;
+                    face_edges_(edge, face) = num_edges_found;
+                    face_edge_polarities_(edge, face) = 1;
+                    edges.push_back(std::make_pair(vertices, num_edges_found));
+                    num_edges_found++;
                 }
                 else
                 {
-                    elem_edges_(edge, elem) = unique_edges[verts];
-                    elem_edge_polarities_(edge, elem) = -1;
-                    edge_counts[unique_edges[verts]].second++;
+                    face_edges_(edge, face) = unique_edges[vertices];
+                    face_edge_polarities_(edge, face) = -1;
                 }
             }
         }
     }
 
-    edges_.resize(2, num_edges);
+    edges_.resize(2, num_edges_found);
     for (const auto& edge: edges)
         edges_.col(edge.second) = EigColVecN<Index, 2> ({ edge.first.first, edge.first.second });
 
-    edge_elems_.resize(2, num_edges);
-    for (Index elem = 0; elem < elem_edges_.cols(); ++elem)
+    edge_faces_ = compute_edge_faces();
+    classify_edges_and_faces();
+
+    return;
+
+};
+
+
+template <uint8_t dim>
+EigRowVec<Index> TriangleMesh<dim>::compute_face_edges(
+    ConstEigRef<EigRowVec<Index>> face_inds
+    ) const
+{
+
+    std::set<Index> unique_edges;
+    for (Index ii = 0; ii < face_inds.size(); ++ii)
+        for (uint8_t jj = 0; jj < 3; ++jj)
+            unique_edges.insert(face_edges_(jj, face_inds[ii]));
+
+    EigRowVec<Index> result (1, unique_edges.size());
+    Index kk = 0;
+    for (const Index edge: unique_edges)
+        result[kk++] = edge;
+
+    return result;
+
+};
+
+
+template <uint8_t dim>
+EigMatNX<Index, 2> TriangleMesh<dim>::compute_edge_faces() const
+{
+
+    EigMatNX<Index, 2> result = EigMatNX<Index, 2>::Constant(2, num_edges(), Index(-1));
+    for (Index face = 0; face < faces_.cols(); ++face)
     {
         for (uint8_t edge = 0; edge < 3; ++edge)
         {
-            if (elem_edge_polarities_(edge, elem) > 0)
-                edge_elems_(0, elem_edges_(edge, elem)) = elem;
+            const Index e = face_edges_(edge, face);
+            if (face_edge_polarities_(edge, face) > 0)
+                result(0, e) = face;
             else
-                edge_elems_(1, elem_edges_(edge, elem)) = elem;
+                result(1, e) = face;
         }
     }
 
+    return result;
+
+};
+
+
+template <uint8_t dim>
+void TriangleMesh<dim>::classify_edges_and_faces()
+{
+
+    EigRowVec<Index> edge_counts = EigRowVec<Index>::Zero(1, num_edges());
+    for (Index face = 0; face < faces_.cols(); ++face)
+        for (uint8_t edge = 0; edge < 3; ++edge)
+            edge_counts[face_edges_(edge, face)]++;
+
     std::vector<Index> boundary_edges, junction_edges, internal_edges;
-    for (Index edge = 0; edge < num_edges; ++edge)
+    for (Index edge = 0; edge < edge_counts.size(); ++edge)
     {
-        if (edge_counts[edge].second == 1 && !decoupled_edges_)
+        if (edge_counts[edge] == 1 && !decoupled_edges_)
             boundary_edges.push_back(edge);
-        else if (edge_counts[edge].second > 2 && !decoupled_edges_)
+        else if (edge_counts[edge] > 2 && !decoupled_edges_)
             junction_edges.push_back(edge);
-        if (edge_counts[edge].second > 1 && !decoupled_edges_)
+        if (edge_counts[edge] > 1 && !decoupled_edges_)
             internal_edges.push_back(edge);
     }
 
@@ -235,21 +339,22 @@ void TriangleMesh<dim>::generate_edges()
         internal_edges.data(), internal_edges.size()
         );
 
-    std::vector<Index> boundary_elems, junction_elems, internal_elems;
-    for (Index elem = 0; elem < base::elems_.cols(); ++elem)
+    std::vector<Index> boundary_faces, junction_faces, internal_faces;
+    for (Index face = 0; face < faces_.cols(); ++face)
     {
         for (uint8_t edge = 0; edge < 3; ++edge)
         {
-            if (edge_counts[elem_edges_(edge, elem)].second == 1 && !decoupled_edges_)
-                boundary_elems.push_back(elem);
-            else if (edge_counts[elem_edges_(edge, elem)].second > 2 && !decoupled_edges_)
-                junction_elems.push_back(elem);
-            if (edge_counts[elem_edges_(edge, elem)].second > 1 && !decoupled_edges_)
-                internal_elems.push_back(elem);
+            const Index e = face_edges_(edge, face);
+            if (edge_counts[e] == 1 && !decoupled_edges_)
+                boundary_faces.push_back(face);
+            else if (edge_counts[e] > 2 && !decoupled_edges_)
+                junction_faces.push_back(face);
+            if (edge_counts[e] > 1 && !decoupled_edges_)
+                internal_faces.push_back(face);
         }
     }
 
-    auto remove_duplicates = [] (std::vector<Index> &v)
+    auto remove_duplicates = [] (std::vector<Index>& v)
     {
         std::sort(v.begin(), v.end());
         auto last = std::unique(v.begin(), v.end());
@@ -257,18 +362,18 @@ void TriangleMesh<dim>::generate_edges()
         return;
     };
 
-    remove_duplicates(boundary_elems);
-    remove_duplicates(junction_elems);
-    remove_duplicates(internal_elems);
+    remove_duplicates(boundary_faces);
+    remove_duplicates(junction_faces);
+    remove_duplicates(internal_faces);
 
-    boundary_elems_ = Eigen::Map<EigRowVec<Index>, Eigen::Unaligned> (
-        boundary_elems.data(), boundary_elems.size()
+    boundary_faces_ = Eigen::Map<EigRowVec<Index>, Eigen::Unaligned> (
+        boundary_faces.data(), boundary_faces.size()
         );
-    junction_elems_ = Eigen::Map<EigRowVec<Index>, Eigen::Unaligned> (
-        junction_elems.data(), junction_elems.size()
+    junction_faces_ = Eigen::Map<EigRowVec<Index>, Eigen::Unaligned> (
+        junction_faces.data(), junction_faces.size()
         );
-    internal_elems_ = Eigen::Map<EigRowVec<Index>, Eigen::Unaligned> (
-        internal_elems.data(), internal_elems.size()
+    internal_faces_ = Eigen::Map<EigRowVec<Index>, Eigen::Unaligned> (
+        internal_faces.data(), internal_faces.size()
         );
 
     return;

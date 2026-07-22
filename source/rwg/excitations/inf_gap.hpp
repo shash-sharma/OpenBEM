@@ -81,7 +81,7 @@ public:
             amp_(amp),
             tol_(tol)
     {
-        if (segments_.size() != amp_.cols())
+        if ((Index) segments_.size() != amp_.cols())
         {
             throw std::invalid_argument(
                 "InfinitesimalGap: `segments` and `amp` must have the same number of columns."
@@ -95,7 +95,7 @@ public:
     * @brief Returns the degrees of freedom for the testing function space.
     * @return Observation degrees of freedom.
     */
-    OperatorDof obs_dof() const override { return OperatorDof::EDGE; };
+    DofSpace obs_dof() const override { return DofSpace::EDGE; };
 
 
     /**

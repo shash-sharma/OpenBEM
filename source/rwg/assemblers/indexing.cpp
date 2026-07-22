@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <set>
+#include <algorithm>
 #include <stdexcept>
 
 #include "types.hpp"
@@ -28,38 +29,38 @@
 namespace bem
 {
 
-EigMatNX<Index, 2> IndexGenerator::elem_pairs(
+EigMatNX<Index, 2> IndexGenerator::face_pairs(
     const TriangleMesh<3>& obs_mesh,
     const TriangleMesh<3>& src_mesh
     )
 {
-    Index num_pairs = obs_mesh.num_elems() * src_mesh.num_elems();
+    Index num_pairs = obs_mesh.num_faces() * src_mesh.num_faces();
     EigMatNX<Index, 2> pairs = EigMatNX<Index, 2>::Zero(2, num_pairs);
 
     for (Index ii = 0; ii < num_pairs; ++ii)
     {
-        pairs(0, ii) = ii / src_mesh.num_elems();
-        pairs(1, ii) = ii % src_mesh.num_elems();
+        pairs(0, ii) = ii / src_mesh.num_faces();
+        pairs(1, ii) = ii % src_mesh.num_faces();
     }
 
     return pairs;
 };
 
 
-EigMatNX<Index, 2> IndexGenerator::elem_pairs(
-    ConstEigRef<EigRowVec<Index>> obs_elems,
-    ConstEigRef<EigRowVec<Index>> src_elems
+EigMatNX<Index, 2> IndexGenerator::face_pairs(
+    ConstEigRef<EigRowVec<Index>> obs_faces,
+    ConstEigRef<EigRowVec<Index>> src_faces
     )
 {
-    Index num_pairs = obs_elems.size() * src_elems.size();
+    Index num_pairs = obs_faces.size() * src_faces.size();
     EigMatNX<Index, 2> pairs = EigMatNX<Index, 2>::Zero(2, num_pairs);
 
-    for (Index ii = 0; ii < obs_elems.size(); ++ii)
+    for (Index ii = 0; ii < obs_faces.size(); ++ii)
     {
-        for (Index jj = 0; jj < src_elems.size(); ++jj)
+        for (Index jj = 0; jj < src_faces.size(); ++jj)
         {
-            pairs(0, jj + ii * src_elems.size()) = obs_elems[ii];
-            pairs(1, jj + ii * src_elems.size()) = src_elems[jj];
+            pairs(0, jj + ii * src_faces.size()) = obs_faces[ii];
+            pairs(1, jj + ii * src_faces.size()) = src_faces[jj];
         }
     }
 
@@ -67,42 +68,42 @@ EigMatNX<Index, 2> IndexGenerator::elem_pairs(
 };
 
 
-EigMatNX<Index, 2> IndexGenerator::elem_pairs(
+EigMatNX<Index, 2> IndexGenerator::face_pairs(
     const TriangleMesh<3>& mesh,
     const IndexSet& index_set,
-    const OperatorDof row_dof,
-    const OperatorDof col_dof
+    const DofSpace row_dof,
+    const DofSpace col_dof
     )
 {
 
-    if (row_dof == OperatorDof::EDGE && col_dof == OperatorDof::EDGE)
+    if (row_dof == DofSpace::EDGE && col_dof == DofSpace::EDGE)
     {
-        EigRowVec<Index> obs_elems = elems_from_edges(mesh, index_set.rows());
-        EigRowVec<Index> src_elems = elems_from_edges(mesh, index_set.cols());
-        return elem_pairs(obs_elems, src_elems);
+        EigRowVec<Index> obs_faces = faces_from_edges(mesh, index_set.rows());
+        EigRowVec<Index> src_faces = faces_from_edges(mesh, index_set.cols());
+        return face_pairs(obs_faces, src_faces);
     }
 
-    else if (row_dof == OperatorDof::FACE && col_dof == OperatorDof::EDGE)
+    else if (row_dof == DofSpace::FACE && col_dof == DofSpace::EDGE)
     {
-        EigRowVec<Index> src_elems = elems_from_edges(mesh, index_set.cols());
-        return elem_pairs(index_set.rows(), src_elems);
+        EigRowVec<Index> src_faces = faces_from_edges(mesh, index_set.cols());
+        return face_pairs(index_set.rows(), src_faces);
     }
 
-    else if (row_dof == OperatorDof::EDGE && col_dof == OperatorDof::FACE)
+    else if (row_dof == DofSpace::EDGE && col_dof == DofSpace::FACE)
     {
-        EigRowVec<Index> obs_elems = elems_from_edges(mesh, index_set.rows());
-        return elem_pairs(obs_elems, index_set.cols());
+        EigRowVec<Index> obs_faces = faces_from_edges(mesh, index_set.rows());
+        return face_pairs(obs_faces, index_set.cols());
     }
 
-    else if (row_dof == OperatorDof::FACE && col_dof == OperatorDof::FACE)
+    else if (row_dof == DofSpace::FACE && col_dof == DofSpace::FACE)
     {
-        return elem_pairs(index_set.rows(), index_set.cols());
+        return face_pairs(index_set.rows(), index_set.cols());
     }
 
     else
     {
         throw std::invalid_argument(
-            "IndexGenerator::elem_pairs(): `index_set` has invalid row or column dofs."
+            "IndexGenerator::face_pairs(): `index_set` has invalid row or column dofs."
             );
     }
 
@@ -131,75 +132,26 @@ EigMatNX<Index, 2> IndexGenerator::unique_pairs(
 };
 
 
-EigRowVec<Index> IndexGenerator::elems_from_edges(
+EigRowVec<Index> IndexGenerator::faces_from_edges(
     const TriangleMesh<3>& mesh,
     ConstEigRef<EigRowVec<Index>> edges
     )
 {
-    std::set<Index> unique_elems;
+    std::vector<Index> unique_faces;
+    unique_faces.reserve(edges.size() * 2);
 
     for (Index ii = 0; ii < edges.size(); ++ii)
         for (uint8_t iip = 0; iip < 2; ++iip)
-            unique_elems.insert(mesh.edge_elems()(iip, edges[ii]));
+        {
+            const Index face = mesh.edge_faces()(iip, edges[ii]);
+            if (face != -1)
+                unique_faces.push_back(face);
+        }
 
-    EigRowVec<Index> elems (1, unique_elems.size());
-    for (auto it = unique_elems.begin(); it != unique_elems.end(); ++it)
-    {
-        Index idx = std::distance(unique_elems.begin(), it);
-        elems[idx] = *it;
-    }
+    std::sort(unique_faces.begin(), unique_faces.end());
+    unique_faces.erase(std::unique(unique_faces.begin(), unique_faces.end()), unique_faces.end());
 
-    return elems;
+    return Eigen::Map<const EigRowVec<Index>> (unique_faces.data(), unique_faces.size());
 }
 
-
-
-
-
-
-
-
-EigMatNX<Index, 2> IndexGenerator::elem_pairs_from_edges(
-    const TriangleMesh<3>& mesh,
-    ConstEigRef<EigRowVec<Index>> obs_edges,
-    ConstEigRef<EigRowVec<Index>> src_edges
-    )
-{
-    EigRowVec<Index> obs_elems = elems_from_edges(mesh, obs_edges);
-    EigRowVec<Index> src_elems = elems_from_edges(mesh, src_edges);
-    return elem_pairs(obs_elems, src_elems);
-};
-
-
-EigMatNX<Index, 2> IndexGenerator::elem_pairs_from_edges(
-    const TriangleMesh<3>& mesh,
-    ConstEigRef<EigRowVec<Index>> edges
-    )
-{
-    return elem_pairs_from_edges(mesh, edges, edges);
-};
-
-
-EigMatNX<Index, 2> IndexGenerator::elem_pairs_from_elems_edges(
-    const TriangleMesh<3>& mesh,
-    ConstEigRef<EigRowVec<Index>> obs_elems,
-    ConstEigRef<EigRowVec<Index>> src_edges
-    )
-{
-    EigRowVec<Index> src_elems = elems_from_edges(mesh, src_edges);
-    return elem_pairs(obs_elems, src_elems);
-};
-
-
-EigMatNX<Index, 2> IndexGenerator::elem_pairs_from_edges_elems(
-    const TriangleMesh<3>& mesh,
-    ConstEigRef<EigRowVec<Index>> obs_edges,
-    ConstEigRef<EigRowVec<Index>> src_elems
-    )
-{
-    EigRowVec<Index> obs_elems = elems_from_edges(mesh, obs_edges);
-    return elem_pairs(obs_elems, src_elems);
-};
-
 }
-
