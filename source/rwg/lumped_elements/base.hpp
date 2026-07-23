@@ -267,20 +267,6 @@ public:
 
 
     /**
-    * @brief Returns the matrix associated with port load admittances.
-    * @return Load matrix.
-    */
-    virtual MatrixType admittance_mapping_matrix() const
-    {
-        MatrixType mat (num_ports(), num_ports());
-        for (Index ii = 0; ii < num_ports(); ++ii)
-            mat.set_value(ii, ii, one / impedances()[ii]);
-        mat.assemble();
-        return mat;
-    };
-
-
-    /**
     * @brief Returns the matrix that maps terminal triangles to their parent mesh triangles.
     * @return Mapping matrix.
     */
