@@ -196,36 +196,6 @@ public:
 
 
     /**
-    * @brief Computes \f$ \mathbf{M} = a\mathbf{X}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$ is this matrix,
-    * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
-    * @param[in] x - First matrix to multiply, must have the same number of columns as `y` has rows.
-    * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
-    * @param[in] a - Scalar with which to scale the product of `x` and `y`.
-    */
-    virtual void set_matmul(
-        const MatrixBase<T>& x,
-        const MatrixBase<T>& y,
-        const T& a = T(1)
-        )
-    { throw std::runtime_error("MatrixBase::set_matmul(): Not implemented."); };
-
-
-    /**
-    * @brief Computes \f$ \mathbf{M} = \mathbf{M} + a\mathbf{X}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$
-    * is this matrix, \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
-    * @param[in] x - First matrix to multiply, must have the same number of columns as `y` has rows.
-    * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
-    * @param[in] a - Scalar with which to scale the product of `x` and `y`.
-    */
-    virtual void add_matmul(
-        const MatrixBase<T>& x,
-        const MatrixBase<T>& y,
-        const T& a = T(1)
-        )
-    { throw std::runtime_error("MatrixBase::add_matmul(): Not implemented."); };
-
-
-    /**
     * @brief Computes \f$ \mathbf{X} = a\mathbf{M}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$ is this matrix,
     * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
     * @param[out] x - Multiplication result.
@@ -369,24 +339,6 @@ public:
         Index b_cols
         ) const
     { throw std::runtime_error("MatrixBase::get_block(): Not implemented."); };
-
-
-    /**
-    * @brief Copies a block of values from this matrix to the corresponding block of another.
-    * @param[out] x - Matrix to store the retrieved values in its corresponding block.
-    * @param[in] row_start - Starting row index for the block.
-    * @param[in] col_start - Starting column index for the block.
-    * @param[in] b_rows - Number of rows in the block to retrieve.
-    * @param[in] b_cols - Number of columns in the block to retrieve.
-    */
-    virtual void copy_block(
-        MatrixBase<T>& x,
-        Index row_start,
-        Index col_start,
-        Index b_rows,
-        Index b_cols
-        ) const
-    { throw std::runtime_error("MatrixBase::copy_block(): Not implemented."); };
 
 
     /**

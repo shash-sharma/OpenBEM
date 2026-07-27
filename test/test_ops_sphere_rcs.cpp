@@ -121,7 +121,7 @@ void test_efie_pec()
 
 
     EigenMatrix<Complex> Escat;
-    Escat.set_matmul(T_proj, Jsurf);
+    T_proj.matmul(Escat, Jsurf);
 
     EigenMatrix<Float> Escatmag;
     Escatmag.raw_matrix() = Escat.raw_matrix().reshaped(3, 100).colwise().norm();
@@ -232,7 +232,7 @@ void test_nmfie_pec()
 
 
     EigenMatrix<Complex> Escat;
-    Escat.set_matmul(T_proj, Jsurf);
+    T_proj.matmul(Escat, Jsurf);
 
     EigenMatrix<Float> Escatmag;
     Escatmag.raw_matrix() = Escat.raw_matrix().reshaped(3, 100).colwise().norm();

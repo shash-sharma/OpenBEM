@@ -275,14 +275,14 @@ int main(int argc, char** argv)
     // for the manually-constructed CFIE case.
 
     MatrixType e_cfie;
-    e_cfie.set_matmul(Lproj, x);
+    Lproj.matmul(e_cfie, x);
 
     // We'll also do the same using the built-in `Tefie` class, as in Example 1, just for
     // comparison.
 
     MatrixType tefie_proj = tefie.j_projector(f, structure.background_material(), projection_points);
     MatrixType e_tefie;
-    e_tefie.set_matmul(tefie_proj, x_tefie);
+    tefie_proj.matmul(e_tefie, x_tefie);
 
     // As in Example 1, the components of the projected fields are stacked consecutively, so we
     // should reshape the projected fields into a more convenient shape.

@@ -294,7 +294,7 @@ public:
         DtT.set_transpose(terminal_mapping_matrix());
 
         MatrixType mat;
-        mat.set_matmul(voltage_mapping_matrix(), DtT);
+        voltage_mapping_matrix().matmul(mat, DtT);
 
         return mat;
     };

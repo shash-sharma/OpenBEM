@@ -546,59 +546,6 @@ public:
 
 
     /**
-    * @brief Computes \f$ \mathbf{M} = a\mathbf{X}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$ is this matrix,
-    * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
-    * @param[in] x - First matrix to multiply, must have the same number of columns as `y` has rows.
-    * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
-    * @param[in] a - Scalar with which to scale the product of `x` and `y`.
-    */
-    void set_matmul(
-        const MatrixBase<T>& x,
-        const MatrixBase<T>& y,
-        const T& a = T(1)
-        ) override
-    {
-        if (x.num_rows() * x.num_cols() * y.num_rows() * y.num_cols() == 0)
-            return;
-
-        dispatch(x, y, [&](const auto& xr, const auto& yr)
-        {
-            matrix_ = as<MatrixType> ((xr * yr * a).eval());
-        });
-
-        return;
-    };
-
-
-    /**
-    * @brief Computes \f$ \mathbf{M} = \mathbf{M} + a\mathbf{X}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$
-    * is this matrix, \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
-    * @param[in] x - First matrix to multiply, must have the same number of columns as `y` has rows.
-    * @param[in] y - Second matrix to multiply , must have the same number of rows as `x` has columns.
-    * @param[in] a - Scalar with which to scale the product of `x` and `y`.
-    */
-    void add_matmul(
-        const MatrixBase<T>& x,
-        const MatrixBase<T>& y,
-        const T& a = T(1)
-        ) override
-    {
-        if (x.num_rows() * x.num_cols() * y.num_rows() * y.num_cols() == 0)
-            return;
-
-        if (!(std::abs(a) > float_eps))
-            return;
-
-        dispatch(x, y, [&](const auto& xr, const auto& yr)
-        {
-            matrix_ += as<MatrixType> ((xr * yr * a).eval());
-        });
-
-        return;
-    };
-
-
-    /**
     * @brief Computes \f$ \mathbf{X} = a\mathbf{M}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$ is this matrix,
     * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
     * @param[out] x - Multiplication result.

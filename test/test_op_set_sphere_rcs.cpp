@@ -141,7 +141,7 @@ void test_cfie_pec()
 
 
     EigenMatrix<Complex> Escat;
-    Escat.set_matmul(T_proj, x);
+    T_proj.matmul(Escat, x);
 
     EigenMatrix<Float> Escatmag;
     Escatmag.raw_matrix() = Escat.raw_matrix().reshaped(3, 100).colwise().norm();
