@@ -206,7 +206,7 @@ public:
 
 
     /**
-    * @brief Resizes the matrix to a new number of rows and columns.
+    * @brief Resizes the matrix and sets it to zeros.
     * @param[in] rows - New number of rows.
     * @param[in] cols - New number of columns.
     */
@@ -224,6 +224,9 @@ public:
     void clear() override
     {
         resize(0, 0);
+        triplets_.clear();
+        assembled_ = false;
+        factorized_ = false;
         return;
     };
 
@@ -1043,16 +1046,18 @@ public:
     * @param[in] solver_type - Type of iterative solver to use (optional).
     * @param[in] tol - Tolerance for convergence (optional).
     * @param[in] restart - Restart iteration at which the Krylov subspace is discarded (optional).
+    * @param[in] message - Message to print to terminal after the solve (optional).
     */
     void mat_solve_iterative(
         MatrixBase<T>& x,
         const MatrixBase<T>& b,
         const EigenIterativeSolverType solver_type = EigenIterativeSolverType::EIGEN_GMRES,
         const Float tol = 1e-4,
-        const Index restart = 100
+        const Index restart = 100,
+        const std::string message = ""
         ) const
     {
-        run_iterative_by_type(raw_matrix(), x, b, solver_type, tol, restart);
+        run_iterative_by_type(raw_matrix(), x, b, solver_type, tol, restart, message);
     };
 
 
@@ -1066,6 +1071,7 @@ public:
     * @param[in] solver_type - Type of iterative solver to use (optional).
     * @param[in] tol - Tolerance for convergence (optional).
     * @param[in] restart - Restart iteration at which the Krylov subspace is discarded (optional).
+    * @param[in] message - Message to print to terminal after the solve (optional).
     */
     template <typename MatmulMatrixType>
     static void mat_solve_iterative(
@@ -1074,10 +1080,11 @@ public:
         const MatmulMatrixType& mat,
         const EigenIterativeSolverType solver_type = EigenIterativeSolverType::EIGEN_GMRES,
         const Float tol = 1e-4,
-        const Index restart = 100
+        const Index restart = 100,
+        const std::string message = ""
         )
     {
-        run_iterative_by_type(mat, x, b, solver_type, tol, restart);
+        run_iterative_by_type(mat, x, b, solver_type, tol, restart, message);
     };
 
 
@@ -1270,6 +1277,7 @@ protected:
     * @param[in] b - Right-hand side.
     * @param[in] tol - Relative residual error tolerance (optional).
     * @param[in] restart - GMRES restart iteration (optional).
+    * @param[in] message - Message to print to terminal after the solve (optional).
     */
     template <typename Solver, typename Op>
     static void run_iterative(
@@ -1277,7 +1285,8 @@ protected:
         MatrixBase<T>& x,
         const MatrixBase<T>& b,
         const Float tol = 1e-4,
-        const Index restart = 100
+        const Index restart = 100,
+        const std::string message = ""
         )
     {
 
@@ -1293,17 +1302,27 @@ protected:
 
         dispatch(x, b, [&](auto& xr, const auto& br)
         {
-            DenseMatrixType rhs = as<DenseMatrixType>(br);
+
+            if (br.squaredNorm() < float_eps)
+            {
+                xr.resize(solver.rows(), br.cols());
+                xr.setZero();
+                return;
+            }
+
+            DenseMatrixType rhs = as<DenseMatrixType> (br);
             DenseMatrixType sol = solver.solve(rhs);
             xr = as<std::decay_t<decltype(xr)>> (sol);
+
+            std::cout << message
+                    << "Iterations: " << solver.iterations()
+                    << " | tolerance: " << solver.tolerance()
+                    << " | residual: " << solver.error() << std::endl;
+
+            if (solver.info() != Eigen::Success)
+                std::cout << "EigenMatrix::mat_solve_iterative(): [Warning] Iterative solve failed." << std::endl;
+
         });
-
-        std::cout << "Iterations: " << solver.iterations()
-                  << " | tolerance: " << solver.tolerance()
-                  << " | residual: " << solver.error() << std::endl;
-
-        if (solver.info() != Eigen::Success)
-            std::cout << "EigenMatrix::mat_solve_iterative(): [Warning] Iterative solve failed." << std::endl;
 
         return;
 
@@ -1319,6 +1338,7 @@ protected:
     * @param[in] solver_type - Iterative solver type to use.
     * @param[in] tol - Relative residual error tolerance (optional).
     * @param[in] restart - GMRES restart iteration (optional).
+    * @param[in] message - Message to print to terminal after the solve (optional).
     */
     template <typename Op>
     static void run_iterative_by_type(
@@ -1327,13 +1347,14 @@ protected:
         const MatrixBase<T>& b,
         const EigenIterativeSolverType solver_type,
         const Float tol = 1e-4,
-        const Index restart = 100
+        const Index restart = 100,
+        const std::string message = ""
         )
     {
         if (solver_type == EigenIterativeSolverType::EIGEN_GMRES)
-            run_iterative<Eigen::GMRES<Op, Eigen::IdentityPreconditioner>> (op, x, b, tol, restart);
+            run_iterative<Eigen::GMRES<Op, Eigen::IdentityPreconditioner>> (op, x, b, tol, restart, message);
         else
-            run_iterative<Eigen::BiCGSTAB<Op, Eigen::IdentityPreconditioner>> (op, x, b, tol, restart);
+            run_iterative<Eigen::BiCGSTAB<Op, Eigen::IdentityPreconditioner>> (op, x, b, tol, restart, message);
     };
 
 
