@@ -1,5 +1,20 @@
 # Changes
 
+## [Unreleased]
+
+### Added
+
+- Ability to compute and cache a component sub-mesh inside a `Component` object.
+
+### Changed
+
+- Refactored `EigenMatrix` to replace variants with a dispatch pattern that improves sparse / dense iteroperability.
+
+### Fixed
+
+- Bug in `EigenMatrix` where GMRES was used even if BiCGStab was requested.
+
+
 ## [1.1.0] - July 11, 2026
 
 ### Added
@@ -26,6 +41,7 @@
 
 - AEFIE's divergence matrix orientation fixed.
 
+
 ## [1.0.2] - April 05, 2025
 
 ### Added
@@ -41,6 +57,7 @@
 
 - Fixed compiler warnings.
 - Typos fixed in docs.
+
 
 ## [1.0.0] - March 30, 2026
 

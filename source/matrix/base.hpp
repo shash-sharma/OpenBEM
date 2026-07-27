@@ -12,7 +12,7 @@
 
 /**
 * @file
-* Base class for for matrix algebra containers.
+* Base class for matrix algebra containers.
 */
 
 #ifndef MATRIX_BASE_HPP
@@ -39,7 +39,7 @@ namespace bem
 */
 
 /**
-* @brief Base class for for matrix algebra containers.
+* @brief Base class for matrix algebra containers.
 * @tparam T - Data type to be stored in the matrix (e.g., float, double, std::complex).
 */
 template <typename T>
@@ -282,6 +282,54 @@ public:
         const MatrixBase<T>& x,
         Index row_start,
         Index col_start,
+        const T& a = T(1)
+        )
+    { throw std::runtime_error("MatrixBase::add_block(): Not implemented."); };
+
+
+    /**
+    * @brief Sets a block of this matrix to a block of a given matrix, starting at a given position.
+    * @param[in] x - Matrix to insert.
+    * @param[in] src_row_start - Starting row index for the source block.
+    * @param[in] src_col_start - Starting column index for the source block.
+    * @param[in] dst_row_start - Starting row index for the destination block.
+    * @param[in] dst_col_start - Starting column index for the destination block.
+    * @param[in] b_rows - Number of rows to retrieve.
+    * @param[in] b_cols - Number of columns to retrieve.
+    * @param[in] a - Scalar to multiply the values of `x` before inserting (optional).
+    */
+    virtual void set_block(
+        const MatrixBase<T>& x,
+        Index src_row_start,
+        Index src_col_start,
+        Index dst_row_start,
+        Index dst_col_start,
+        Index b_rows,
+        Index b_cols,
+        const T& a = T(1)
+        )
+    { throw std::runtime_error("MatrixBase::set_block(): Not implemented."); };
+
+
+    /**
+    * @brief Adds a block to this matrix from a block of a given matrix, starting at a given position.
+    * @param[in] x - Matrix whose block should be added to a block of this matrix.
+    * @param[in] src_row_start - Starting row index for the source block.
+    * @param[in] src_col_start - Starting column index for the source block.
+    * @param[in] dst_row_start - Starting row index for the destination block.
+    * @param[in] dst_col_start - Starting column index for the destination block.
+    * @param[in] b_rows - Number of rows to retrieve.
+    * @param[in] b_cols - Number of columns to retrieve.
+    * @param[in] a - Scalar to multiply the values of `x` before inserting (optional).
+    */
+    virtual void add_block(
+        const MatrixBase<T>& x,
+        Index src_row_start,
+        Index src_col_start,
+        Index dst_row_start,
+        Index dst_col_start,
+        Index b_rows,
+        Index b_cols,
         const T& a = T(1)
         )
     { throw std::runtime_error("MatrixBase::add_block(): Not implemented."); };

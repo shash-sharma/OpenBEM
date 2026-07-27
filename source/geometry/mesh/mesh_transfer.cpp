@@ -231,14 +231,14 @@ void MeshTransfer::read_gmsh_v2(
     for (const auto& [key, value]: surface_elems)
     {
         MeshView view (structure.mesh(), value, "surface_id_" + std::to_string(key));
-        Component metacomp (view, PerfectDielectricMaterial(1, 1), "surface_id_" + std::to_string(key));
+        Component metacomp (view, PerfectDielectricMaterial(1, 1), "surface_id_" + std::to_string(key), true);
         structure.add_metacomponent(metacomp);
     }
     for (const auto& [key, value]: physical_elems)
     {
         std::string name = physical_names[key] + "_physical_id_" + std::to_string(key);
         MeshView view (structure.mesh(), value, name);
-        Component comp (view, PerfectDielectricMaterial(1, 1), name);
+        Component comp (view, PerfectDielectricMaterial(1, 1), name, true);
         structure.add_component(comp);
     }
 

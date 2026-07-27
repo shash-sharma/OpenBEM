@@ -48,31 +48,38 @@ public:
     * @param[in] mesh_view - The mesh view associated with the component.
     * @param[in] material - Material associated with the component.
     * @param[in] name - Name of the component (optional).
+    * @param[in] cache_mesh - Whether to cache the mesh data for faster access (optional).
     */
     template <typename MaterialType>
     Component(
         const MeshView<MeshType>& mesh_view,
         const MaterialType& material,
-        const std::string name = "component"
+        const std::string name = "component",
+        const bool cache_mesh = false
         ):
             mesh_view_(mesh_view),
             material_(std::make_shared<MaterialType> (material)),
-            name_(name) {};
+            name_(name),
+            cache_mesh_(cache_mesh)
+        {
+            if (cache_mesh_)
+                mesh_ = mesh_view_.mesh();
+            return;
+        };
 
 
     /**
     * @brief Constructs a `Component` with a mesh view.
     * @param[in] mesh_view - The mesh view associated with the component.
     * @param[in] name - Name of the component (optional).
+    * @param[in] cache_mesh - Whether to cache the mesh data for faster access (optional).
     */
     template <typename MaterialType>
     Component(
         const MeshView<MeshType>& mesh_view,
-        const std::string name = "component"
-        ):
-            mesh_view_(mesh_view),
-            material_(std::make_shared<PerfectDielectricMaterial> (PerfectDielectricMaterial(1, 1))),
-            name_(name) {};
+        const std::string name = "component",
+        const bool cache_mesh = false
+        ): Component(mesh_view, PerfectDielectricMaterial(1, 1), name, cache_mesh) {};
 
 
     /**
@@ -96,7 +103,12 @@ public:
     * @return Mesh associated with the component.
     */
     MeshType mesh() const
-    { return mesh_view_.mesh(); };
+    {
+        if (cache_mesh_)
+            return mesh_;
+        else
+            return mesh_view_.mesh();
+    };
 
 
     /**
@@ -130,7 +142,8 @@ private:
         PerfectDielectricMaterial(1, 1)
         );
     std::string name_ = "component";
-
+    const bool cache_mesh_ = false;
+    MeshType mesh_;
 };
 
 /**

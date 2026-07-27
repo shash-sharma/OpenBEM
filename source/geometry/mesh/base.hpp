@@ -212,11 +212,12 @@ public:
     MeshView(
         const MeshType& mesh,
         const std::string name = "view"
-        ): mesh_(mesh), name_(name)
-    {
-        elem_inds_ = EigRowVec<Index>::LinSpaced(mesh_.num_elems(), 0, mesh_.num_elems() - 1);
-        return;
-    };
+        ):
+        MeshView(
+            mesh,
+            EigRowVec<Index>::LinSpaced(mesh.num_elems(), 0, mesh.num_elems() - 1),
+            name
+            ) {};
 
 
     /**
@@ -250,7 +251,8 @@ protected:
     const MeshType& mesh_;
     const EigRowVec<Index> elem_inds_;
     const std::string name_ = "view";
-
+    const bool cache_mesh_ = false;
+    
 };
 
 /**
