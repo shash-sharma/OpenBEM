@@ -477,9 +477,13 @@ public:
     * \f$ \mathbf{X} \f$ is a given matrix, and \f$ \mathbf{X}^T \f$ is its transpose.
     * @param[in] x - Matrix to transpose.
     */
-    void set_transpose(const EigenMatrix<T, type, storage_order>& x)
+    void set_transpose(const MatrixBase<T>& x) override
     {
-        matrix_ = x.raw_matrix().transpose();
+        dispatch(x, [&](auto& xr)
+        {
+            matrix_ = as<MatrixType> (xr.transpose());
+        });
+
         return;
     };
 

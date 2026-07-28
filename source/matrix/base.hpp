@@ -188,6 +188,15 @@ public:
 
 
     /**
+    * @brief Computes \f$ \mathbf{M} = \mathbf{X}^T \f$ where \f$ \mathbf{M} \f$ is this matrix,
+    * \f$ \mathbf{X} \f$ is a given matrix, and \f$ \mathbf{X}^T \f$ is its transpose.
+    * @param[in] x - Matrix to transpose.
+    */
+    virtual void set_transpose(const MatrixBase<T>& x)
+    { throw std::runtime_error("MatrixBase::set_transpose(): Not implemented."); };
+
+
+    /**
     * @brief Retrieves matrix values on the diagonal.
     * @param[out] x - Diagonal matrix.
     */
