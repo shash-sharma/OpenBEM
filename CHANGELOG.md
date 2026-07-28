@@ -9,6 +9,7 @@
 ### Changed
 
 - Refactored `EigenMatrix` to replace variants with a dispatch pattern that improves sparse / dense iteroperability.
+- Moved lumped elements into excitations and de-templated it.
 
 ### Fixed
 

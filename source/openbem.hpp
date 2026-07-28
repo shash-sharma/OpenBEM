@@ -81,6 +81,7 @@
 #include "rwg/excitations/base.hpp"
 #include "rwg/excitations/plane_wave.hpp"
 #include "rwg/excitations/inf_gap.hpp"
+#include "rwg/excitations/lumped_elements.hpp"
 
 #include "rwg/assemblers/base.hpp"
 #include "rwg/assemblers/indexing.hpp"
@@ -88,7 +89,5 @@
 #include "rwg/assemblers/block_assembler.hpp"
 #include "rwg/assemblers/excitation_assembler.hpp"
 #include "rwg/assemblers/projector_assembler.hpp"
-
-#include "rwg/lumped_elements/base.hpp"
 
 #endif

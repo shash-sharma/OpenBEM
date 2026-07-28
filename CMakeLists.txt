@@ -194,6 +194,7 @@ set(SRC_FILES
     ${SRC_DIR}/rwg/assemblers/projector_assembler.cpp
     ${SRC_DIR}/rwg/excitations/inf_gap.cpp
     ${SRC_DIR}/rwg/excitations/plane_wave.cpp
+    ${SRC_DIR}/rwg/excitations/lumped_elements.cpp
 )
 
 if (HEADER_ONLY STREQUAL "no")
