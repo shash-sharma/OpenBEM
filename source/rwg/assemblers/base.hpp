@@ -58,21 +58,6 @@ public:
         const Complex k
         ) = 0;
 
-
-    /**
-    * @brief Assembles operator matrices for given operator objects.
-    * @param[out] mats - Matrices to store the assembled operator coefficients, with columns corresponding
-    * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
-    * @param[in] k - Complex wavenumber.
-    * @param[in] obs_integrator - Integration object for the observation triangle (optional).
-    */
-    template <typename MatrixType, typename ObsIntegratorType = ObsStrategic, typename... Ops>
-    void assemble(
-        std::vector<MatrixType>& mats,
-        const Complex k,
-        const ObsIntegratorType obs_integrator = ObsStrategic()
-        ) {};
-
         
     /**
     * @brief Virtual destructor.
