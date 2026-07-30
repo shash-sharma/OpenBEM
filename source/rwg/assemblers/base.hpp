@@ -19,12 +19,14 @@
 #define BEM_RWG_ASSEMBLER_BASE_H
 
 #include <vector>
+#include <memory>
 
 #include "types.hpp"
 #include "matrix/base.hpp"
 #include "rwg/operators/base.hpp"
 #include "rwg/excitations/base.hpp"
 #include "rwg/projectors/base.hpp"
+#include "rwg/integrators/obs/base.hpp"
 #include "rwg/integrators/obs/strategic.hpp"
 
 
@@ -58,7 +60,23 @@ public:
         const Complex k
         ) = 0;
 
-        
+    
+    /**
+    * @brief Assembles a set of operator matrices for given operators.
+    * @param[out] mats - Matrix pointers to store the assembled operator coefficients, with columns
+    * corresponding to source degrees of freedom, and rows corresponding to observation degrees of freedom.
+    * @param[in] ops - Operator object pointers that compute the coefficients to assemble into `mats`.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] obs_integrator - Integration object for the observation triangle for all operators.
+    */
+    virtual void assemble(
+        std::vector<std::shared_ptr<MatrixBase<Complex>>>& mats,
+        const std::vector<std::shared_ptr<OperatorBase>>& ops,
+        const Complex k,
+        ObsIntegratorBase& obs_integrator
+        ) {};
+
+
     /**
     * @brief Virtual destructor.
     */
