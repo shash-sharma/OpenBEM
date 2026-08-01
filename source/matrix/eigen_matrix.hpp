@@ -558,22 +558,100 @@ public:
     * @param[out] x - Multiplication result.
     * @param[in] y - Matrix with which to multiply, must have the same number of rows as this matrix.
     * @param[in] a - Scalar with which to scale the product.
+    * @param[in] accumulate - Whether to accumulate the product into a pre-existing `x`.
     */
     void matmul(
         MatrixBase<T>& x,
         const MatrixBase<T>& y,
-        const T& a = T(1)
+        const T& a = T(1),
+        const bool accumulate = false
         ) const override
     {
         if (y.num_rows() * y.num_cols() == 0)
             return;
+        
+        if (!(std::abs(a) > float_eps) && accumulate)
+            return;
 
         dispatch(x, y, [&](auto& xr, const auto& yr)
         {
-            xr = as<std::decay_t<decltype(xr)>> ((matrix_ * yr * a).eval());
+            if (accumulate)
+                xr += as<std::decay_t<decltype(xr)>> ((matrix_ * yr * a).eval());
+            else
+                xr = as<std::decay_t<decltype(xr)>> ((matrix_ * yr * a).eval());
         });
 
         return;
+    };
+
+
+    /**
+    * @brief Computes \f$ \mathbf{X}_b = a\mathbf{M}\mathbf{Y}_b \f$ where \f$ \mathbf{M} \f$ is this matrix,
+    * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices, and the subscript \f$ b \f$
+    * indicates that the matrix is multiplied into a sub-block of \f$ \mathbf{Y} \f$, and the result is 
+    * placed in a sub-block of \f$ \mathbf{X} \f$.
+    * @param[in,out] x - Destination matrix, with at least as many rows as rows of this matrix.
+    * @param[in] y - Matrix whose sub-block to multiply, with at least as many rows as columns of this matrix.
+    * @param[in] x_row_start - Starting row index for the destination block.
+    * @param[in] y_row_start - Starting row index for the multiplier block.
+    * @param[in] a - Scalar with which to scale the product.
+    * @param[in] accumulate - Whether to accumulate the product into a pre-existing `x`.
+    */
+    virtual void matmul_block(
+        MatrixBase<T>& x,
+        const MatrixBase<T>& y,
+        const Index x_row_start,
+        const Index y_row_start,
+        const T& a = T(1),
+        const bool accumulate = false
+        ) const override
+    {
+
+        if (y.num_rows() * y.num_cols() == 0)
+            return;
+
+        if (y.num_rows() < num_cols())
+            throw std::invalid_argument("EigenMatrix::matmul_block(): `y` must have at least as many rows as `this` matrix has columns.");
+
+        if (x.num_rows() < num_rows())
+            throw std::invalid_argument("EigenMatrix::matmul_block(): `x` must have at least as many rows as `this` matrix has rows.");
+
+        if (!(std::abs(a) > float_eps) && accumulate)
+            return;
+
+        dispatch(x, y, [&](auto& xr, const auto& yr)
+        {
+            if constexpr (std::is_same_v<std::decay_t<decltype(xr)>, SparseMatrixType>)
+            {
+                EigenMatrix<T, EigenMatrixType::EIGEN_SPARSE, storage_order> temp;
+                temp.raw_matrix() = as<std::decay_t<decltype(xr)>> ((matrix_ * yr.block(
+                    y_row_start, 0, num_cols(), y.num_cols()
+                    ) * a).eval());
+
+                if (accumulate)
+                    x.add_block(temp, x_row_start, 0);
+                else
+                    x.set_block(temp, x_row_start, 0);
+            }
+            else
+            {
+                if (accumulate)
+                    xr.block(
+                        x_row_start, 0, num_rows(), y.num_cols()
+                        ) += as<std::decay_t<decltype(xr)>> ((matrix_ * yr.block(
+                            y_row_start, 0, num_cols(), y.num_cols()
+                            ) * a).eval());
+                else
+                    xr.block(
+                        x_row_start, 0, num_rows(), y.num_cols()
+                        ) = as<std::decay_t<decltype(xr)>> ((matrix_ * yr.block(
+                            y_row_start, 0, num_cols(), y.num_cols()
+                            ) * a).eval());
+            }
+        });
+
+        return;
+
     };
 
 
@@ -599,6 +677,61 @@ public:
         });
 
         return;
+    };
+
+
+    /**
+    * @brief Computes \f$ \mathbf{X}_b += a\mathbf{M}\mathbf{Y}_b \f$ where \f$ \mathbf{M} \f$ is this matrix,
+    * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices, and the subscript \f$ b \f$
+    * indicates that the matrix is multiplied into a sub-block of \f$ \mathbf{Y} \f$, and the result is 
+    * added to a sub-block of \f$ \mathbf{X} \f$.
+    * @param[in,out] x - Destination matrix, with at least as many rows as rows of this matrix.
+    * @param[in] y - Matrix whose sub-block to multiply, with at least as many rows as columns of this matrix.
+    * @param[in] x_row_start - Starting row index for the destination block.
+    * @param[in] y_row_start - Starting row index for the multiplier block.
+    * @param[in] a - Scalar with which to scale the product.
+    */
+    virtual void matmuladd_block(
+        MatrixBase<T>& x,
+        const MatrixBase<T>& y,
+        const Index x_row_start,
+        const Index y_row_start,
+        const T& a = T(1)
+        ) const override
+    {
+
+        if (y.num_rows() * y.num_cols() == 0)
+            return;
+
+        if (y.num_rows() < num_cols())
+            throw std::invalid_argument("EigenMatrix::matmul_block(): `y` must have at least as many rows as `this` matrix has columns.");
+
+        if (x.num_rows() < num_rows())
+            throw std::invalid_argument("EigenMatrix::matmul_block(): `x` must have at least as many rows as `this` matrix has rows.");
+
+        dispatch(x, y, [&](auto& xr, const auto& yr)
+        {
+            if constexpr (std::is_same_v<std::decay_t<decltype(xr)>, SparseMatrixType>)
+            {
+                EigenMatrix<T, EigenMatrixType::EIGEN_SPARSE, storage_order> temp;
+                temp.raw_matrix() = as<std::decay_t<decltype(xr)>> ((matrix_ * yr.block(
+                    y_row_start, 0, num_cols(), y.num_cols()
+                    ) * a).eval());
+
+                x.add_block(temp, x_row_start, 0);
+            }
+            else
+            {
+                xr.block(
+                    x_row_start, 0, num_rows(), y.num_cols()
+                    ) += as<std::decay_t<decltype(xr)>> ((matrix_ * yr.block(
+                        y_row_start, 0, num_cols(), y.num_cols()
+                        ) * a).eval());
+            }
+        });
+
+        return;
+
     };
 
 
