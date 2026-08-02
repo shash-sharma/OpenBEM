@@ -591,9 +591,9 @@ public:
     * indicates that the matrix is multiplied into a sub-block of \f$ \mathbf{Y} \f$, and the result is 
     * placed in a sub-block of \f$ \mathbf{X} \f$.
     * @param[in,out] x - Destination matrix, with at least as many rows as rows of this matrix. If
-    * `accumulate` is `false`, `x` may instead be left unallocated or undersized, in which case it
-    * is resized automatically to fit the destination block; otherwise the existing block is
-    * updated in place.
+    * `x` is completely unallocated (0x0), it is resized automatically to fit the destination
+    * block; otherwise it must already be at least as large as the destination block requires
+    * (an exception is thrown if it is undersized), and the existing block is updated in place.
     * @param[in] y - Matrix whose sub-block to multiply, with at least as many rows as columns of this matrix.
     * @param[in] x_row_start - Starting row index for the destination block.
     * @param[in] y_row_start - Starting row index for the multiplier block.
@@ -616,14 +616,13 @@ public:
         if (y.num_rows() < num_cols())
             throw std::invalid_argument("EigenMatrix::matmul_block(): `y` must have at least as many rows as `this` matrix has columns.");
 
-        if (accumulate)
+        if (x.num_rows() == 0 && x.num_cols() == 0)
         {
-            if (x.num_rows() < num_rows())
-                throw std::invalid_argument("EigenMatrix::matmul_block(): `x` must have at least as many rows as `this` matrix has rows.");
+            x.resize(x_row_start + num_rows(), y.num_cols());
         }
         else if (x.num_rows() < x_row_start + num_rows() || x.num_cols() < y.num_cols())
         {
-            x.resize(x_row_start + num_rows(), y.num_cols());
+            throw std::invalid_argument("EigenMatrix::matmul_block(): `x` must be either unallocated or already large enough to hold the destination block.");
         }
 
         if (!(std::abs(a) > float_eps) && accumulate)
