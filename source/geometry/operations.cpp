@@ -50,6 +50,25 @@ EigMatNX<Float, dim> GeometryOps<dim>::polar_to_cartesian(ConstEigRef<EigMatNX<F
 
 
 template <uint8_t dim>
+EigMatNX<Float, dim> GeometryOps<dim>::cartesian_to_polar(ConstEigRef<EigMatNX<Float, dim>> points)
+{
+    if constexpr (dim != 2 && dim != 3)
+        throw std::invalid_argument("GeometryOps::cartesian_to_polar(): `dim` must be 2 or 3.");
+
+    EigMatNX<Float, dim> points_out = EigMatNX<Float, dim>::Zero(dim, points.cols());
+    points_out.row(0) = points.colwise().norm();
+
+    for (Index ii = 0; ii < points.cols(); ++ii)
+        points_out(1, ii) = std::atan2(points(1, ii), points(0, ii));
+
+    if (dim == 3)
+        points_out.row(2) = Eigen::acos(points.row(2).array() / points_out.row(0).array());
+
+    return points_out;
+}
+
+
+template <uint8_t dim>
 EigMatNX<Complex, dim> GeometryOps<dim>::cartesian_to_polar_field(
     ConstEigRef<EigMatNX<Float, dim>> points,
     ConstEigRef<EigMatNX<Complex, dim>> field
