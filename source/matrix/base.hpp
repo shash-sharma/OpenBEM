@@ -222,21 +222,6 @@ public:
 
 
     /**
-    * @brief Computes \f$ \mathbf{X} += a\mathbf{M}\mathbf{Y} \f$ where \f$ \mathbf{M} \f$ is this matrix,
-    * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices.
-    * @param[out] x - Multiplication result.
-    * @param[in] y - Matrix with which to multiply, must have the same number of rows as this matrix.
-    * @param[in] a - Scalar with which to scale the product.
-    */
-    virtual void matmuladd(
-        MatrixBase<T>& x,
-        const MatrixBase<T>& y,
-        const T& a = T(1)
-        ) const
-    { throw std::runtime_error("MatrixBase::matmul(): Not implemented."); };
-
-
-    /**
     * @brief Computes \f$ \mathbf{X}_b = a\mathbf{M}\mathbf{Y}_b \f$ where \f$ \mathbf{M} \f$ is this matrix,
     * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices, and the subscript \f$ b \f$
     * indicates that the matrix is multiplied into a sub-block of \f$ \mathbf{Y} \f$, and the result is 
@@ -257,27 +242,6 @@ public:
         const bool accumulate = false
         ) const
     { throw std::runtime_error("MatrixBase::matmul_block(): Not implemented."); };
-
-
-    /**
-    * @brief Computes \f$ \mathbf{X}_b += a\mathbf{M}\mathbf{Y}_b \f$ where \f$ \mathbf{M} \f$ is this matrix,
-    * \f$ a \f$ is a scalar, and \f$ \mathbf{X} \f$ and \f$ \mathbf{Y} \f$ are matrices, and the subscript \f$ b \f$
-    * indicates that the matrix is multiplied into a sub-block of \f$ \mathbf{Y} \f$, and the result is 
-    * added to a sub-block of \f$ \mathbf{X} \f$.
-    * @param[in,out] x - Destination matrix, with at least as many rows as rows of this matrix.
-    * @param[in] y - Matrix whose sub-block to multiply, with at least as many rows as columns of this matrix.
-    * @param[in] x_row_start - Starting row index for the destination block.
-    * @param[in] y_row_start - Starting row index for the multiplier block.
-    * @param[in] a - Scalar with which to scale the product.
-    */
-    virtual void matmuladd_block(
-        MatrixBase<T>& x,
-        const MatrixBase<T>& y,
-        const Index x_row_start,
-        const Index y_row_start,
-        const T& a = T(1)
-        ) const
-    { throw std::runtime_error("MatrixBase::matmuladd_block(): Not implemented."); };
 
 
     /**
