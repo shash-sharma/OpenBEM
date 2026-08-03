@@ -256,7 +256,7 @@ void MeshTransfer::write_gmsh_v2(
 
     std::ofstream file(msh_filename + "." + extension);
     if (!file.is_open())
-        throw std::runtime_error("Could not open mesh file: " + msh_filename + "." + extension);
+        throw std::runtime_error("Could not open file: " + msh_filename + "." + extension);
 
     // Write header
     file << "$MeshFormat\n";
