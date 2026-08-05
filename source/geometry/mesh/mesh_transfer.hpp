@@ -76,12 +76,20 @@ public:
      * @param[in] msh_filename - Path to the output GMSH v2 mesh file.
      * @param[in] field - Scalar field to superimpose on the mesh.
      * @param[in] field_name - Name for the field (optional).
+     * @param[in] field_plot_type - Either "nodes" (one value per mesh vertex, written as `$NodeData`,
+     * which GMSH interpolates across each element for a continuous-looking plot) or "elements" (one
+     * value per mesh element, written as `$ElementData`, discontinuous across element boundaries)
+     * (optional).
+     * @details
+     * `field` must have one entry per mesh vertex if `field_plot_type` is "nodes", or one entry per
+     * mesh element if "elements".
      */
     static void write_gmsh_v2_scalar_field(
         const Structure<TriangleMesh<3>>& structure,
         const std::string msh_filename,
         ConstEigRef<EigRowVec<Float>> field,
-        std::string field_name = "scalar_field"
+        std::string field_name = "scalar_field",
+        const std::string field_plot_type = "nodes"
         );
 
 
@@ -91,12 +99,20 @@ public:
      * @param[in] msh_filename - Path to the output GMSH v2 mesh file.
      * @param[in] field - Vector field to superimpose on the mesh.
      * @param[in] field_name - Name for the field (optional).
+     * @param[in] field_plot_type - Either "nodes" (one value per mesh vertex, written as `$NodeData`,
+     * which GMSH interpolates across each element for a continuous-looking plot) or "elements" (one
+     * value per mesh element, written as `$ElementData`, discontinuous across element boundaries)
+     * (optional).
+     * @details
+     * `field` must have one column per mesh vertex if `field_plot_type` is "nodes", or one column per
+     * mesh element if "elements".
      */
     static void write_gmsh_v2_vector_field(
         const Structure<TriangleMesh<3>>& structure,
         const std::string msh_filename,
         ConstEigRef<EigMatNX<Float, 3>> field,
-        std::string field_name = "vector_field"
+        std::string field_name = "vector_field",
+        const std::string field_plot_type = "nodes"
         );
 
 };

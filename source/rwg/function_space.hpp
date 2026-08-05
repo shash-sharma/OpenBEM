@@ -128,6 +128,10 @@ public:
     * @param[in] coeffs - Vector of function space coefficients for each degree of freedom.
     * @param[in] points - Points on which to sample the field.
     * @return Field sampled at `points`.
+    * @details
+    * A point contained in more than one element (e.g. a mesh vertex) is averaged across all
+    * elements containing it, rather than summed, so that reconstructing at element centroids
+    * (where each point belongs to exactly one element) and at vertices are both meaningful.
     */
     static EigMatNX<Complex, dim> reconstruct_field(
         const TriangleMesh<3>& mesh,
@@ -196,6 +200,10 @@ public:
     * @param[in] coeffs - Vector of function space coefficients for each degree of freedom.
     * @param[in] points - Points on which to sample the field.
     * @return Field sampled at `points`.
+    * @details
+    * A point contained in more than one element (e.g. a mesh vertex) is averaged across all
+    * elements containing it, rather than summed, so that reconstructing at element centroids
+    * (where each point belongs to exactly one element) and at vertices are both meaningful.
     */
     static EigMatNX<Complex, 3> reconstruct_field(
         const TriangleMesh<3>& mesh,
@@ -265,6 +273,10 @@ public:
     * @param[in] coeffs - Vector of function space coefficients for each degree of freedom.
     * @param[in] points - Points on which to sample the field.
     * @return Field sampled at `points`.
+    * @details
+    * A point contained in more than one element (e.g. a mesh vertex) is averaged across all
+    * elements containing it, rather than summed, so that reconstructing at element centroids
+    * (where each point belongs to exactly one element) and at vertices are both meaningful.
     */
     static EigMatNX<Complex, 3> reconstruct_field(
         const TriangleMesh<3>& mesh,
@@ -334,6 +346,10 @@ public:
     * @param[in] coeffs - Vector of function space coefficients for each degree of freedom.
     * @param[in] points - Points on which to sample the field.
     * @return Field sampled at `points`.
+    * @details
+    * A point contained in more than one element (e.g. a mesh vertex) is averaged across all
+    * elements containing it, rather than summed, so that reconstructing at element centroids
+    * (where each point belongs to exactly one element) and at vertices are both meaningful.
     */
     static EigMatNX<Complex, 1> reconstruct_field(
         const TriangleMesh<3>& mesh,

@@ -311,26 +311,33 @@ void MeshTransfer::write_gmsh_v2_scalar_field(
     const Structure<TriangleMesh<3>>& structure,
     const std::string msh_filename,
     ConstEigRef<EigRowVec<Float>> field,
-    std::string field_name
+    std::string field_name,
+    const std::string field_plot_type
     )
 {
 
     MeshTransfer::write_gmsh_v2(structure, msh_filename, "pos");
 
-    if (field.size() != structure.mesh().num_elems())
-        throw std::invalid_argument("Field size must match number of faces in the mesh.");
+    const bool at_nodes = (field_plot_type == "nodes");
+    const Index num_entities = at_nodes ? structure.mesh().num_verts() : structure.mesh().num_elems();
+
+    if (field.size() != num_entities)
+        throw std::invalid_argument(
+            "Field size must match the number of " +
+            std::string(at_nodes ? "vertices" : "faces") + " in the mesh."
+            );
 
     std::ofstream file(msh_filename + ".pos", std::ios_base::app);
     if (!file.is_open())
         throw std::runtime_error("Could not open mesh file: " + msh_filename + ".pos");
 
-    file << "$ElementData\n";
+    file << (at_nodes ? "$NodeData\n" : "$ElementData\n");
     file << "1\n" << field_name << "\n";
     file << "1\n" << 0 << "\n";
-    file << "4\n" << 0 << "\n" << 1 << "\n" << structure.mesh().num_elems() << "\n" << "0\n";
-    for (Index ii = 0; ii < structure.mesh().num_elems(); ++ii)
+    file << "4\n" << 0 << "\n" << 1 << "\n" << num_entities << "\n" << "0\n";
+    for (Index ii = 0; ii < num_entities; ++ii)
         file << (ii + 1) << " " << field(ii) << "\n";
-    file << "$EndElementData\n";
+    file << (at_nodes ? "$EndNodeData\n" : "$EndElementData\n");
 
     return;
 
@@ -341,26 +348,35 @@ void MeshTransfer::write_gmsh_v2_vector_field(
     const Structure<TriangleMesh<3>>& structure,
     const std::string msh_filename,
     ConstEigRef<EigMatNX<Float, 3>> field,
-    std::string field_name
+    std::string field_name,
+    const std::string field_plot_type
     )
 {
 
-    MeshTransfer::write_gmsh_v2_scalar_field(structure, msh_filename, field.colwise().norm());
+    MeshTransfer::write_gmsh_v2_scalar_field(
+        structure, msh_filename, field.colwise().norm(), "scalar_field", field_plot_type
+        );
 
-    if (field.cols() != structure.mesh().num_elems())
-        throw std::invalid_argument("Field size must match number of faces in the mesh.");
+    const bool at_nodes = (field_plot_type == "nodes");
+    const Index num_entities = at_nodes ? structure.mesh().num_verts() : structure.mesh().num_elems();
+
+    if (field.cols() != num_entities)
+        throw std::invalid_argument(
+            "Field size must match the number of " +
+            std::string(at_nodes ? "vertices" : "faces") + " in the mesh."
+            );
 
     std::ofstream file(msh_filename + ".pos", std::ios_base::app);
     if (!file.is_open())
         throw std::runtime_error("Could not open mesh file: " + msh_filename + ".pos");
 
-    file << "$ElementData\n";
+    file << (at_nodes ? "$NodeData\n" : "$ElementData\n");
     file << "1\n" << field_name << "\n";
     file << "1\n" << 0 << "\n";
-    file << "4\n" << 0 << "\n" << 3 << "\n" << structure.mesh().num_elems() << "\n" << "0\n";
-    for (Index ii = 0; ii < structure.mesh().num_elems(); ++ii)
+    file << "4\n" << 0 << "\n" << 3 << "\n" << num_entities << "\n" << "0\n";
+    for (Index ii = 0; ii < num_entities; ++ii)
         file << (ii + 1) << " " << field(0, ii) << " " << field(1, ii) << " " << field(2, ii) << "\n";
-    file << "$EndElementData\n";
+    file << (at_nodes ? "$EndNodeData\n" : "$EndElementData\n");
 
     return;
 

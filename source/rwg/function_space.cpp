@@ -78,6 +78,8 @@ EigMatNX<Complex, 3> Rwg::reconstruct_field(
 
     for (Index point = 0; point < points.cols(); ++point)
     {
+        Index count = 0;
+
         for (Index face = 0; face < mesh.num_elems(); ++face)
         {
             Triangle<3> tri = mesh.elem_primitive(face);
@@ -90,7 +92,12 @@ EigMatNX<Complex, 3> Rwg::reconstruct_field(
                 Index idx = mesh.elem_edges()(edge, face);
                 field.col(point) += value(tri, points.col(point), edge) * coeffs.value(idx, 0);
             }
+
+            ++count;
         }
+
+        if (count > 0)
+            field.col(point) /= (Float)count;
     }
 
     return field;
@@ -145,6 +152,8 @@ EigMatNX<Complex, 3> NxRwg::reconstruct_field(
 
     for (Index point = 0; point < points.cols(); ++point)
     {
+        Index count = 0;
+
         for (Index face = 0; face < mesh.num_elems(); ++face)
         {
             Triangle<3> tri = mesh.elem_primitive(face);
@@ -157,7 +166,12 @@ EigMatNX<Complex, 3> NxRwg::reconstruct_field(
                 Index idx = mesh.elem_edges()(edge, face);
                 field.col(point) += value(tri, points.col(point), edge) * coeffs.value(idx, 0);
             }
+
+            ++count;
         }
+
+        if (count > 0)
+            field.col(point) /= (Float)count;
     }
 
     return field;
@@ -194,6 +208,9 @@ EigRowVec<Complex> Pulse::reconstruct_field(
 
     for (Index point = 0; point < points.cols(); ++point)
     {
+        Complex sum = 0;
+        Index count = 0;
+
         for (Index face = 0; face < mesh.num_elems(); ++face)
         {
             Triangle<3> tri = mesh.elem_primitive(face);
@@ -201,8 +218,12 @@ EigRowVec<Complex> Pulse::reconstruct_field(
             if (!tri.point_in_triangle(points.col(point)))
                 continue;
 
-            field[point] = Pulse::value(tri, points.col(point))[0] * coeffs.value(face, 0);
+            sum += Pulse::value(tri, points.col(point))[0] * coeffs.value(face, 0);
+            ++count;
         }
+
+        if (count > 0)
+            field[point] = sum / (Float)count;
     }
 
     return field;
