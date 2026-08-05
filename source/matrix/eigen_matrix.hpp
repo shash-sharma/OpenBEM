@@ -1113,6 +1113,7 @@ public:
     * @param[in] tol - Tolerance for convergence (optional).
     * @param[in] restart - Restart iteration at which the Krylov subspace is discarded (optional).
     * @param[in] message - Message to print to terminal after the solve (optional).
+    * @param[in] verbose - Whether to print the post-solve summary message to terminal (optional).
     */
     void mat_solve_iterative(
         MatrixBase<T>& x,
@@ -1120,10 +1121,11 @@ public:
         const EigenIterativeSolverType solver_type = EigenIterativeSolverType::EIGEN_GMRES,
         const Float tol = 1e-4,
         const Index restart = 100,
-        const std::string message = ""
+        const std::string message = "",
+        const bool verbose = true
         ) const
     {
-        run_iterative_by_type(raw_matrix(), x, b, solver_type, tol, restart, message);
+        run_iterative_by_type(raw_matrix(), x, b, solver_type, tol, restart, message, verbose);
     };
 
 
@@ -1138,6 +1140,7 @@ public:
     * @param[in] tol - Tolerance for convergence (optional).
     * @param[in] restart - Restart iteration at which the Krylov subspace is discarded (optional).
     * @param[in] message - Message to print to terminal after the solve (optional).
+    * @param[in] verbose - Whether to print the post-solve summary message to terminal (optional).
     */
     template <typename MatmulMatrixType>
     static void mat_solve_iterative(
@@ -1147,10 +1150,11 @@ public:
         const EigenIterativeSolverType solver_type = EigenIterativeSolverType::EIGEN_GMRES,
         const Float tol = 1e-4,
         const Index restart = 100,
-        const std::string message = ""
+        const std::string message = "",
+        const bool verbose = true
         )
     {
-        run_iterative_by_type(mat, x, b, solver_type, tol, restart, message);
+        run_iterative_by_type(mat, x, b, solver_type, tol, restart, message, verbose);
     };
 
 
@@ -1344,6 +1348,7 @@ protected:
     * @param[in] tol - Relative residual error tolerance (optional).
     * @param[in] restart - GMRES restart iteration (optional).
     * @param[in] message - Message to print to terminal after the solve (optional).
+    * @param[in] verbose - Whether to print the post-solve summary message to terminal (optional).
     */
     template <typename Solver, typename Op>
     static void run_iterative(
@@ -1352,7 +1357,8 @@ protected:
         const MatrixBase<T>& b,
         const Float tol = 1e-4,
         const Index restart = 100,
-        const std::string message = ""
+        const std::string message = "",
+        const bool verbose = true
         )
     {
 
@@ -1380,10 +1386,13 @@ protected:
             DenseMatrixType sol = solver.solve(rhs);
             xr = as<std::decay_t<decltype(xr)>> (sol);
 
-            std::cout << message
-                    << "Iterations: " << solver.iterations()
-                    << " | tolerance: " << solver.tolerance()
-                    << " | residual: " << solver.error() << std::endl;
+            if (verbose)
+            {
+                std::cout << message
+                        << "Iterations: " << solver.iterations()
+                        << " | tolerance: " << solver.tolerance()
+                        << " | residual: " << solver.error() << std::endl;
+            }
 
             if (solver.info() != Eigen::Success)
                 std::cout << "EigenMatrix::mat_solve_iterative(): [Warning] Iterative solve failed." << std::endl;
@@ -1405,6 +1414,7 @@ protected:
     * @param[in] tol - Relative residual error tolerance (optional).
     * @param[in] restart - GMRES restart iteration (optional).
     * @param[in] message - Message to print to terminal after the solve (optional).
+    * @param[in] verbose - Whether to print the post-solve summary message to terminal (optional).
     */
     template <typename Op>
     static void run_iterative_by_type(
@@ -1414,13 +1424,14 @@ protected:
         const EigenIterativeSolverType solver_type,
         const Float tol = 1e-4,
         const Index restart = 100,
-        const std::string message = ""
+        const std::string message = "",
+        const bool verbose = true
         )
     {
         if (solver_type == EigenIterativeSolverType::EIGEN_GMRES)
-            run_iterative<Eigen::GMRES<Op, Eigen::IdentityPreconditioner>> (op, x, b, tol, restart, message);
+            run_iterative<Eigen::GMRES<Op, Eigen::IdentityPreconditioner>> (op, x, b, tol, restart, message, verbose);
         else
-            run_iterative<Eigen::BiCGSTAB<Op, Eigen::IdentityPreconditioner>> (op, x, b, tol, restart, message);
+            run_iterative<Eigen::BiCGSTAB<Op, Eigen::IdentityPreconditioner>> (op, x, b, tol, restart, message, verbose);
     };
 
 
