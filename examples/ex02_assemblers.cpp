@@ -329,7 +329,9 @@ int main(int argc, char** argv)
         structure.mesh().elem_centroids() // points at which to compute field values
         ).array().real(); // Eigen syntax to keep only the real part of the computed currents
 
-    bem::MeshTransfer::write_gmsh_v2_vector_field(structure, path + "msh/ex02_jsurf_cfie", j_surf);
+    bem::MeshTransfer::write_gmsh_v2_vector_field(
+        structure, path + "msh/ex02_jsurf_cfie", j_surf, "jsurf_cfie", "elements"
+        );
 
     // Now you are equipped to set up your own integral equations in any way of combining different
     // operators that you'd like. Enjoy!

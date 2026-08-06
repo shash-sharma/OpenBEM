@@ -486,8 +486,12 @@ int main(int argc, char** argv)
 
     // Use OpenBEM's built-in Gmsh field writer to write the fields to disk.
 
-    bem::MeshTransfer::write_gmsh_v2_vector_field(structure, path + "msh/ex01_jsurf_tefie", j_surf_tefie);
-    bem::MeshTransfer::write_gmsh_v2_vector_field(structure, path + "msh/ex01_jsurf_nmfie", j_surf_nmfie);
+    bem::MeshTransfer::write_gmsh_v2_vector_field(
+        structure, path + "msh/ex01_jsurf_tefie", j_surf_tefie, "jsurf_tefie", "elements"
+        );
+    bem::MeshTransfer::write_gmsh_v2_vector_field(
+        structure, path + "msh/ex01_jsurf_nmfie", j_surf_nmfie, "jsurf_nmfie", "elements"
+        );
 
     // This will create two files in the above location with the `.pos` extension, which can be
     // opened with the Gmsh GUI to show the electric surface current density magnitude and direction
