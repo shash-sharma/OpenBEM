@@ -258,7 +258,7 @@ void LumpedElement::set_terminals_from_polygons(
         if (single_element)
         {
             Float offset = 1e30;
-            Index term_elem;
+            Index term_elem = 0;
             EigColVecN<Float, 3> term_centroid =
                 terminal_polygons[ii].rowwise().sum() / terminal_polygons[ii].cols();
 
