@@ -1117,6 +1117,118 @@ public:
 
 
     /**
+    * @brief Factorizes this matrix via a Schur-complement decomposition, using an analytical
+    * inverse for the top-left block if possible, depending on `pattern`.
+    * @param[in] pivot - Size of the top-left block.
+    * @param[in] pattern - Known structure of the top-left block (optional).
+    */
+    void factorize_schur(Index pivot, MatrixStructure pattern = MatrixStructure::NONE) override
+    {
+
+        const Index n2 = matrix_.rows() - pivot;
+
+        schur_pattern_ = pattern;
+
+        B_schur_ = std::make_shared<EigenMatrix<T, type, storage_order>> ();
+        C_schur_ = std::make_shared<EigenMatrix<T, type, storage_order>> ();
+        S_schur_ = std::make_shared<EigenMatrix<T, type, storage_order>> ();
+
+        B_schur_->raw_matrix() = matrix_.block(0, pivot, pivot, n2);
+        C_schur_->raw_matrix() = matrix_.block(pivot, 0, n2, pivot);
+
+        MatrixType D = matrix_.block(pivot, pivot, n2, n2);
+
+        A_inv_schur_.clear();
+
+        if (pattern == MatrixStructure::DIAGONAL_2X2)
+        {
+            const Index h = pivot / 2;
+
+            EigMat<T> a1 = MatrixType(matrix_.block(0, 0, h, h)).diagonal();
+            EigMat<T> a2 = MatrixType(matrix_.block(0, h, h, h)).diagonal();
+            EigMat<T> a3 = MatrixType(matrix_.block(h, 0, h, h)).diagonal();
+            EigMat<T> a4 = MatrixType(matrix_.block(h, h, h, h)).diagonal();
+            EigMat<T> det = a1.array() * a4.array() - a2.array() * a3.array();
+
+            A_inv_schur_.resize(4);
+            A_inv_schur_[0].raw_matrix() = (a4.array() / det.array()).matrix().asDiagonal();
+            A_inv_schur_[1].raw_matrix() = (-a2.array() / det.array()).matrix().asDiagonal();
+            A_inv_schur_[2].raw_matrix() = (-a3.array() / det.array()).matrix().asDiagonal();
+            A_inv_schur_[3].raw_matrix() = (a1.array() / det.array()).matrix().asDiagonal();
+        }
+
+        else if (pattern == MatrixStructure::DIAGONAL)
+        {
+            EigMat<T> a = MatrixType(matrix_.block(0, 0, pivot, pivot)).diagonal();
+
+            A_inv_schur_.resize(1);
+            A_inv_schur_[0].raw_matrix() = a.array().inverse().matrix().asDiagonal();
+        }
+
+        else
+        {
+            A_inv_schur_.resize(1);
+            A_inv_schur_[0].raw_matrix() = matrix_.block(0, 0, pivot, pivot);
+            A_inv_schur_[0].factorize();
+        }
+
+        EigenMatrix<T, type, storage_order> AinvB;
+        apply_ainv_schur(AinvB, *B_schur_);
+
+        S_schur_->raw_matrix() = D - C_schur_->raw_matrix() * AinvB.raw_matrix();
+        S_schur_->factorize();
+
+        schur_factorized_ = true;
+
+        return;
+
+    };
+
+
+    /**
+    * @brief Solves \f$ \mathbf{M}\mathbf{X} = \mathbf{B} \f$ using the factorization computed by
+    * `factorize_schur()`.
+    * @param[out] x - Solution.
+    * @param[in] b - Right-hand side matrix.
+    */
+    void mat_solve_schur(MatrixBase<T>& x, const MatrixBase<T>& b) const override
+    {
+
+        if (!schur_factorized_)
+            throw std::runtime_error("EigenMatrix::mat_solve_schur(): Matrix must be factorized first.");
+
+        const Index pivot = B_schur_->num_rows();
+        const Index n2 = b.num_rows() - pivot;
+
+        EigenMatrix<T, type, storage_order> temp1, temp2;
+
+        b.get_block(temp1, 0, 0, pivot, b.num_cols());
+
+        EigenMatrix<T, type, storage_order> y1;
+        apply_ainv_schur(y1, temp1);
+
+        C_schur_->matmul(temp1, y1);
+
+        b.get_block(temp2, pivot, 0, n2, b.num_cols());
+        temp2.raw_matrix() -= temp1.raw_matrix();
+
+        EigenMatrix<T, type, storage_order> x2;
+        S_schur_->mat_solve(x2, temp2);
+
+        B_schur_->matmul(temp1, x2);
+        apply_ainv_schur(temp2, temp1);
+        temp2.raw_matrix() = y1.raw_matrix() - temp2.raw_matrix();
+
+        x.resize(pivot + n2, b.num_cols());
+        x.set_block(temp2, 0, 0);
+        x.set_block(x2, pivot, 0);
+
+        return;
+
+    };
+
+
+    /**
     * @brief Solves \f$ \mathbf{M}\mathbf{X} = \mathbf{B} \f$ for matrix \f$ \mathbf{X} \f$ with an
     * iterative solver, where \f$ \mathbf{M} \f$ is this matrix, and \f$ \mathbf{B} \f$ is a given
     * right-hand side matrix.
@@ -1438,6 +1550,40 @@ protected:
     };
 
 
+    /**
+    * @brief Applies the analytical (or factorized) inverse of `factorize_schur()`'s top-left block.
+    * @param[out] out - Result.
+    * @param[in] in - Matrix to which the inverse is applied.
+    */
+    void apply_ainv_schur(
+        EigenMatrix<T, type, storage_order>& out,
+        const EigenMatrix<T, type, storage_order>& in
+        ) const
+    {
+        if (schur_pattern_ == MatrixStructure::DIAGONAL_2X2)
+        {
+            const Index h = A_inv_schur_[0].num_rows();
+
+            out.resize(2 * h, in.num_cols());
+
+            A_inv_schur_[0].matmul_block(out, in, 0, 0, T(1), false);
+            A_inv_schur_[1].matmul_block(out, in, 0, h, T(1), true);
+            A_inv_schur_[2].matmul_block(out, in, h, 0, T(1), false);
+            A_inv_schur_[3].matmul_block(out, in, h, h, T(1), true);
+        }
+        else if (schur_pattern_ == MatrixStructure::DIAGONAL)
+        {
+            A_inv_schur_[0].matmul(out, in);
+        }
+        else
+        {
+            A_inv_schur_[0].mat_solve(out, in);
+        }
+
+        return;
+    };
+
+
     MatrixType matrix_;
 
     std::vector<Eigen::Triplet<T>> triplets_;
@@ -1456,6 +1602,13 @@ protected:
     std::shared_ptr<DenseSolverType> dense_solver_ = nullptr;
 
     bool factorized_ = false;
+
+    bool schur_factorized_ = false;
+    MatrixStructure schur_pattern_ = MatrixStructure::NONE;
+    std::vector<EigenMatrix<T, type, storage_order>> A_inv_schur_;
+    std::shared_ptr<EigenMatrix<T, type, storage_order>> B_schur_;
+    std::shared_ptr<EigenMatrix<T, type, storage_order>> C_schur_;
+    std::shared_ptr<EigenMatrix<T, type, storage_order>> S_schur_;
 
 };
 

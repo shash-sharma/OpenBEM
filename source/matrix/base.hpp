@@ -39,6 +39,17 @@ namespace bem
 */
 
 /**
+* @brief Enumeration of special structures a matrix may have.
+*/
+enum class MatrixStructure
+{
+    NONE,
+    DIAGONAL,
+    DIAGONAL_2X2
+};
+
+
+/**
 * @brief Base class for matrix algebra containers.
 * @tparam T - Data type to be stored in the matrix (e.g., float, double, std::complex).
 */
@@ -376,6 +387,26 @@ public:
     */
     virtual void mat_solve(MatrixBase<T>& x, const MatrixBase<T>& b) const
     { throw std::runtime_error("MatrixBase::mat_solve(): Not implemented."); };
+
+
+    /**
+    * @brief Factorizes this matrix via a Schur-complement decomposition, using an analytical
+    * inverse for the top-left block if possible, depending on `pattern`.
+    * @param[in] pivot - Size of the top-left block.
+    * @param[in] pattern - Known structure of the top-left block (optional).
+    */
+    virtual void factorize_schur(Index pivot, MatrixStructure pattern = MatrixStructure::NONE)
+    { throw std::runtime_error("MatrixBase::factorize_schur(): Not implemented."); };
+
+
+    /**
+    * @brief Solves \f$ \mathbf{M}\mathbf{X} = \mathbf{B} \f$ using the factorization computed by
+    * `factorize_schur()`.
+    * @param[out] x - Solution.
+    * @param[in] b - Right-hand side matrix.
+    */
+    virtual void mat_solve_schur(MatrixBase<T>& x, const MatrixBase<T>& b) const
+    { throw std::runtime_error("MatrixBase::mat_solve_schur(): Not implemented."); };
 
 
     /**
