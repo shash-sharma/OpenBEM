@@ -8,7 +8,9 @@
 
 #include <vector>
 #include <unordered_map>
+#include <utility>
 #include <memory>
+#include <mutex>
 
 #include "types.hpp"
 #include "geometry/mesh/triangle_mesh.hpp"
@@ -29,6 +31,27 @@ namespace bem::rwg
 */
 
 /**
+* @brief Hash for a pair of element indices, used to key `BlockAssembler`'s per-element-pair
+* integration cache.
+*/
+struct ElemPairHash
+{
+    std::size_t operator()(const std::pair<Index, Index>& p) const noexcept
+    {
+        std::size_t h1 = std::hash<Index>{}(p.first);
+        std::size_t h2 = std::hash<Index>{}(p.second);
+
+        if constexpr (sizeof(std::size_t) >= 8)
+            h2 += 0x9e3779b97f4a7c15ULL;
+        else
+            h2 += 0x9e3779b9U;
+
+        return h1 ^ (h2 + (h1 << 6) + (h1 >> 2));
+    }
+};
+
+
+/**
 * @brief Class for assembling matrix sub-blocks for RWG observation and source functions.
 */
 class BlockAssembler: public OperatorAssemblerBase
@@ -39,13 +62,16 @@ public:
     * @brief Constructs a `BlockAssembler` for a given mesh.
     * @param[in] mesh - Triangle mesh for which the operator matrix is to be assembled.
     * @param[in] index_set - Block index definition.
+    * @param[in] use_integration_cache - Whether to cache and reuse triangle-pair integrals (optional).
     */
     BlockAssembler(
         const TriangleMesh<3>& mesh,
-        const IndexSet& index_set
+        const IndexSet& index_set,
+        const bool use_integration_cache = true
         ):
         mesh_(mesh),
-        index_set_(index_set)
+        index_set_(index_set),
+        use_integration_cache_(use_integration_cache)
     {
         for (Index ii = 0; ii < index_set_.num_rows(); ++ii)
             row_map_.insert({ index_set_.rows()[ii], ii });
@@ -158,6 +184,12 @@ protected:
 
     EigRowVec<Index> row_elems_from_edges_;
     EigRowVec<Index> col_elems_from_edges_;
+
+    const bool use_integration_cache_ = true;
+    std::unordered_map<std::pair<Index, Index>, EigMat<Complex>, ElemPairHash> integration_cache_;
+    const OperatorBase* integration_cache_op_ = nullptr;
+    Complex integration_cache_k_ = 0;
+    std::mutex integration_cache_mutex_;
 
 };
 

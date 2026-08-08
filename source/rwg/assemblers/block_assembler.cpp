@@ -136,18 +136,58 @@ void BlockAssembler::assemble_from_elems(
 
     mat.resize(out_rows, out_cols);
 
+    if (use_integration_cache_)
+    {
+        std::lock_guard<std::mutex> lock (integration_cache_mutex_);
+        if (integration_cache_op_ != &op || integration_cache_k_ != k)
+        {
+            integration_cache_.clear();
+            integration_cache_op_ = &op;
+            integration_cache_k_ = k;
+        }
+    }
+
+    std::mutex mat_mutex;
+
 #pragma omp parallel for
     for (Index ii = 0; ii < elem_pairs.cols(); ++ii)
     {
-        Triangle<3> obs_tri = mesh_.elem_primitive(elem_pairs(0, ii));
-        Triangle<3> src_tri = mesh_.elem_primitive(elem_pairs(1, ii));
+        EigMat<Complex> values;
+        bool cached = false;
 
-        EigMat<Complex> values = op.compute(
-            k, obs_tri, src_tri
-            );
+        std::pair<Index, Index> pair_key (elem_pairs(0, ii), elem_pairs(1, ii));
 
-#pragma omp critical
-        fill_matrix(mat, op, elem_pairs.col(ii), values, active_row_map, active_col_map);
+        if (use_integration_cache_)
+        {
+            std::lock_guard<std::mutex> lock (integration_cache_mutex_);
+            auto it = integration_cache_.find(pair_key);
+            if (it != integration_cache_.end())
+            {
+                values = it->second;
+                cached = true;
+            }
+        }
+
+        if (!cached)
+        {
+            Triangle<3> obs_tri = mesh_.elem_primitive(elem_pairs(0, ii));
+            Triangle<3> src_tri = mesh_.elem_primitive(elem_pairs(1, ii));
+
+            values = op.compute(
+                k, obs_tri, src_tri
+                );
+
+            if (use_integration_cache_)
+            {
+                std::lock_guard<std::mutex> lock (integration_cache_mutex_);
+                integration_cache_.insert({ pair_key, values });
+            }
+        }
+
+        {
+            std::lock_guard<std::mutex> lock (mat_mutex);
+            fill_matrix(mat, op, elem_pairs.col(ii), values, active_row_map, active_col_map);
+        }
     }
 
     mat.assemble();
