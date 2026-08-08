@@ -112,6 +112,22 @@ public:
 
 
     /**
+    * @brief Returns a reference to a cached mesh for the component; generates and caches
+    * the mesh if not already cached.
+    * @return Reference to the cached mesh.
+    */
+    const MeshType& cached_mesh() const
+    {
+        if (cache_mesh_)
+            return mesh_;
+        else
+            mesh_ = mesh_view_.mesh();
+        cache_mesh_ = true;
+        return mesh_;
+    };
+
+
+    /**
     * @brief Returns the name of the component.
     * @return Name of the component.
     */
@@ -142,8 +158,8 @@ private:
         PerfectDielectricMaterial(1, 1)
         );
     std::string name_ = "component";
-    const bool cache_mesh_ = false;
-    MeshType mesh_;
+    mutable MeshType mesh_;
+    mutable bool cache_mesh_ = false;
 };
 
 /**
