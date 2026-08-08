@@ -74,19 +74,23 @@ void test_cfie_pec()
 
 
     OperatorAssembler assm (mesh);
-    std::vector<EigenMatrix<Complex>> mats;
 
-    assm.assemble<
-        EigenMatrix<Complex>,
-        ObsStrategic,
-        VectorHypersingularOp,
-        RotVectorDoubleLayerPvOp,
-        VectorIdentityOp
-        > (mats, k);
+    std::vector<std::shared_ptr<OperatorBase>> op_ptrs {
+        std::make_shared<VectorHypersingularOp> (),
+        std::make_shared<RotVectorDoubleLayerPvOp> (),
+        std::make_shared<VectorIdentityOp> ()
+        };
 
-    EigenMatrix<Complex>& T = mats[0];
-    EigenMatrix<Complex>& K = mats[1];
-    EigenMatrix<Complex>& I = mats[2];
+    std::vector<std::shared_ptr<MatrixBase<Complex>>> mats (3);
+    for (auto& mat : mats)
+        mat = std::make_shared<EigenMatrix<Complex>> ();
+
+    ObsStrategic obs_integrator;
+    assm.assemble(mats, op_ptrs, k, obs_integrator);
+
+    EigenMatrix<Complex>& T = dynamic_cast<EigenMatrix<Complex>&> (*mats[0]);
+    EigenMatrix<Complex>& K = dynamic_cast<EigenMatrix<Complex>&> (*mats[1]);
+    EigenMatrix<Complex>& I = dynamic_cast<EigenMatrix<Complex>&> (*mats[2]);
 
     EigenMatrix<Complex> A;
     A.set_axpby(T, K, -J * omega * mu);

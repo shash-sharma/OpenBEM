@@ -20,6 +20,7 @@
 
 #include <vector>
 #include <memory>
+#include <stdexcept>
 
 #include "types.hpp"
 #include "matrix/base.hpp"
@@ -74,7 +75,8 @@ public:
         const std::vector<std::shared_ptr<OperatorBase>>& ops,
         const Complex k,
         ObsIntegratorBase& obs_integrator
-        ) {};
+        )
+    { throw std::runtime_error("OperatorAssemblerBase::assemble(): Not implemented."); };
 
 
     /**
