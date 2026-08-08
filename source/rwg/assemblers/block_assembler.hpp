@@ -53,14 +53,18 @@ public:
         for (Index ii = 0; ii < index_set_.num_cols(); ++ii)
             col_map_.insert({ index_set_.cols()[ii], ii });
 
+        row_elems_from_edges_ = IndexGenerator::elems_from_edges(mesh_, index_set_.rows());
+        col_elems_from_edges_ = IndexGenerator::elems_from_edges(mesh_, index_set_.cols());
+
         return;
     };
 
 
     /**
-    * @brief Assembles the operator matrix blocks for a given operator object.
-    * @param[out] mat - Matrix to store the assembled operator coefficients, with columns corresponding
-    * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
+    * @brief Assembles the operator matrix block for a given operator object.
+    * @param[out] mat - Matrix to store the assembled operator block, sized to the block
+    * defined by `index_set_`, with columns corresponding to source degrees of freedom, and rows
+    * corresponding to observation degrees of freedom.
     * @param[in] op - Operator object that computes the coefficients to be assembled into `mat`.
     * @param[in] k - Complex wavenumber.
     */
@@ -69,6 +73,28 @@ public:
         const OperatorBase& op,
         const Complex k
         ) override;
+
+
+    /**
+    * @brief Assembles a sub-block of the operator matrix block for a given operator object.
+    * @param[out] mat - Matrix to store the assembled operator sub-block, sized to exactly
+    * `local_rows.size() x local_cols.size()`.
+    * @param[in] op - Operator object that computes the coefficients to be assembled into `mat`.
+    * @param[in] k - Complex wavenumber.
+    * @param[in] local_rows - Local row indices (positions within `index_set_.rows()`) to assemble.
+    * @param[in] local_cols - Local column indices (positions within `index_set_.cols()`) to assemble.
+    * @details
+    * Out-of-bounds entries in `local_rows`, `local_cols` are ignored (the corresponding row/column
+    * of `mat` is left zero). A selection whose size equals `index_set_.num_rows()` (or `num_cols()`)
+    * is assumed, not verified, to be `[0, 1, ..., n-1]`.
+    */
+    void assemble(
+        MatrixBase<Complex>& mat,
+        const OperatorBase& op,
+        const Complex k,
+        ConstEigRef<EigRowVec<Index>> local_rows,
+        ConstEigRef<EigRowVec<Index>> local_cols
+        );
 
 
     /**
@@ -86,32 +112,23 @@ public:
         ObsIntegratorBase& obs_integrator
         ) override {};
 
+        
+protected:
 
     /**
-    * @brief Assembles operator matrices for given operator objects.
-    * @param[out] mats - Matrices to store the assembled operator coefficients, with columns corresponding
-    * to source degrees of freedom, and rows corresponding to observation degrees of freedom.
-    * @param[in] k - Complex wavenumber.
-    * @param[in] obs_integrator - Integration object for the observation triangle (optional).
+    * @brief Computes element pairs from `obs_elems` and `src_elems`, evaluates `op` for each,
+    * and places results in `mat` (`out_rows x out_cols`) via `active_row_map`, `active_col_map`.
     */
-    template <typename MatrixType, typename ObsIntegratorType = ObsStrategic, typename... Ops>
-    void assemble(
-        std::vector<MatrixType>& mats,
-        const Complex k,
-        const ObsIntegratorType obs_integrator = ObsStrategic()
-        );
-
-
-    /**
-    * @brief Computes and retrieves a block of operator matrix values for a given operator object.
-    * @param[out] mat - Block of values for requested row and column indices.
-    * @param[in] op - Operator object that computes the coefficients to be assembled into `mat`.
-    * @param[in] k - Complex wavenumber.
-    */
-    void get_block(
-        EigMat<Complex>& mat,
+    void assemble_from_elems(
+        MatrixBase<Complex>& mat,
         const OperatorBase& op,
-        const Complex k
+        const Complex k,
+        ConstEigRef<EigRowVec<Index>> obs_elems,
+        ConstEigRef<EigRowVec<Index>> src_elems,
+        const std::unordered_map<Index, Index>& active_row_map,
+        const std::unordered_map<Index, Index>& active_col_map,
+        const Index out_rows,
+        const Index out_cols
         );
 
 
@@ -121,32 +138,26 @@ public:
     * @param[in] op - Operator object that computes the coefficients to be assembled into `mat`.
     * @param[in] elem_pair - Observation (first entry) and source (second entry) triangle index pair.
     * @param[in] values - Operator values for each pair of observation and source degrees of freedom.
+    * @param[in] active_row_map - Map from global observation indices to local row indices in `mat`.
+    * @param[in] active_col_map - Map from global source indices to local column indices in `mat`.
     */
     void fill_matrix(
-        EigMat<Complex>& mat,
+        MatrixBase<Complex>& mat,
         const OperatorBase& op,
         ConstEigRef<EigColVecN<Index, 2>> elem_pair,
-        ConstEigRef<EigMat<Complex>> values
+        ConstEigRef<EigMat<Complex>> values,
+        const std::unordered_map<Index, Index>& active_row_map,
+        const std::unordered_map<Index, Index>& active_col_map
         );
 
-
-protected:
 
     const TriangleMesh<3>& mesh_;
     const IndexSet index_set_;
     std::unordered_map<Index, Index> row_map_;
     std::unordered_map<Index, Index> col_map_;
 
-};
-
-
-template <typename MatrixType, typename ObsIntegratorType, typename... Ops>
-void BlockAssembler::assemble(
-    std::vector<MatrixType>& mats,
-    const Complex k,
-    ObsIntegratorType obs_integrator
-    )
-{
+    EigRowVec<Index> row_elems_from_edges_;
+    EigRowVec<Index> col_elems_from_edges_;
 
 };
 

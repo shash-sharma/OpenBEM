@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <set>
+#include <algorithm>
 #include <stdexcept>
 
 #include "types.hpp"
@@ -136,70 +137,17 @@ EigRowVec<Index> IndexGenerator::elems_from_edges(
     ConstEigRef<EigRowVec<Index>> edges
     )
 {
-    std::set<Index> unique_elems;
+    std::vector<Index> unique_elems;
+    unique_elems.reserve(edges.size() * 2);
 
     for (Index ii = 0; ii < edges.size(); ++ii)
         for (uint8_t iip = 0; iip < 2; ++iip)
-            unique_elems.insert(mesh.edge_elems()(iip, edges[ii]));
+            unique_elems.push_back(mesh.edge_elems()(iip, edges[ii]));
 
-    EigRowVec<Index> elems (1, unique_elems.size());
-    for (auto it = unique_elems.begin(); it != unique_elems.end(); ++it)
-    {
-        Index idx = std::distance(unique_elems.begin(), it);
-        elems[idx] = *it;
-    }
+    std::sort(unique_elems.begin(), unique_elems.end());
+    unique_elems.erase(std::unique(unique_elems.begin(), unique_elems.end()), unique_elems.end());
 
-    return elems;
+    return Eigen::Map<const EigRowVec<Index>> (unique_elems.data(), unique_elems.size());
 }
 
-
-
-
-
-
-
-
-EigMatNX<Index, 2> IndexGenerator::elem_pairs_from_edges(
-    const TriangleMesh<3>& mesh,
-    ConstEigRef<EigRowVec<Index>> obs_edges,
-    ConstEigRef<EigRowVec<Index>> src_edges
-    )
-{
-    EigRowVec<Index> obs_elems = elems_from_edges(mesh, obs_edges);
-    EigRowVec<Index> src_elems = elems_from_edges(mesh, src_edges);
-    return elem_pairs(obs_elems, src_elems);
-};
-
-
-EigMatNX<Index, 2> IndexGenerator::elem_pairs_from_edges(
-    const TriangleMesh<3>& mesh,
-    ConstEigRef<EigRowVec<Index>> edges
-    )
-{
-    return elem_pairs_from_edges(mesh, edges, edges);
-};
-
-
-EigMatNX<Index, 2> IndexGenerator::elem_pairs_from_elems_edges(
-    const TriangleMesh<3>& mesh,
-    ConstEigRef<EigRowVec<Index>> obs_elems,
-    ConstEigRef<EigRowVec<Index>> src_edges
-    )
-{
-    EigRowVec<Index> src_elems = elems_from_edges(mesh, src_edges);
-    return elem_pairs(obs_elems, src_elems);
-};
-
-
-EigMatNX<Index, 2> IndexGenerator::elem_pairs_from_edges_elems(
-    const TriangleMesh<3>& mesh,
-    ConstEigRef<EigRowVec<Index>> obs_edges,
-    ConstEigRef<EigRowVec<Index>> src_elems
-    )
-{
-    EigRowVec<Index> obs_elems = elems_from_edges(mesh, obs_edges);
-    return elem_pairs(obs_elems, src_elems);
-};
-
 }
-
