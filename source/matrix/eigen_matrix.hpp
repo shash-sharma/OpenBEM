@@ -1352,8 +1352,6 @@ public:
     };
 
 
-protected:
-
     /**
     * @brief Dispatches a callable object to the appropriate concrete matrix type based on the
     * dynamic type of a `MatrixBase` read-only reference.
@@ -1456,6 +1454,8 @@ protected:
         }
     }
 
+
+protected:
 
     /**
     * @brief Runs an iterative solver based on the given solver and matrix definitions.
@@ -1606,9 +1606,9 @@ protected:
     bool schur_factorized_ = false;
     MatrixStructure schur_pattern_ = MatrixStructure::NONE;
     std::vector<EigenMatrix<T, type, storage_order>> A_inv_schur_;
-    std::shared_ptr<EigenMatrix<T, type, storage_order>> B_schur_;
-    std::shared_ptr<EigenMatrix<T, type, storage_order>> C_schur_;
-    std::shared_ptr<EigenMatrix<T, type, storage_order>> S_schur_;
+    std::shared_ptr<EigenMatrix<T, type, storage_order>> B_schur_ = nullptr;
+    std::shared_ptr<EigenMatrix<T, type, storage_order>> C_schur_ = nullptr;
+    std::shared_ptr<EigenMatrix<T, type, storage_order>> S_schur_ = nullptr;
 
 };
 
