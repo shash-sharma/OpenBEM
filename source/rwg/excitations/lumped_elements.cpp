@@ -26,7 +26,7 @@
 #include "geometry/operations.hpp"
 #include "geometry/structure.hpp"
 #include "geometry/primitives/triangle.hpp"
-#include "geometry/mesh/base.hpp"
+#include "geometry/mesh/triangle_mesh_view.hpp"
 #include "geometry/mesh/triangle_mesh.hpp"
 
 #include "matrix/base.hpp"
@@ -36,51 +36,51 @@
 namespace bem::rwg
 {
 
-Index LumpedElement::num_port_elems() const
+Index LumpedElement::num_port_faces() const
 {
-    Index num_elems = 0;
+    Index num_faces = 0;
     for (Index ii = 0; ii < num_ports(); ++ii)
         for (Index term: ports()[ii])
-            num_elems += terminals()[term].elem_inds().size();
-    return num_elems;
+            num_faces += terminals()[term].face_inds().size();
+    return num_faces;
 }
 
 
-Index LumpedElement::num_port_elems(Index idx) const
+Index LumpedElement::num_port_faces(Index idx) const
 {
-    Index num_elems = 0;
+    Index num_faces = 0;
     for (Index term: ports()[idx])
-        num_elems += terminals()[term].elem_inds().size();
-    return num_elems;
+        num_faces += terminals()[term].face_inds().size();
+    return num_faces;
 }
 
 
-MeshView<TriangleMesh<3>> LumpedElement::port_mesh_view() const
+TriangleMeshView<3> LumpedElement::port_mesh_view() const
 {
-    EigRowVec<Index> elem_inds = EigRowVec<Index>::Zero(1, num_port_elems());
+    EigRowVec<Index> face_inds = EigRowVec<Index>::Zero(1, num_port_faces());
     Index col = 0;
     for (Index ii = 0; ii < num_ports(); ++ii)
     {
         for (Index term: ports()[ii])
         {
-            elem_inds.middleCols(col, terminals()[term].elem_inds().size()) = terminals()[term].elem_inds();
-            col += terminals()[term].elem_inds().size();
+            face_inds.middleCols(col, terminals()[term].face_inds().size()) = terminals()[term].face_inds();
+            col += terminals()[term].face_inds().size();
         }
     }
-    return MeshView<TriangleMesh<3>> (structure_.mesh(), elem_inds, "port_mesh");
+    return TriangleMeshView<3> (structure_.mesh(), face_inds, "port_mesh");
 }
 
 
-MeshView<TriangleMesh<3>> LumpedElement::port_mesh_view(Index idx) const
+TriangleMeshView<3> LumpedElement::port_mesh_view(Index idx) const
 {
-    EigRowVec<Index> elem_inds = EigRowVec<Index>::Zero(1, num_port_elems(idx));
+    EigRowVec<Index> face_inds = EigRowVec<Index>::Zero(1, num_port_faces(idx));
     Index col = 0;
     for (Index term: ports()[idx])
     {
-        elem_inds.middleCols(col, terminals()[term].elem_inds().size()) = terminals()[term].elem_inds();
-        col += terminals()[term].elem_inds().size();
+        face_inds.middleCols(col, terminals()[term].face_inds().size()) = terminals()[term].face_inds();
+        col += terminals()[term].face_inds().size();
     }
-    return MeshView<TriangleMesh<3>> (structure_.mesh(), elem_inds, "port_mesh");
+    return TriangleMeshView<3> (structure_.mesh(), face_inds, "port_mesh");
 }
 
 
@@ -94,7 +94,7 @@ void LumpedElement::get_exc_matrix(MatrixBase<Complex>& mat, const Float f) cons
 
 void LumpedElement::get_current_mapping_matrix(MatrixBase<Complex>& mat) const
 {
-    mat.resize(num_port_elems(), num_ports());
+    mat.resize(num_port_faces(), num_ports());
 
     Index row = 0;
     for (Index ii = 0; ii < num_ports(); ++ii)
@@ -104,10 +104,10 @@ void LumpedElement::get_current_mapping_matrix(MatrixBase<Complex>& mat) const
         {
             Float term_area = terminal_area(terminals()[term]);
 
-            for (Index jj = 0; jj < terminals()[term].elem_inds().size(); ++jj)
+            for (Index jj = 0; jj < terminals()[term].face_inds().size(); ++jj)
             {
-                Index elem = terminals()[term].elem_inds()[jj];
-                mat.set_value(row++, ii, sign * structure_.mesh().elem_primitive(elem).area() / term_area);
+                Index face = terminals()[term].face_inds()[jj];
+                mat.set_value(row++, ii, sign * structure_.mesh().face_primitive(face).area() / term_area);
             }
 
             sign *= -one;
@@ -122,7 +122,7 @@ void LumpedElement::get_current_mapping_matrix(MatrixBase<Complex>& mat) const
 
 void LumpedElement::get_voltage_mapping_matrix(MatrixBase<Complex>& mat) const
 {
-    mat.resize(num_ports(), num_port_elems());
+    mat.resize(num_ports(), num_port_faces());
 
     Index col = 0;
     for (Index ii = 0; ii < num_ports(); ++ii)
@@ -132,10 +132,10 @@ void LumpedElement::get_voltage_mapping_matrix(MatrixBase<Complex>& mat) const
         {
             Float term_area = terminal_area(terminals()[term]);
 
-            for (Index jj = 0; jj < terminals()[term].elem_inds().size(); ++jj)
+            for (Index jj = 0; jj < terminals()[term].face_inds().size(); ++jj)
             {
-                Index elem = terminals()[term].elem_inds()[jj];
-                mat.set_value(ii, col++, sign * structure_.mesh().elem_primitive(elem).area() / term_area);
+                Index face = terminals()[term].face_inds()[jj];
+                mat.set_value(ii, col++, sign * structure_.mesh().face_primitive(face).area() / term_area);
             }
 
             sign *= -one;
@@ -160,12 +160,12 @@ void LumpedElement::get_impedance_mapping_matrix(MatrixBase<Complex>& mat) const
 
 void LumpedElement::get_terminal_mapping_matrix(MatrixBase<Complex>& mat) const
 {
-    MeshView<TriangleMesh<3>> view = port_mesh_view();
+    TriangleMeshView<3> view = port_mesh_view();
 
-    mat.resize(structure_.mesh().num_elems(), view.elem_inds().size());
+    mat.resize(structure_.mesh().num_faces(), view.face_inds().size());
 
-    for (Index ii = 0; ii < view.elem_inds().size(); ++ii)
-        mat.set_value(view.elem_inds()[ii], ii, one);
+    for (Index ii = 0; ii < view.face_inds().size(); ++ii)
+        mat.set_value(view.face_inds()[ii], ii, one);
     mat.assemble();
 
     return;
@@ -189,11 +189,11 @@ void LumpedElement::get_port_mapping_matrix(MatrixBase<Complex>& mat) const
 };
 
 
-Float LumpedElement::terminal_area(const MeshView<TriangleMesh<3>>& terminal) const
+Float LumpedElement::terminal_area(const TriangleMeshView<3>& terminal) const
 {
     Float area = 0;
-    for (const Index elem: terminal.elem_inds())
-        area += structure_.mesh().elem_primitive(elem).area();
+    for (const Index face: terminal.face_inds())
+        area += structure_.mesh().face_primitive(face).area();
     return area;
 };
 
@@ -215,7 +215,7 @@ void LumpedElement::check_impedances()
 
 void LumpedElement::set_terminals_from_polygons(
     const std::vector<EigMatNX<Float, 3>>& terminal_polygons,
-    const bool single_element
+    const bool single_face
     )
 {
     terminals_.clear();
@@ -224,16 +224,16 @@ void LumpedElement::set_terminals_from_polygons(
     // Find all mesh triangles whose centroid lies within the terminal polygon
     for (Index ii = 0; ii < terminal_polygons.size(); ++ii)
     {
-        std::vector<Index> term_elems;
+        std::vector<Index> term_faces;
 
         for (Index jj = 0; jj < structure_.components().size(); ++jj)
         {
             // TODO: for efficiency, first check if the polygon is in the component's bounding box
 
-            for (Index kk = 0; kk < structure_.components()[jj].mesh_view().elem_inds().size(); ++kk)
+            for (Index kk = 0; kk < structure_.components()[jj].mesh_view().face_inds().size(); ++kk)
             {
-                Triangle<3> tri = structure_.mesh().elem_primitive(
-                    structure_.components()[jj].mesh_view().elem_inds()[kk]
+                Triangle<3> tri = structure_.mesh().face_primitive(
+                    structure_.components()[jj].mesh_view().face_inds()[kk]
                     );
 
                 Triangle<3> poly_tri (terminal_polygons[ii].leftCols(3));
@@ -244,46 +244,46 @@ void LumpedElement::set_terminals_from_polygons(
                 if (!GeometryOps<3>::point_in_polygon(tri.centroid(), terminal_polygons[ii]))
                     continue;
 
-                term_elems.push_back(structure_.components()[jj].mesh_view().elem_inds()[kk]);
+                term_faces.push_back(structure_.components()[jj].mesh_view().face_inds()[kk]);
                 terminal_components_[ii].push_back(jj);
             }
         }
 
-        if (term_elems.size() == 0)
+        if (term_faces.size() == 0)
             throw std::runtime_error(
                 "LumpedElement::set_terminals_from_polygons(): No mesh triangles found for terminal " + std::to_string(ii)
                 );
 
         // Keep only the mesh triangle closest to the terminal polygon centroid
-        if (single_element)
+        if (single_face)
         {
             Float offset = 1e30;
-            Index term_elem = 0;
+            Index term_face = 0;
             EigColVecN<Float, 3> term_centroid =
                 terminal_polygons[ii].rowwise().sum() / terminal_polygons[ii].cols();
 
-            for (Index jj = 0; jj < term_elems.size(); ++jj)
+            for (Index jj = 0; jj < term_faces.size(); ++jj)
             {
                 Float dist = (
-                    structure_.mesh().elem_primitive(term_elems[jj]).centroid() - term_centroid
+                    structure_.mesh().face_primitive(term_faces[jj]).centroid() - term_centroid
                     ).norm();
 
                 if (dist < offset)
                 {
                     offset = dist;
-                    term_elem = jj;
+                    term_face = jj;
                 }
             }
-            term_elems = { term_elems[term_elem] };
-            terminal_components_[ii] = { terminal_components_[ii][term_elem] };
+            term_faces = { term_faces[term_face] };
+            terminal_components_[ii] = { terminal_components_[ii][term_face] };
         }
 
         std::sort(terminal_components_[ii].begin(), terminal_components_[ii].end());
         auto iter = std::unique(terminal_components_[ii].begin(), terminal_components_[ii].end());
         terminal_components_[ii].erase(iter, terminal_components_[ii].end());
 
-        EigRowVec<Index> elem_inds = Eigen::Map<EigRowVec<Index>, Eigen::Unaligned> (term_elems.data(), term_elems.size());
-        MeshView<TriangleMesh<3>> view (structure_.mesh(), elem_inds, "terminal_" + std::to_string(ii));
+        EigRowVec<Index> face_inds = Eigen::Map<EigRowVec<Index>, Eigen::Unaligned> (term_faces.data(), term_faces.size());
+        TriangleMeshView<3> view (structure_.mesh(), face_inds, "terminal_" + std::to_string(ii));
         terminals_.push_back(view);
     }
 

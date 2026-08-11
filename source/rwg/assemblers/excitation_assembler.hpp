@@ -52,19 +52,19 @@ class ExcitationAssembler: public ExcitationAssemblerBase
 public:
 
     /**
-    * @brief Constructs an `ExcitationAssembler` for a given mesh on given test elements.
+    * @brief Constructs an `ExcitationAssembler` for a given mesh on given test faces.
     * @param[in] mesh - Triangle mesh for which the excitation matrix is to be assembled.
-    * @param[in] elems - Triangle index pairs on which to test the incident field.
+    * @param[in] faces - Triangle index pairs on which to test the incident field.
     */
     ExcitationAssembler(
         const TriangleMesh<3>& mesh,
-        EigRowVec<Index> elems = EigRowVec<Index>::Zero(1, 0)
+        EigRowVec<Index> faces = EigRowVec<Index>::Zero(1, 0)
         ):
         mesh_(mesh),
-        elems_(elems)
+        faces_(faces)
     {
-        if (elems_.cols() == 0)
-            elems_ = EigRowVec<Index>::LinSpaced(mesh_.num_elems(), 0, mesh_.num_elems() - 1);
+        if (faces_.cols() == 0)
+            faces_ = EigRowVec<Index>::LinSpaced(mesh_.num_faces(), 0, mesh_.num_faces() - 1);
         return;
     };
 
@@ -86,7 +86,7 @@ public:
 protected:
 
     const TriangleMesh<3>& mesh_;
-    EigRowVec<Index> elems_;
+    EigRowVec<Index> faces_;
 
 };
 

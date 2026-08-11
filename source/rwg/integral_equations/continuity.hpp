@@ -80,7 +80,7 @@ public:
         const Material& material
         )
     {
-        MatrixType I (base::obs_mesh_.num_elems(), base::src_mesh_.num_elems());
+        MatrixType I (base::obs_mesh_.num_faces(), base::src_mesh_.num_faces());
         I.set_identity();
         I.scale(J * two_pi * f);
         return I;
@@ -89,7 +89,7 @@ public:
 
 protected:
 
-    OperatorAssembler assembler_ = OperatorAssembler (base::obs_mesh_, base::src_mesh_, base::elem_pairs_);
+    OperatorAssembler assembler_ = OperatorAssembler (base::obs_mesh_, base::src_mesh_, base::face_pairs_);
 
 };
 

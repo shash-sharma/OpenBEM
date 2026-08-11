@@ -59,17 +59,17 @@ public:
     * @brief Constructs a `Triangle` with given vertices.
     * @param[in] v - Vertices of the triangle.
     * @param[in] edge_polarities - Polarity of each edge of the triangle (optional).
-    * @param[in] comp_tag - Tag of the component the triangle belongs to (optional).
-    * @param[in] elem_tag - Index of the mesh element the triangle represents (optional).
+    * @param[in] tag - Tag of the component the triangle belongs to (optional).
+    * @param[in] idx - Index of the mesh face the triangle represents (optional).
     */
     Triangle(
         ConstEigRef<EigMatMN<Float, dim, 3>> v,
         EigRowVecN<Float, 3> edge_polarities = EigRowVecN<Float, 3>::Constant(1, 3, 1),
-        const Index comp_tag = 0,
-        const Index elem_tag = 0
+        const Index tag = 0,
+        const Index idx = 0
         )
     {
-        set_data(v, edge_polarities, comp_tag, elem_tag);
+        set_data(v, edge_polarities, tag, idx);
         return;
     };
 
@@ -78,20 +78,20 @@ public:
     * @brief Constructs a `Triangle` with given vertices.
     * @param[in] v_array - Array of vertices of the triangle.
     * @param[in] edge_polarities - Polarity of each edge of the triangle (optional).
-    * @param[in] comp_tag - Tag of the component the triangle belongs to (optional).
-    * @param[in] elem_tag - Index of the mesh element the triangle represents (optional).
+    * @param[in] tag - Tag of the component the triangle belongs to (optional).
+    * @param[in] idx - Index of the mesh face the triangle represents (optional).
     */
     Triangle(
         std::array<EigColVecN<Float, dim>, 3> v_array,
         EigRowVecN<Float, 3> edge_polarities = EigRowVecN<Float, 3>::Constant(1, 3, 1),
-        const Index comp_tag = 0,
-        const Index elem_tag = 0
+        const Index tag = 0,
+        const Index idx = 0
         )
     {
         EigMatMN<Float, dim, 3> v;
         for (uint8_t ii = 0; ii < 3; ++ii)
             v.col(ii) = v_array[ii];
-        set_data(v, edge_polarities, comp_tag, elem_tag);
+        set_data(v, edge_polarities, tag, idx);
         return;
     };
 
@@ -100,14 +100,14 @@ public:
     * @brief Sets the vertices of this `Triangle`.
     * @param[in] v - Vertices of the triangle.
     * @param[in] edge_polarities - Polarity of each edge of the triangle (optional).
-    * @param[in] comp_tag - Tag of the component the triangle belongs to (optional).
-    * @param[in] elem_tag - Index of the mesh element the triangle represents (optional).
+    * @param[in] tag - Tag of the component the triangle belongs to (optional).
+    * @param[in] idx - Index of the mesh face the triangle represents (optional).
     */
     void set_data(
         ConstEigRef<EigMatMN<Float, dim, 3>> v,
         EigRowVecN<Float, 3> edge_polarities = EigRowVecN<Float, 3>::Constant(1, 3, 1),
-        const Index comp_tag = 0,
-        const Index elem_tag = 0
+        const Index tag = 0,
+        const Index idx = 0
         );
 
 
@@ -161,19 +161,19 @@ public:
     * @brief Returns the tag of the component that this `Triangle` belongs to.
     * @return Component tag.
     */
-    Index comp_tag() const
+    Index tag() const
     {
-        return comp_tag_;
+        return tag_;
     };
 
 
     /**
-    * @brief Returns the index of the mesh element that this `Triangle` represents.
-    * @return Element index.
+    * @brief Returns the index of the mesh face that this `Triangle` represents.
+    * @return Face index.
     */
-    Index elem_tag() const
+    Index idx() const
     {
-        return elem_tag_;
+        return idx_;
     };
 
 
@@ -182,7 +182,7 @@ public:
     */
     void reverse()
     {
-        set_data(v_.rowwise().reverse(), edge_polarities_.reverse(), comp_tag_, elem_tag_);
+        set_data(v_.rowwise().reverse(), edge_polarities_.reverse(), tag_, idx_);
         return;
     };
 
@@ -439,8 +439,8 @@ protected:
     EigColVecN<Float, 3> normal_;
     EigColVecN<Float, dim> centroid_;
     EigRowVecN<Float, 3> edge_polarities_ = EigRowVecN<Float, 3>::Constant(1, 3, 1);
-    Index comp_tag_ = 0;
-    Index elem_tag_ = 0;
+    Index tag_ = 0;
+    Index idx_ = 0;
 
 };
 

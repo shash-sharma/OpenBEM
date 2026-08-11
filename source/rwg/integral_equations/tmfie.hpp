@@ -156,14 +156,14 @@ public:
         ExcitationBase& exc
         )
     {
-        std::vector<Index> obs_elems_vec (base::elem_pairs_.cols());
-        EigRowVec<Index>::Map(&obs_elems_vec[0], base::elem_pairs_.row(0).size()) = base::elem_pairs_.row(0);
+        std::vector<Index> obs_faces_vec (base::face_pairs_.cols());
+        EigRowVec<Index>::Map(&obs_faces_vec[0], base::face_pairs_.row(0).size()) = base::face_pairs_.row(0);
 
-        std::sort(obs_elems_vec.begin(), obs_elems_vec.end());
-        obs_elems_vec.erase(std::unique(obs_elems_vec.begin(), obs_elems_vec.end()), obs_elems_vec.end());
+        std::sort(obs_faces_vec.begin(), obs_faces_vec.end());
+        obs_faces_vec.erase(std::unique(obs_faces_vec.begin(), obs_faces_vec.end()), obs_faces_vec.end());
 
-        EigRowVec<Index> obs_elems = EigRowVec<Index>::Map(&obs_elems_vec[0], obs_elems_vec.size());
-        ExcitationAssembler exc_assembler (base::obs_mesh_, obs_elems);
+        EigRowVec<Index> obs_faces = EigRowVec<Index>::Map(&obs_faces_vec[0], obs_faces_vec.size());
+        ExcitationAssembler exc_assembler (base::obs_mesh_, obs_faces);
 
         Complex k = material.k(f);
         MatrixType inc (base::obs_mesh_.num_edges(), exc.num_excitations());
@@ -233,7 +233,7 @@ protected:
     VectorHypersingularProj proj_T_;
     VectorDoubleLayerProj proj_K_;
 
-    OperatorAssembler assembler_ = OperatorAssembler (base::obs_mesh_, base::src_mesh_, base::elem_pairs_);
+    OperatorAssembler assembler_ = OperatorAssembler (base::obs_mesh_, base::src_mesh_, base::face_pairs_);
 
 };
 

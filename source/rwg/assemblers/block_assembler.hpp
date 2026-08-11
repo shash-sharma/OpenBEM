@@ -31,10 +31,10 @@ namespace bem::rwg
 */
 
 /**
-* @brief Hash for a pair of element indices, used to key `BlockAssembler`'s per-element-pair
+* @brief Hash for a pair of face indices, used to key `BlockAssembler`'s per-face-pair
 * integration cache.
 */
-struct ElemPairHash
+struct FacePairHash
 {
     std::size_t operator()(const std::pair<Index, Index>& p) const noexcept
     {
@@ -79,8 +79,8 @@ public:
         for (Index ii = 0; ii < index_set_.num_cols(); ++ii)
             col_map_.insert({ index_set_.cols()[ii], ii });
 
-        row_elems_from_edges_ = IndexGenerator::elems_from_edges(mesh_, index_set_.rows());
-        col_elems_from_edges_ = IndexGenerator::elems_from_edges(mesh_, index_set_.cols());
+        row_faces_from_edges_ = IndexGenerator::faces_from_edges(mesh_, index_set_.rows());
+        col_faces_from_edges_ = IndexGenerator::faces_from_edges(mesh_, index_set_.cols());
 
         return;
     };
@@ -129,15 +129,15 @@ protected:
 
 
     /**
-    * @brief Computes element pairs from `obs_elems` and `src_elems`, evaluates `op` for each,
+    * @brief Computes face pairs from `obs_faces` and `src_faces`, evaluates `op` for each,
     * and places results in `mat` (`out_rows x out_cols`) via `active_row_map`, `active_col_map`.
     */
-    void assemble_from_elems(
+    void assemble_from_faces(
         MatrixBase<Complex>& mat,
         const OperatorBase& op,
         const Complex k,
-        ConstEigRef<EigRowVec<Index>> obs_elems,
-        ConstEigRef<EigRowVec<Index>> src_elems,
+        ConstEigRef<EigRowVec<Index>> obs_faces,
+        ConstEigRef<EigRowVec<Index>> src_faces,
         const std::unordered_map<Index, Index>& active_row_map,
         const std::unordered_map<Index, Index>& active_col_map,
         const Index out_rows,
@@ -149,7 +149,7 @@ protected:
     * @brief Fills operator values in the matrix.
     * @param[out] mat - Matrix to store the assembled operator coefficients.
     * @param[in] op - Operator object that computes the coefficients to be assembled into `mat`.
-    * @param[in] elem_pair - Observation (first entry) and source (second entry) triangle index pair.
+    * @param[in] face_pair - Observation (first entry) and source (second entry) triangle index pair.
     * @param[in] values - Operator values for each pair of observation and source degrees of freedom.
     * @param[in] active_row_map - Map from global observation indices to local row indices in `mat`.
     * @param[in] active_col_map - Map from global source indices to local column indices in `mat`.
@@ -157,7 +157,7 @@ protected:
     void fill_matrix(
         MatrixBase<Complex>& mat,
         const OperatorBase& op,
-        ConstEigRef<EigColVecN<Index, 2>> elem_pair,
+        ConstEigRef<EigColVecN<Index, 2>> face_pair,
         ConstEigRef<EigMat<Complex>> values,
         const std::unordered_map<Index, Index>& active_row_map,
         const std::unordered_map<Index, Index>& active_col_map
@@ -169,11 +169,11 @@ protected:
     std::unordered_map<Index, Index> row_map_;
     std::unordered_map<Index, Index> col_map_;
 
-    EigRowVec<Index> row_elems_from_edges_;
-    EigRowVec<Index> col_elems_from_edges_;
+    EigRowVec<Index> row_faces_from_edges_;
+    EigRowVec<Index> col_faces_from_edges_;
 
     const bool use_integration_cache_ = true;
-    std::unordered_map<std::pair<Index, Index>, EigMat<Complex>, ElemPairHash> integration_cache_;
+    std::unordered_map<std::pair<Index, Index>, EigMat<Complex>, FacePairHash> integration_cache_;
     const OperatorBase* integration_cache_op_ = nullptr;
     Complex integration_cache_k_ = 0;
     std::mutex integration_cache_mutex_;

@@ -36,17 +36,17 @@ void OperatorAssembler::assemble(
     prep_matrix(mat, op);
 
 #pragma omp parallel for
-    for (Index ii = 0; ii < elem_pairs_.cols(); ++ii)
+    for (Index ii = 0; ii < face_pairs_.cols(); ++ii)
     {
-        Triangle<3> obs_tri = obs_mesh_.elem_primitive(elem_pairs_(0, ii));
-        Triangle<3> src_tri = src_mesh_.elem_primitive(elem_pairs_(1, ii));
+        Triangle<3> obs_tri = obs_mesh_.face_primitive(face_pairs_(0, ii));
+        Triangle<3> src_tri = src_mesh_.face_primitive(face_pairs_(1, ii));
 
         EigMat<Complex> values = op.compute(
             k, obs_tri, src_tri
             );
 
 #pragma omp critical
-        fill_matrix(mat, op, elem_pairs_.col(ii), values);
+        fill_matrix(mat, op, face_pairs_.col(ii), values);
     }
 
     mat.assemble();
@@ -80,10 +80,10 @@ void OperatorAssembler::assemble(
         prep_matrix(*mats[ii], *ops[ii]);
 
 #pragma omp parallel for
-    for (Index ii = 0; ii < elem_pairs_.cols(); ++ii)
+    for (Index ii = 0; ii < face_pairs_.cols(); ++ii)
     {
-        Triangle<3> obs_tri = obs_mesh_.elem_primitive(elem_pairs_(0, ii));
-        Triangle<3> src_tri = src_mesh_.elem_primitive(elem_pairs_(1, ii));
+        Triangle<3> obs_tri = obs_mesh_.face_primitive(face_pairs_(0, ii));
+        Triangle<3> src_tri = src_mesh_.face_primitive(face_pairs_(1, ii));
 
         Triangle<3> obs_tri_local;
         Triangle<2> src_tri_local;
@@ -100,7 +100,7 @@ void OperatorAssembler::assemble(
                 );
 
 #pragma omp critical
-            fill_matrix(*mats[jj], *ops[jj], elem_pairs_.col(ii), values);
+            fill_matrix(*mats[jj], *ops[jj], face_pairs_.col(ii), values);
         }
     }
 
@@ -121,25 +121,25 @@ void OperatorAssembler::prep_matrix(
     if (op.obs_dof() == OperatorDof::EDGE && op.src_dof() == OperatorDof::EDGE)
     {
         mat.resize(obs_mesh_.num_edges(), src_mesh_.num_edges());
-        mat.preallocate(elem_pairs_.cols() * EDGE_ELEM_RATIO * EDGE_ELEM_RATIO);
+        mat.preallocate(face_pairs_.cols() * EDGE_ELEM_RATIO * EDGE_ELEM_RATIO);
     }
 
     else if (op.obs_dof() == OperatorDof::FACE && op.src_dof() == OperatorDof::EDGE)
     {
-        mat.resize(obs_mesh_.num_elems(), src_mesh_.num_edges());
-        mat.preallocate(elem_pairs_.cols() * EDGE_ELEM_RATIO);
+        mat.resize(obs_mesh_.num_faces(), src_mesh_.num_edges());
+        mat.preallocate(face_pairs_.cols() * EDGE_ELEM_RATIO);
     }
 
     else if (op.obs_dof() == OperatorDof::EDGE && op.src_dof() == OperatorDof::FACE)
     {
-        mat.resize(obs_mesh_.num_edges(), src_mesh_.num_elems());
-        mat.preallocate(elem_pairs_.cols() * EDGE_ELEM_RATIO);
+        mat.resize(obs_mesh_.num_edges(), src_mesh_.num_faces());
+        mat.preallocate(face_pairs_.cols() * EDGE_ELEM_RATIO);
     }
 
     else if (op.obs_dof() == OperatorDof::FACE && op.src_dof() == OperatorDof::FACE)
     {
-        mat.resize(obs_mesh_.num_elems(), src_mesh_.num_elems());
-        mat.preallocate(elem_pairs_.cols());
+        mat.resize(obs_mesh_.num_faces(), src_mesh_.num_faces());
+        mat.preallocate(face_pairs_.cols());
     }
 
     return;
@@ -150,7 +150,7 @@ void OperatorAssembler::prep_matrix(
 void OperatorAssembler::fill_matrix(
     MatrixBase<Complex>& mat,
     const OperatorBase& op,
-    ConstEigRef<EigColVecN<Index, 2>> elem_pair,
+    ConstEigRef<EigColVecN<Index, 2>> face_pair,
     ConstEigRef<EigMat<Complex>> values
     )
 {
@@ -159,10 +159,10 @@ void OperatorAssembler::fill_matrix(
     {
         for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
         {
-            Index col = src_mesh_.elem_edges()(src_edge, elem_pair[1]);
+            Index col = src_mesh_.face_edges()(src_edge, face_pair[1]);
             for (uint8_t obs_edge = 0; obs_edge < 3; ++obs_edge)
             {
-                Index row = obs_mesh_.elem_edges()(obs_edge, elem_pair[0]);
+                Index row = obs_mesh_.face_edges()(obs_edge, face_pair[0]);
                 mat.add_value(row, col, values(obs_edge, src_edge));
             }
         }
@@ -170,27 +170,27 @@ void OperatorAssembler::fill_matrix(
 
     else if (op.obs_dof() == OperatorDof::FACE && op.src_dof() == OperatorDof::EDGE)
     {
-        Index row = elem_pair[0];
+        Index row = face_pair[0];
         for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
         {
-            Index col = src_mesh_.elem_edges()(src_edge, elem_pair[1]);
+            Index col = src_mesh_.face_edges()(src_edge, face_pair[1]);
             mat.add_value(row, col, values(0, src_edge));
         }
     }
 
     else if (op.obs_dof() == OperatorDof::EDGE && op.src_dof() == OperatorDof::FACE)
     {
-        Index col = elem_pair[1];
+        Index col = face_pair[1];
         for (uint8_t obs_edge = 0; obs_edge < 3; ++obs_edge)
         {
-            Index row = obs_mesh_.elem_edges()(obs_edge, elem_pair[0]);
+            Index row = obs_mesh_.face_edges()(obs_edge, face_pair[0]);
             mat.add_value(row, col, values(obs_edge, 0));
         }
     }
 
     else if (op.obs_dof() == OperatorDof::FACE && op.src_dof() == OperatorDof::FACE)
     {
-        mat.set_value(elem_pair[0], elem_pair[1], values(0, 0));
+        mat.set_value(face_pair[0], face_pair[1], values(0, 0));
     }
 
     return;

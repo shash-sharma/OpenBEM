@@ -1431,7 +1431,7 @@ public:
 
 
     /**
-    * @brief Converts a given Eigen expression to a target matrix type (dense or sparse).
+    * @brief Convertices a given Eigen expression to a target matrix type (dense or sparse).
     * @tparam Target - Target matrix type to convert to (DenseMatrixType or SparseMatrixType).
     * @tparam Expr - Type of the Eigen expression to convert.
     * @param[in] expr - Eigen expression to convert.

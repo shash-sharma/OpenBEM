@@ -27,7 +27,7 @@
 #include "geometry/operations.hpp"
 #include "geometry/structure.hpp"
 #include "geometry/primitives/triangle.hpp"
-#include "geometry/mesh/base.hpp"
+#include "geometry/mesh/triangle_mesh_view.hpp"
 #include "geometry/mesh/triangle_mesh.hpp"
 
 #include "matrix/base.hpp"
@@ -58,8 +58,8 @@ public:
     * @param[in] impedances - Impedance of each lumped element.
     */
     LumpedElement(
-        const Structure<TriangleMesh<3>>& structure,
-        const std::vector<MeshView<TriangleMesh<3>>>& terminals,
+        const Structure<3>& structure,
+        const std::vector<TriangleMeshView<3>>& terminals,
         const std::vector<std::vector<Index>>& terminal_components,
         const std::vector<std::array<Index, 2>>& ports,
         const std::vector<Complex>& impedances
@@ -81,14 +81,14 @@ public:
     * @param[in] terminal_polygons - Vertices defining terminal polygons on the `mesh`.
     * @param[in] ports - List of index pairs into `terminals` that define each port.
     * @param[in] impedances - Impedance of each lumped element.
-    * @param[in] single_element - If true, only the mesh element closest to the terminal polygon centroid is kept (optional).
+    * @param[in] single_face - If true, only the mesh element closest to the terminal polygon centroid is kept (optional).
     */
     LumpedElement(
-        const Structure<TriangleMesh<3>>& structure,
+        const Structure<3>& structure,
         const std::vector<EigMatNX<Float, 3>>& terminal_polygons,
         const std::vector<std::array<Index, 2>>& ports,
         const std::vector<Complex>& impedances,
-        const bool single_element = false
+        const bool single_face = false
         ):
             structure_(structure),
             terminal_polygons_(terminal_polygons),
@@ -96,7 +96,7 @@ public:
             impedances_(impedances)
     {
         check_impedances();
-        set_terminals_from_polygons(terminal_polygons_, single_element);
+        set_terminals_from_polygons(terminal_polygons_, single_face);
         return;
     };
 
@@ -113,28 +113,28 @@ public:
     * @brief Returns the number of mesh elements associated with ports.
     * @return Number of port mesh elements.
     */
-    Index num_port_elems() const;
+    Index num_port_faces() const;
 
 
     /**
     * @brief Returns the number of mesh elements associated with a given port.
     * @return Number of port mesh elements.
     */
-    Index num_port_elems(Index idx) const;
+    Index num_port_faces(Index idx) const;
 
 
     /**
     * @brief Returns a mesh view consisting of all elements associated with the ports.
     * @return Port mesh view.
     */
-    MeshView<TriangleMesh<3>> port_mesh_view() const;
+    TriangleMeshView<3> port_mesh_view() const;
 
 
     /**
     * @brief Returns a mesh view consisting of all elements associated with a given port.
     * @return Port mesh view.
     */
-    MeshView<TriangleMesh<3>> port_mesh_view(Index idx) const;
+    TriangleMeshView<3> port_mesh_view(Index idx) const;
 
 
     /**
@@ -185,13 +185,13 @@ public:
     * @param[in] terminal - Terminal mesh view.
     * @return Terminal area.
     */
-    Float terminal_area(const MeshView<TriangleMesh<3>>& terminal) const;
+    Float terminal_area(const TriangleMeshView<3>& terminal) const;
 
 
     /**
     * @brief Returns a read-only reference to the terminal mesh views.
     */
-    const std::vector<MeshView<TriangleMesh<3>>>& terminals() const { return terminals_; };
+    const std::vector<TriangleMeshView<3>>& terminals() const { return terminals_; };
 
 
     /**
@@ -229,21 +229,21 @@ protected:
     /**
     * @brief Populates `terminals_` by finding mesh elements inside each terminal polygon.
     * @param[in] terminal_polygons - Terminal polygons.
-    * @param[in] single_element - If true, only the mesh element closest to the terminal polygon centroid is kept (optional).
+    * @param[in] single_face - If true, only the mesh element closest to the terminal polygon centroid is kept (optional).
     * @details
     * A triangle is considered part of a terminal if it is coplanar with the terminal polygon, and
     * its centroid lies on or within the terminal boundary.
     */
     void set_terminals_from_polygons(
         const std::vector<EigMatNX<Float, 3>>& terminal_polygons,
-        const bool single_element = false
+        const bool single_face = false
         );
 
 
-    const Structure<TriangleMesh<3>>& structure_;
+    const Structure<3>& structure_;
     const std::vector<EigMatNX<Float, 3>> terminal_polygons_;
     const std::vector<std::array<Index, 2>> ports_;
-    std::vector<MeshView<TriangleMesh<3>>> terminals_;
+    std::vector<TriangleMeshView<3>> terminals_;
     std::vector<std::vector<Index>> terminal_components_;
     std::vector<Complex> impedances_;
 

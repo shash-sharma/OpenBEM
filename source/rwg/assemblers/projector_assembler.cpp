@@ -39,18 +39,18 @@ void ProjectorAssembler<obs_dim>::assemble(
 
         mat.resize(obs_cloud_.num_points() * obs_dim, mesh_.num_edges());
         mat.preallocate(
-            obs_cloud_.num_points() * obs_dim * elems_.size() * EDGE_ELEM_RATIO
+            obs_cloud_.num_points() * obs_dim * faces_.size() * EDGE_ELEM_RATIO
             );
 
-        for (Index ii = 0; ii < elems_.size(); ++ii)
+        for (Index ii = 0; ii < faces_.size(); ++ii)
         {
-            Triangle<3> src_tri = mesh_.elem_primitive(elems_[ii]);
+            Triangle<3> src_tri = mesh_.face_primitive(faces_[ii]);
 
             EigMatXN<Complex, 3> values = op.compute(k, obs_cloud_.points(), src_tri);
 
             for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
             {
-                Index col = mesh_.elem_edges()(src_edge, elems_[ii]);
+                Index col = mesh_.face_edges()(src_edge, faces_[ii]);
 
                 for (Index obs_point = 0; obs_point < obs_cloud_.num_points(); ++obs_point)
                 {
@@ -68,12 +68,12 @@ void ProjectorAssembler<obs_dim>::assemble(
     else if (op.src_dof() == 1)
     {
 
-        mat.resize(obs_cloud_.num_points() * obs_dim, mesh_.num_elems());
-        mat.preallocate(obs_cloud_.num_points() * obs_dim * elems_.size());
+        mat.resize(obs_cloud_.num_points() * obs_dim, mesh_.num_faces());
+        mat.preallocate(obs_cloud_.num_points() * obs_dim * faces_.size());
 
-        for (Index ii = 0; ii < elems_.size(); ++ii)
+        for (Index ii = 0; ii < faces_.size(); ++ii)
         {
-            Triangle<3> src_tri = mesh_.elem_primitive(elems_[ii]);
+            Triangle<3> src_tri = mesh_.face_primitive(faces_[ii]);
 
             EigMatXN<Complex, 1> values = op.compute(k, obs_cloud_.points(), src_tri);
 
@@ -82,7 +82,7 @@ void ProjectorAssembler<obs_dim>::assemble(
                 for (uint8_t obs_dim_idx = 0; obs_dim_idx < obs_dim; ++obs_dim_idx)
                 {
                     Index row = obs_dim_idx + obs_point * obs_dim;
-                    mat.add_value(row, elems_[ii], values(row, 0));
+                    mat.add_value(row, faces_[ii], values(row, 0));
                 }
             }
         }

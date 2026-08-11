@@ -30,7 +30,7 @@
 #include "geometry/primitives/edge.hpp"
 #include "geometry/primitives/triangle.hpp"
 
-#include "geometry/mesh/base.hpp"
+#include "geometry/mesh/triangle_mesh_view.hpp"
 #include "geometry/mesh/triangle_mesh.hpp"
 #include "geometry/mesh/mesh_transfer.hpp"
 

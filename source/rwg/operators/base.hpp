@@ -112,16 +112,16 @@ public:
                 obs_tri.v(), local_origin, local_uvw
                 ),
             obs_tri.edge_polarities(),
-            obs_tri.comp_tag(),
-            obs_tri.elem_tag()
+            obs_tri.tag(),
+            obs_tri.idx()
         );
         src_tri_local.set_data(
             GeometryOps<3>::transform_coordinate_system(
                 src_tri.v(), local_origin, local_uvw
                 ).topRows(2),
             src_tri.edge_polarities(),
-            src_tri.comp_tag(),
-            src_tri.elem_tag()
+            src_tri.tag(),
+            src_tri.idx()
         );
 
         return;

@@ -107,7 +107,7 @@ protected:
 
 
 /**
-* @brief Class to generate index sets and maps across element types.
+* @brief Class to generate index sets and maps across face types.
 */
 class IndexGenerator
 {
@@ -121,7 +121,7 @@ public:
     * @return All possible triangle index pairs, with observation indices in the first row,
     * and source indices in the second row.
     */
-    static EigMatNX<Index, 2> elem_pairs(
+    static EigMatNX<Index, 2> face_pairs(
         const TriangleMesh<3>& obs_mesh,
         const TriangleMesh<3>& src_mesh
         );
@@ -129,26 +129,26 @@ public:
 
     /**
     * @brief Makes all possible pairs of triangle indices for given observation and source triangle indices.
-    * @param[in] obs_elems - Observation triangle indices.
-    * @param[in] src_elems - Source triangle indices.
+    * @param[in] obs_faces - Observation triangle indices.
+    * @param[in] src_faces - Source triangle indices.
     * @return All possible triangle index pairs, with observation indices in the first row,
     * and source indices in the second row.
     */
-    static EigMatNX<Index, 2> elem_pairs(
-        ConstEigRef<EigRowVec<Index>> obs_elems,
-        ConstEigRef<EigRowVec<Index>> src_elems
+    static EigMatNX<Index, 2> face_pairs(
+        ConstEigRef<EigRowVec<Index>> obs_faces,
+        ConstEigRef<EigRowVec<Index>> src_faces
         );
 
 
     /**
-    * @brief Returns all unique element pairs associated with a given index set.
+    * @brief Returns all unique face pairs associated with a given index set.
     * @param[in] mesh - Triangle mesh.
     * @param[in] index_set - Index set defining degrees of freedom.
     * @param[in] row_dof - Degrees of freedom associated with rows.
     * @param[in] col_dof - Degrees of freedom associated with columns.
     * @return Triangle index pairs.
     */
-    static EigMatNX<Index, 2> elem_pairs(
+    static EigMatNX<Index, 2> face_pairs(
         const TriangleMesh<3>& mesh,
         const IndexSet& index_set,
         const OperatorDof row_dof,
@@ -167,12 +167,12 @@ public:
 
 
     /**
-    * @brief Returns all unique element indices associated with given edge indices.
+    * @brief Returns all unique face indices associated with given edge indices.
     * @param[in] mesh - Triangle mesh.
     * @param[in] edges - Edge indices.
     * @return Triangle indices.
     */
-    static EigRowVec<Index> elems_from_edges(
+    static EigRowVec<Index> faces_from_edges(
         const TriangleMesh<3>& mesh,
         ConstEigRef<EigRowVec<Index>> edges
         );

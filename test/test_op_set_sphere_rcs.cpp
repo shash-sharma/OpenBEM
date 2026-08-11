@@ -60,7 +60,7 @@ void test_cfie_pec()
 
     std::string msh_filename = path + "/msh/sphere.msh";
 
-    Structure<TriangleMesh<3>> structure;
+    Structure<3> structure;
     MeshTransfer::read_gmsh_v2(structure, msh_filename);
     TriangleMesh<3>& mesh = structure.mesh();
 

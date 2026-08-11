@@ -54,20 +54,20 @@ public:
     * @brief Constructs an `OperatorAssembler` for given observation and source meshes.
     * @param[in] obs_mesh - Observation triangle mesh for which the operator matrix is to be assembled.
     * @param[in] src_mesh - Source triangle mesh for which the operator matrix is to be assembled.
-    * @param[in] elem_pairs - Observation (first row) and source (second row) triangle index pairs
+    * @param[in] face_pairs - Observation (first row) and source (second row) triangle index pairs
     * for which the operator matrix is to be assembled (optional).
     */
     OperatorAssembler(
         const TriangleMesh<3>& obs_mesh,
         const TriangleMesh<3>& src_mesh,
-        const EigMatNX<Index, 2> elem_pairs = EigMatNX<Index, 2>::Zero(2, 0)
+        const EigMatNX<Index, 2> face_pairs = EigMatNX<Index, 2>::Zero(2, 0)
         ):
             obs_mesh_(obs_mesh),
             src_mesh_(src_mesh),
-            elem_pairs_(elem_pairs)
+            face_pairs_(face_pairs)
     {
-        if (elem_pairs_.cols() == 0)
-            elem_pairs_ = IndexGenerator::elem_pairs(obs_mesh_, src_mesh_);
+        if (face_pairs_.cols() == 0)
+            face_pairs_ = IndexGenerator::face_pairs(obs_mesh_, src_mesh_);
         return;
     };
 
@@ -75,13 +75,13 @@ public:
     /**
     * @brief Constructs an `OperatorAssembler` for a given mesh.
     * @param[in] mesh - Triangle mesh for which the operator matrix is to be assembled.
-    * @param[in] elem_pairs - Observation (first row) and source (second row) triangle index pairs
+    * @param[in] face_pairs - Observation (first row) and source (second row) triangle index pairs
     * for which the operator matrix is to be assembled (optional).
     */
     OperatorAssembler(
         const TriangleMesh<3>& mesh,
-        const EigMatNX<Index, 2> elem_pairs = EigMatNX<Index, 2>::Zero(2, 0)
-        ): OperatorAssembler(mesh, mesh, elem_pairs) {};
+        const EigMatNX<Index, 2> face_pairs = EigMatNX<Index, 2>::Zero(2, 0)
+        ): OperatorAssembler(mesh, mesh, face_pairs) {};
 
 
     /**
@@ -130,13 +130,13 @@ public:
     * @brief Fills operator values in the matrix.
     * @param[out] mat - Matrix to store the assembled operator coefficients.
     * @param[in] op - Operator object that computes the coefficients to be assembled into `mat`.
-    * @param[in] elem_pair - Observation (first entry) and source (second entry) triangle index pair.
+    * @param[in] face_pair - Observation (first entry) and source (second entry) triangle index pair.
     * @param[in] values - Operator values for each pair of observation and source degrees of freedom.
     */
     void fill_matrix(
         MatrixBase<Complex>& mat,
         const OperatorBase& op,
-        ConstEigRef<EigColVecN<Index, 2>> elem_pair,
+        ConstEigRef<EigColVecN<Index, 2>> face_pair,
         ConstEigRef<EigMat<Complex>> values
         );
 
@@ -145,7 +145,7 @@ protected:
 
     const TriangleMesh<3>& obs_mesh_;
     const TriangleMesh<3>& src_mesh_;
-    EigMatNX<Index, 2> elem_pairs_;
+    EigMatNX<Index, 2> face_pairs_;
 
 };
 

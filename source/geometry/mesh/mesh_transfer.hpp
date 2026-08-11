@@ -27,7 +27,7 @@ namespace bem
 {
 
 // Forward declarations
-template <typename MeshType> class Structure;
+template <uint8_t dim> class Structure;
 template <uint8_t dim> class TriangleMesh;
 
 /**
@@ -51,7 +51,7 @@ public:
      * It is assumed that all physical surfaces are numbered consecutively from 1 onwards.
      */
     static void read_gmsh_v2(
-        Structure<TriangleMesh<3>>& structure,
+        Structure<3>& structure,
         const std::string msh_filename,
         const bool decoupled_edges = false
         );
@@ -64,7 +64,7 @@ public:
      * @param[in] extension - Custom file extension for the output mesh file (optional).
      */
     static void write_gmsh_v2(
-        const Structure<TriangleMesh<3>>& structure,
+        const Structure<3>& structure,
         const std::string msh_filename,
         const std::string extension = "msh"
         );
@@ -77,15 +77,15 @@ public:
      * @param[in] field - Scalar field to superimpose on the mesh.
      * @param[in] field_name - Name for the field (optional).
      * @param[in] field_plot_type - Either "nodes" (one value per mesh vertex, written as `$NodeData`,
-     * which GMSH interpolates across each element for a continuous-looking plot) or "elements" (one
-     * value per mesh element, written as `$ElementData`, discontinuous across element boundaries)
+     * which GMSH interpolates across each face for a continuous-looking plot) or "elements" (one
+     * value per mesh face, written as `$ElementData`, discontinuous across face boundaries)
      * (optional).
      * @details
      * `field` must have one entry per mesh vertex if `field_plot_type` is "nodes", or one entry per
-     * mesh element if "elements".
+     * mesh face if "elements".
      */
     static void write_gmsh_v2_scalar_field(
-        const Structure<TriangleMesh<3>>& structure,
+        const Structure<3>& structure,
         const std::string msh_filename,
         ConstEigRef<EigRowVec<Float>> field,
         std::string field_name = "scalar_field",
@@ -100,15 +100,15 @@ public:
      * @param[in] field - Vector field to superimpose on the mesh.
      * @param[in] field_name - Name for the field (optional).
      * @param[in] field_plot_type - Either "nodes" (one value per mesh vertex, written as `$NodeData`,
-     * which GMSH interpolates across each element for a continuous-looking plot) or "elements" (one
-     * value per mesh element, written as `$ElementData`, discontinuous across element boundaries)
+     * which GMSH interpolates across each face for a continuous-looking plot) or "elements" (one
+     * value per mesh face, written as `$ElementData`, discontinuous across face boundaries)
      * (optional).
      * @details
      * `field` must have one column per mesh vertex if `field_plot_type` is "nodes", or one column per
-     * mesh element if "elements".
+     * mesh face if "elements".
      */
     static void write_gmsh_v2_vector_field(
-        const Structure<TriangleMesh<3>>& structure,
+        const Structure<3>& structure,
         const std::string msh_filename,
         ConstEigRef<EigMatNX<Float, 3>> field,
         std::string field_name = "vector_field",

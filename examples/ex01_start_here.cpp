@@ -71,12 +71,9 @@ int main(int argc, char** argv)
     // for each object in the structure being modeled. This requires the `geometry/structure.hpp`
     // header.
 
-    bem::Structure<bem::TriangleMesh<3>> structure;
+    bem::Structure<3> structure;
 
-    // The template parameter of a `Structure` specifies the type of mesh that will be stored, and
-    // its dimensionality. In this example, we're considering a 3D problem with a triangular mesh,
-    // so we invoke the `TriangleMesh<3>` class. This requires the `geometry/mesh/triangle_mesh.hpp`
-    // header.
+    // The template parameter of a `Structure` specifies its dimension - 3D in this example.
 
     // Now we'll use OpenBEM's built-in Gmsh reader function to parse mesh data into the `Structure`
     // object we created. This requires the `geometry/mesh/io.hpp` header.
@@ -89,8 +86,8 @@ int main(int argc, char** argv)
 
     // Let's print out some of the mesh info.
 
-    std::cout << "Number of vertices: " << structure.mesh().num_verts() << std::endl;
-    std::cout << "Number of triangles: " << structure.mesh().num_elems() << std::endl;
+    std::cout << "Number of vertices: " << structure.mesh().num_vertices() << std::endl;
+    std::cout << "Number of triangles: " << structure.mesh().num_faces() << std::endl;
     std::cout << "Number of edges: " << structure.mesh().num_edges() << std::endl;
 
     // Next, we'll set the simulation frequency in Hz.
@@ -475,13 +472,13 @@ int main(int argc, char** argv)
     bem::EigMatNX<bem::Float, 3> j_surf_tefie = bem::Rwg::reconstruct_field(
         structure.mesh(), // mesh with which the field is associated
         j_tefie, // RWG coefficients computed using the TEFIE
-        structure.mesh().elem_centroids() // points at which to compute field values
+        structure.mesh().face_centroids() // points at which to compute field values
         ).array().real(); // Eigen syntax to keep only the real part of the computed currents
 
     bem::EigMatNX<bem::Float, 3> j_surf_nmfie = bem::Rwg::reconstruct_field(
         structure.mesh(), // mesh with which the field is associated
         j_nmfie, // RWG coefficients computed using the NMFIE
-        structure.mesh().elem_centroids() // points at which to compute field values
+        structure.mesh().face_centroids() // points at which to compute field values
         ).array().real(); // Eigen syntax to keep only the real part of the computed currents
 
     // Use OpenBEM's built-in Gmsh field writer to write the fields to disk.

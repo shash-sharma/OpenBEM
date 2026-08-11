@@ -41,10 +41,10 @@ void ExcitationAssembler::assemble(
         mat.resize(obs_num_edges, exc.num_excitations());
         mat.preallocate(obs_num_edges * exc.num_excitations());
 
-        for (Index ii = 0; ii < elems_.size(); ++ii)
+        for (Index ii = 0; ii < faces_.size(); ++ii)
         {
-            Index face = elems_[ii];
-            Triangle<3> obs_tri = mesh_.elem_primitive(face);
+            Index face = faces_[ii];
+            Triangle<3> obs_tri = mesh_.face_primitive(face);
 
             EigMatNX<Complex, 3> values = exc.compute(k, obs_tri);
 
@@ -52,7 +52,7 @@ void ExcitationAssembler::assemble(
             {
                 for (uint8_t edge = 0; edge < 3; edge++)
                 {
-                    Index row = mesh_.elem_edges()(edge, face);
+                    Index row = mesh_.face_edges()(edge, face);
                     mat.add_value(row, col, values(edge, col));
                 }
             }
@@ -63,15 +63,15 @@ void ExcitationAssembler::assemble(
     else if (exc.obs_dof() == 1)
     {
 
-        Index obs_num_faces = mesh_.num_elems();
+        Index obs_num_faces = mesh_.num_faces();
 
         mat.resize(obs_num_faces, exc.num_excitations());
         mat.preallocate(obs_num_faces * exc.num_excitations());
 
-        for (Index ii = 0; ii < elems_.size(); ++ii)
+        for (Index ii = 0; ii < faces_.size(); ++ii)
         {
-            Index face = elems_[ii];
-            Triangle<3> obs_tri = mesh_.elem_primitive(face);
+            Index face = faces_[ii];
+            Triangle<3> obs_tri = mesh_.face_primitive(face);
 
             EigMatNX<Complex, 1> values = exc.compute(k, obs_tri);
 

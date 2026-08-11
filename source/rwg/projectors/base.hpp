@@ -93,8 +93,8 @@ public:
                 src_tri.v(), local_origin, local_uvw
                 ).topRows(2),
             src_tri.edge_polarities(),
-            src_tri.comp_tag(),
-            src_tri.elem_tag()
+            src_tri.tag(),
+            src_tri.idx()
         );
 
         return;

@@ -86,8 +86,8 @@ int main(int argc, char** argv)
 
     // Let's print out some of the mesh info.
 
-    std::cout << "Number of vertices: " << structure.mesh().num_verts() << std::endl;
-    std::cout << "Number of triangles: " << structure.mesh().num_elems() << std::endl;
+    std::cout << "Number of vertices: " << structure.mesh().num_vertices() << std::endl;
+    std::cout << "Number of triangles: " << structure.mesh().num_faces() << std::endl;
     std::cout << "Number of edges: " << structure.mesh().num_edges() << std::endl;
 
     // The `Structure` has a `background_material()` object of type `Material`, which is set to
@@ -371,11 +371,11 @@ int main(int argc, char** argv)
     // the `Component` objects.
 
     // Note that the `Component` objects do not actually store the sub-meshes explicitly. Rather than storing
-    // duplicates of the vertices and triangles, `Component` objects store a `MeshView` object which simply
-    // contains a list of indices into the global list of mesh elements in `Structure::mesh()`.
+    // duplicates of the vertices and triangles, `Component` objects store a `TriangleMeshView` object which simply
+    // contains a list of indices into the global list of mesh faces in `Structure::mesh()`.
     // When we call `Structure::component()[i].mesh()`, a sub-mesh is explicitly generated in real time.
     // If we don't need an explicit sub-mesh to be generated, but we just need the indices into the global
-    // mesh, we could instead use `Structure::component()[i].mesh_view()` which returns a `MeshView` object.
+    // mesh, we could instead use `Structure::component()[i].mesh_view()` which returns a `TriangleMeshView` object.
 
 
     return 0;

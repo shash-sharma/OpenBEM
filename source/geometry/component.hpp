@@ -22,7 +22,7 @@
 #include <memory>
 
 #include "materials.hpp"
-#include "geometry/mesh/base.hpp"
+#include "geometry/mesh/triangle_mesh_view.hpp"
 
 
 namespace bem
@@ -35,9 +35,9 @@ namespace bem
 
 /**
 * @brief Class that defines a component in a structure.
-* @tparam MeshType - Type of the mesh for representing the component.
+* @tparam dim - The dimension of the mesh (2 or 3).
 */
-template <typename MeshType>
+template <uint8_t dim>
 class Component
 {
 public:
@@ -51,7 +51,7 @@ public:
     */
     template <typename MaterialType>
     Component(
-        const MeshView<MeshType>& mesh_view,
+        const TriangleMeshView<dim>& mesh_view,
         const MaterialType& material,
         const std::string name = "component",
         const bool cache_mesh = false
@@ -74,7 +74,7 @@ public:
     * @param[in] cache_mesh - Whether to cache the mesh data for faster access (optional).
     */
     Component(
-        const MeshView<MeshType>& mesh_view,
+        const TriangleMeshView<dim>& mesh_view,
         const std::string name = "component",
         const bool cache_mesh = false
         ): Component(mesh_view, PerfectDielectricMaterial(1, 1), name, cache_mesh) {};
@@ -84,7 +84,7 @@ public:
     * @brief Returns the mesh view associated with the component.
     * @return Mesh view associated with the component.
     */
-    const MeshView<MeshType>& mesh_view() const
+    const TriangleMeshView<dim>& mesh_view() const
     { return mesh_view_; };
 
 
@@ -100,7 +100,7 @@ public:
     * @brief Returns the mesh associated with the component.
     * @return Mesh associated with the component.
     */
-    MeshType mesh() const
+    TriangleMesh<dim> mesh() const
     {
         if (cache_mesh_)
             return mesh_;
@@ -114,7 +114,7 @@ public:
     * the mesh if not already cached.
     * @return Reference to the cached mesh.
     */
-    const MeshType& cached_mesh() const
+    const TriangleMesh<dim>& cached_mesh() const
     {
         if (cache_mesh_)
             return mesh_;
@@ -151,12 +151,12 @@ public:
 
 private:
 
-    const MeshView<MeshType> mesh_view_;
+    const TriangleMeshView<dim> mesh_view_;
     std::shared_ptr<Material> material_ = std::make_shared<PerfectDielectricMaterial> (
         PerfectDielectricMaterial(1, 1)
         );
     std::string name_ = "component";
-    mutable MeshType mesh_;
+    mutable TriangleMesh<dim> mesh_;
     mutable bool cache_mesh_ = false;
 };
 
