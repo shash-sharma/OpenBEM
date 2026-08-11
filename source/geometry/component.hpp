@@ -21,13 +21,12 @@
 #include <string>
 #include <memory>
 
+#include "materials.hpp"
+#include "geometry/mesh/base.hpp"
+
 
 namespace bem
 {
-
-// Forward declarations
-template <typename MeshType> class MeshView;
-class Material;
 
 /**
 * \ingroup geom
@@ -74,7 +73,6 @@ public:
     * @param[in] name - Name of the component (optional).
     * @param[in] cache_mesh - Whether to cache the mesh data for faster access (optional).
     */
-    template <typename MaterialType>
     Component(
         const MeshView<MeshType>& mesh_view,
         const std::string name = "component",

@@ -251,7 +251,6 @@ protected:
     const MeshType& mesh_;
     const EigRowVec<Index> elem_inds_;
     const std::string name_ = "view";
-    const bool cache_mesh_ = false;
     
 };
 

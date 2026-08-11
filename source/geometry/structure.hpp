@@ -147,13 +147,11 @@ public:
     * @brief Returns a list of the components whose name contains a given string.
     * @param[in] name - Search string.
     * @param[in] search_metacomponents - Whether to search the metacomponents instead of components (optional).
-    * @param[in] case_sensitive - Whether the search should be case sensitive (optional).
     * @return Named components.
     */
     std::vector<Component<MeshType>> components_by_name(
         const std::string name,
-        const bool search_metacomponents = false,
-        const bool case_sensitive = false
+        const bool search_metacomponents = false
         );
 
 

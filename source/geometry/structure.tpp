@@ -31,20 +31,14 @@ namespace bem
 template <typename MeshType>
 std::vector<Component<MeshType>> Structure<MeshType>::components_by_name(
     const std::string name,
-    const bool search_metacomponents,
-    const bool case_sensitive
+    const bool search_metacomponents
     )
 {
     std::vector<Component<MeshType>> comps;
 
     auto run = [&] (const Component<MeshType>& comp)
     {
-        std::string comp_name;
-        if (case_sensitive)
-            comp_name = comp.name();
-        if (!case_sensitive)
-            comp_name = comp.name().tolower();
-        if (comp_name.find(name) != std::string::npos)
+        if (comp.name().find(name) != std::string::npos)
             comps.push_back(comp);
     };
 
