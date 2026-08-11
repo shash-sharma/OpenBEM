@@ -51,7 +51,7 @@ public:
     */
     Edge(ConstEigRef<EigMatMN<Float, dim, 2>> v)
     {
-        set_v(v);
+        set_data(v);
         return;
     };
 
@@ -65,7 +65,7 @@ public:
     {
         EigMatMN<Float, dim, 2> v;
         v << v1, v2;
-        set_v(v);
+        set_data(v);
         return;
     };
 
@@ -97,7 +97,7 @@ public:
     * @brief Sets the vertices of this `Edge`.
     * @param[in] v - Vertices of the edge.
     */
-    void set_v(ConstEigRef<EigMatMN<Float, dim, 2>> v);
+    void set_data(ConstEigRef<EigMatMN<Float, dim, 2>> v);
 
 
     /**

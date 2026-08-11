@@ -232,7 +232,9 @@ public:
     {
         return Triangle<dim> (
             base::verts()(Eigen::placeholders::all, base::elems(elem)),
-            elem_edge_polarities().col(elem)
+            elem_edge_polarities().col(elem),
+            base::elem_tags(elem),
+            elem
             );
     };
 

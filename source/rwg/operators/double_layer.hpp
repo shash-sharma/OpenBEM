@@ -57,12 +57,10 @@ public:
 
     /**
     * @brief Constructs a `VectorDoubleLayerPvOp` object with a specified integration object.
-    * @tparam ObsIntegratorType - Type of the observation triangle integrator, derived from `ObsIntegratorBase`.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    template <typename ObsIntegratorType = ObsStrategic>
-    VectorDoubleLayerPvOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
-        obs_integrator_(std::make_shared<ObsIntegratorType> (obs_integrator)) {};
+    VectorDoubleLayerPvOp(const ObsIntegratorBase& obs_integrator = ObsStrategic()):
+        obs_integrator_(obs_integrator.clone()) {};
 
 
     /**
@@ -147,12 +145,10 @@ public:
 
     /**
     * @brief Constructs a `RotVectorDoubleLayerPvOp` object with a specified integration object.
-    * @tparam ObsIntegratorType - Type of the observation triangle integrator, derived from `ObsIntegratorBase`.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    template <typename ObsIntegratorType = ObsStrategic>
-    RotVectorDoubleLayerPvOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
-        obs_integrator_(std::make_shared<ObsIntegratorType> (obs_integrator)) {};
+    RotVectorDoubleLayerPvOp(const ObsIntegratorBase& obs_integrator = ObsStrategic()):
+        obs_integrator_(obs_integrator.clone()) {};
 
 
     /**

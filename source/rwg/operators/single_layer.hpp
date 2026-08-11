@@ -56,12 +56,10 @@ public:
 
     /**
     * @brief Constructs a `VectorSingleLayerOp` object with a specified integration object.
-    * @tparam ObsIntegratorType - Type of the observation triangle integrator, derived from `ObsIntegratorBase`.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    template <typename ObsIntegratorType = ObsStrategic>
-    VectorSingleLayerOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
-        obs_integrator_(std::make_shared<ObsIntegratorType> (obs_integrator)) {};
+    VectorSingleLayerOp(const ObsIntegratorBase& obs_integrator = ObsStrategic()):
+        obs_integrator_(obs_integrator.clone()) {};
 
 
     /**
@@ -146,12 +144,10 @@ public:
 
     /**
     * @brief Constructs a `RotVectorSingleLayerOp` object with a specified integration object.
-    * @tparam ObsIntegratorType - Type of the observation triangle integrator, derived from `ObsIntegratorBase`.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    template <typename ObsIntegratorType = ObsStrategic>
-    RotVectorSingleLayerOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
-        obs_integrator_(std::make_shared<ObsIntegratorType> (obs_integrator)) {};
+    RotVectorSingleLayerOp(const ObsIntegratorBase& obs_integrator = ObsStrategic()):
+        obs_integrator_(obs_integrator.clone()) {};
 
 
     /**
@@ -233,12 +229,10 @@ public:
 
     /**
     * @brief Constructs a `ScalarSingleLayerOp` object with a specified integration object.
-    * @tparam ObsIntegratorType - Type of the observation triangle integrator, derived from `ObsIntegratorBase`.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    template <typename ObsIntegratorType = ObsStrategic>
-    ScalarSingleLayerOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
-        obs_integrator_(std::make_shared<ObsIntegratorType> (obs_integrator)) {};
+    ScalarSingleLayerOp(const ObsIntegratorBase& obs_integrator = ObsStrategic()):
+        obs_integrator_(obs_integrator.clone()) {};
 
 
     /**
@@ -322,13 +316,11 @@ class RotGradScalarSingleLayerOp: public OperatorBase
 public:
 
     /**
-     * @tparam ObsIntegratorType - Type of the observation triangle integrator, derived from `ObsIntegratorBase`.
     * @brief Constructs a `RotGradScalarSingleLayerOp` object with a specified integration object.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    template <typename ObsIntegratorType = ObsStrategic>
-    RotGradScalarSingleLayerOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
-        obs_integrator_(std::make_shared<ObsIntegratorType> (obs_integrator)) {};
+    RotGradScalarSingleLayerOp(const ObsIntegratorBase& obs_integrator = ObsStrategic()):
+        obs_integrator_(obs_integrator.clone()) {};
 
 
     /**
@@ -414,12 +406,10 @@ public:
 
     /**
     * @brief Constructs a `VectorHypersingularOp` object with a specified integration object.
-    * @tparam ObsIntegratorType - Type of the observation triangle integrator, derived from `ObsIntegratorBase`.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    template <typename ObsIntegratorType = ObsStrategic>
-    VectorHypersingularOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
-        obs_integrator_(std::make_shared<ObsIntegratorType> (obs_integrator)),
+    VectorHypersingularOp(const ObsIntegratorBase& obs_integrator = ObsStrategic()):
+        obs_integrator_(obs_integrator.clone()),
         op_g_(obs_integrator),
         op_hessg_(obs_integrator) {};
 
@@ -509,13 +499,11 @@ class RotVectorHypersingularOp: public OperatorBase
 public:
 
     /**
-     * @tparam ObsIntegratorType - Type of the observation triangle integrator, derived from `ObsIntegratorBase`.
     * @brief Constructs a `RotVectorHypersingularOp` object with a specified integration object.
     * @param[in] obs_integrator - Integration object for the observation triangle (optional).
     */
-    template <typename ObsIntegratorType = ObsStrategic>
-    RotVectorHypersingularOp(const ObsIntegratorType obs_integrator = ObsStrategic()):
-        obs_integrator_(std::make_shared<ObsIntegratorType> (obs_integrator)),
+    RotVectorHypersingularOp(const ObsIntegratorBase& obs_integrator = ObsStrategic()):
+        obs_integrator_(obs_integrator.clone()),
         op_g_(obs_integrator),
         op_hessg_(obs_integrator) {};
 

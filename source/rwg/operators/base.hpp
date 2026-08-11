@@ -107,17 +107,21 @@ public:
         EigMatMN<Float, 3, 3> local_uvw = src_tri.local_coordinate_basis();
         EigColVecN<Float, 3> local_origin = src_tri.local_origin();
 
-        obs_tri_local.set_v(
+        obs_tri_local.set_data(
             GeometryOps<3>::transform_coordinate_system(
                 obs_tri.v(), local_origin, local_uvw
                 ),
-            obs_tri.edge_polarities()
+            obs_tri.edge_polarities(),
+            obs_tri.comp_tag(),
+            obs_tri.elem_tag()
         );
-        src_tri_local.set_v(
+        src_tri_local.set_data(
             GeometryOps<3>::transform_coordinate_system(
                 src_tri.v(), local_origin, local_uvw
                 ).topRows(2),
-            src_tri.edge_polarities()
+            src_tri.edge_polarities(),
+            src_tri.comp_tag(),
+            src_tri.elem_tag()
         );
 
         return;

@@ -30,9 +30,11 @@ namespace bem
 {
 
 template <uint8_t dim>
-void Triangle<dim>::set_v(
+void Triangle<dim>::set_data(
     ConstEigRef<EigMatMN<Float, dim, 3>> v,
-    EigRowVecN<Float, 3> edge_polarities
+    EigRowVecN<Float, 3> edge_polarities,
+    const Index comp_tag,
+    const Index elem_tag
     )
 {
     v_ = v;
@@ -40,6 +42,8 @@ void Triangle<dim>::set_v(
     area_ = area(v_);
     normal_ = normal(v_);
     centroid_ = centroid(v_);
+    comp_tag_ = comp_tag;
+    elem_tag_ = elem_tag;
     return;
 };
 
@@ -65,7 +69,7 @@ Triangle<2> Triangle<dim>::to_2d() const
     v_2d.topRightCorner(1, 1) = x;
     v_2d.bottomRightCorner(1, 1) = Eigen::sqrt(y.array()).matrix();
 
-    return Triangle<2> (v_2d, edge_polarities_);
+    return Triangle<2> (v_2d, edge_polarities_, comp_tag_, elem_tag_);
 };
 
 
@@ -74,7 +78,7 @@ Triangle<3> Triangle<dim>::to_3d(const Float z) const
 {
     EigMatMN<Float, 3, 3> v_3d = EigMatMN<Float, 3, 3>::Constant(3, 3, z);
     v_3d.topRows(dim) = v_.topRows(dim);
-    return Triangle<3> (v_3d, edge_polarities_);
+    return Triangle<3> (v_3d, edge_polarities_, comp_tag_, elem_tag_);
 };
 
 
