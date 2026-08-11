@@ -22,6 +22,7 @@
 #include <stdexcept>
 #include <vector>
 #include <algorithm>
+#include <numeric>
 #include <string>
 #include <map>
 
@@ -226,19 +227,36 @@ void MeshTransfer::read_gmsh_v2(
         }
     }
 
+    std::vector<Index> order (face_tags.size());
+    std::iota(order.begin(), order.end(), 0);
+    std::stable_sort(order.begin(), order.end(),
+        [&] (Index a, Index b) { return face_tags[a] < face_tags[b]; });
+
+    std::vector<Index> new_pos_of_old(order.size());
+    for (Index new_pos = 0; new_pos < order.size(); ++new_pos)
+        new_pos_of_old[order[new_pos]] = new_pos;
+
     structure.mesh().set_data(vertices, faces, face_tags, decoupled_edges);
+
+    for (auto& [key, value]: surface_faces)
+        for (Index jj = 0; jj < value.size(); ++jj)
+            value[jj] = new_pos_of_old[value[jj]];
+
+    for (auto& [key, value]: physical_faces)
+        for (Index jj = 0; jj < value.size(); ++jj)
+            value[jj] = new_pos_of_old[value[jj]];
 
     for (const auto& [key, value]: surface_faces)
     {
-        TriangleMeshView view (structure.mesh(), value, "surface_id_" + std::to_string(key));
-        Component metacomp (view, PerfectDielectricMaterial(1, 1), "surface_id_" + std::to_string(key), true);
+        TriangleMeshView<3> view (structure.mesh(), value, "surface_id_" + std::to_string(key));
+        Component<3> metacomp (view, PerfectDielectricMaterial(1, 1), "surface_id_" + std::to_string(key), true);
         structure.add_metacomponent(metacomp);
     }
     for (const auto& [key, value]: physical_faces)
     {
         std::string name = physical_names[key] + "_physical_id_" + std::to_string(key);
-        TriangleMeshView view (structure.mesh(), value, name);
-        Component comp (view, PerfectDielectricMaterial(1, 1), name, true);
+        TriangleMeshView<3> view (structure.mesh(), value, name);
+        Component<3> comp (view, PerfectDielectricMaterial(1, 1), name, true);
         structure.add_component(comp);
     }
 

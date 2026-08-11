@@ -291,20 +291,79 @@ public:
             vertices_(Eigen::placeholders::all, faces_.col(face)),
             face_edge_polarities_.col(face),
             face_tags_[face],
-            face
+            root_face(face)
             );
     };
 
 
     /**
-    * @brief Reverses the orientation of each face.
+    * @brief Returns whether this mesh is a partition of another mesh.
+    * @return True if this mesh was produced by `partition_by_faces()`/`partition_by_bbox()`,
+    * false if it was built directly via a constructor or `set_data()`.
     */
-    void reverse_orientation()
-    {
-        faces_ = faces_.colwise().reverse().eval();
-        generate_edges();
-        return;
-    };
+    bool is_partition() const
+    { return root_faces_.size() > 0; };
+
+
+    /**
+    * @brief Returns, for each face of this mesh, its index in the root mesh this is a partition of.
+    * @return Face-wise root indices. Empty if this mesh is not a partition.
+    */
+    const EigRowVec<Index>& root_faces() const
+    { return root_faces_; };
+
+
+    /**
+    * @brief Returns, for each edge of this mesh, its index in the root mesh this is a partition of.
+    * @return Edge-wise root indices. Empty if this mesh is not a partition.
+    */
+    const EigRowVec<Index>& root_edges() const
+    { return root_edges_; };
+
+
+    /**
+    * @brief Returns, for each vertex of this mesh, its index in the root mesh this is a partition of.
+    * @return Vertex-wise root indices. Empty if this mesh is not a partition.
+    */
+    const EigRowVec<Index>& root_vertices() const
+    { return root_vertices_; };
+
+
+    /**
+    * @brief Returns the index of a given face in the root mesh this is a partition of.
+    * @param[in] face - Index of the face in this mesh.
+    * @return Index of the face in the root mesh, or `face` unchanged if this mesh is not a partition.
+    */
+    Index root_face(Index face) const
+    { return is_partition() ? root_faces_[face] : face; };
+
+
+    /**
+    * @brief Returns the index of a given edge in the root mesh this is a partition of.
+    * @param[in] edge - Index of the edge in this mesh.
+    * @return Index of the edge in the root mesh, or `edge` unchanged if this mesh is not a partition.
+    */
+    Index root_edge(Index edge) const
+    { return is_partition() ? root_edges_[edge] : edge; };
+
+
+    /**
+    * @brief Returns the index of a given vertex in the root mesh this is a partition of.
+    * @param[in] vert - Index of the vertex in this mesh.
+    * @return Index of the vertex in the root mesh, or `vert` unchanged if this mesh is not a partition.
+    */
+    Index root_vertex(Index vert) const
+    { return is_partition() ? root_vertices_[vert] : vert; };
+
+
+    /**
+    * @brief Returns the sorted, unique edge indices associated with a given set of faces.
+    * @param[in] face_inds - Indices of faces of this mesh.
+    * @return Sorted, unique indices into this mesh's own `edges()` touching `face_inds`.
+    */
+    EigRowVec<Index> compute_face_edges(
+        ConstEigRef<EigRowVec<Index>> face_inds
+        ) const;
 
 
 protected:
@@ -318,6 +377,24 @@ protected:
     * creating artificial junctions at the point of contact.
     */
     void generate_edges();
+
+
+    /**
+    * @brief Computes, for every edge of this mesh, the pair of faces on either side of it.
+    * @return Edge-wise pairs of face indices ordered as (plus, minus) polarity, derived from this
+    * mesh's current `face_edges()`/`face_edge_polarities()`.
+    */
+    EigMatNX<Index, 2> compute_edge_faces() const;
+
+
+    /**
+    * @brief Classifies edges and faces as boundary, junction, or internal, and sets the
+    * corresponding members.
+    * @details
+    * Computes, for every edge of this mesh, how many faces reference it (via this mesh's
+    * current `face_edges()`), then classifies accordingly.
+    */
+    void classify_edges_and_faces();
 
 
     EigMatNX<Float, dim> vertices_;
@@ -339,6 +416,10 @@ protected:
     EigRowVec<Index> boundary_edges_;
     EigRowVec<Index> junction_edges_;
     EigRowVec<Index> internal_edges_;
+
+    EigRowVec<Index> root_faces_;
+    EigRowVec<Index> root_edges_;
+    EigRowVec<Index> root_vertices_;
 
 };
 

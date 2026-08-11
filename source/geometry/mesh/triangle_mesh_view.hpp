@@ -19,7 +19,6 @@
 #define GEOM_TRIANGLE_MESH_VIEW_H
 
 #include <string>
-#include <set>
 
 #include "types.hpp"
 #include "geometry/mesh/triangle_mesh.hpp"
@@ -52,11 +51,11 @@ public:
         const TriangleMesh<dim>& mesh,
         ConstEigRef<EigRowVec<Index>> face_inds,
         const std::string name = "view"
-        ): mesh_(mesh), name_(name), face_inds_(face_inds)
-    {
-        set_edge_inds();
-        return;
-    };
+        ):
+        mesh_(mesh),
+        name_(name),
+        face_inds_(face_inds),
+        edge_inds_(mesh.compute_face_edges(face_inds)) {};
 
 
     /**
@@ -136,30 +135,10 @@ public:
 
 protected:
 
-    /**
-    * @brief Collects the parent mesh's edge indices associated with this view's faces.
-    */
-    void set_edge_inds()
-    {
-        std::set<Index> unique_edges;
-        for (Index ii = 0; ii < face_inds_.size(); ++ii)
-            for (uint8_t jj = 0; jj < 3; ++jj)
-                unique_edges.insert(mesh_.face_edges()(jj, face_inds_[ii]));
-
-        edge_inds_.resize(1, unique_edges.size());
-
-        Index kk = 0;
-        for (const Index edge: unique_edges)
-            edge_inds_[kk++] = edge;
-
-        return;
-    };
-
-
     const TriangleMesh<dim>& mesh_;
     const std::string name_ = "view";
     const EigRowVec<Index> face_inds_;
-    EigRowVec<Index> edge_inds_;
+    const EigRowVec<Index> edge_inds_;
 
 };
 

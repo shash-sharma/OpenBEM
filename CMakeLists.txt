@@ -259,6 +259,10 @@ if (BUILD_TESTS STREQUAL "yes")
     target_include_directories(test_triangle_mesh PRIVATE ${INC_DIR})
     target_link_libraries(test_triangle_mesh ${LINK_LIBS})
 
+    add_executable(test_mesh_partitioning ${TEST_DIR}/test_mesh_partitioning.cpp)
+    target_include_directories(test_mesh_partitioning PRIVATE ${INC_DIR})
+    target_link_libraries(test_mesh_partitioning ${LINK_LIBS})
+
     add_executable(test_materials ${TEST_DIR}/test_materials.cpp)
     target_include_directories(test_materials PRIVATE ${INC_DIR})
     target_link_libraries(test_materials ${LINK_LIBS})
