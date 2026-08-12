@@ -63,6 +63,10 @@ public:
     * @param[in] mesh - Triangle mesh for which the operator matrix is to be assembled.
     * @param[in] index_set - Block index definition.
     * @param[in] use_integration_cache - Whether to cache and reuse triangle-pair integrals (optional).
+    * @details
+    * When `use_integration_cache` is `true`, cached values are reused whenever `op and `k` are 
+    * unchanged from the previous call. An operator that is otherwise reconfigured between calls 
+    * should clear the cache in between using `clear_cache()`.
     */
     BlockAssembler(
         const TriangleMesh<3>& mesh,
@@ -122,7 +126,22 @@ public:
         ConstEigRef<EigRowVec<Index>> local_cols
         );
 
-        
+
+    /**
+    * @brief Discards cached triangle-pair integrals and resets the cache.
+    */
+    void clear_cache()
+    {
+        std::lock_guard<std::mutex> lock (integration_cache_mutex_);
+
+        integration_cache_.clear();
+        integration_cache_op_ = nullptr;
+        integration_cache_k_ = 0;
+
+        return;
+    };
+
+
 protected:
 
     using OperatorAssemblerBase::assemble;
@@ -150,7 +169,8 @@ protected:
     * @param[out] mat - Matrix to store the assembled operator coefficients.
     * @param[in] op - Operator object that computes the coefficients to be assembled into `mat`.
     * @param[in] face_pair - Observation (first entry) and source (second entry) triangle index pair.
-    * @param[in] values - Operator values for each pair of observation and source degrees of freedom.
+    * @param[in] values - Operator values for each pair of observation and source degrees of
+    * freedom. An empty matrix means the operator declined this triangle pair, and nothing is filled.
     * @param[in] active_row_map - Map from global observation indices to local row indices in `mat`.
     * @param[in] active_col_map - Map from global source indices to local column indices in `mat`.
     */

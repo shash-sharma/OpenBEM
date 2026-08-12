@@ -26,6 +26,8 @@ void BlockAssembler::assemble(
     )
 {
 
+    clear_cache();
+
     ConstEigRef<EigRowVec<Index>> obs_faces = (op.obs_dof() == OperatorDof::EDGE) ?
         row_faces_from_edges_ : index_set_.rows();
 
@@ -206,6 +208,9 @@ void BlockAssembler::fill_matrix(
     const std::unordered_map<Index, Index>& active_col_map
     )
 {
+
+    if (values.size() == 0)
+        return;
 
     if (op.obs_dof() == OperatorDof::EDGE && op.src_dof() == OperatorDof::EDGE)
     {

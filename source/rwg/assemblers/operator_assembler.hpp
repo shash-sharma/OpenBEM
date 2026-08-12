@@ -131,7 +131,8 @@ public:
     * @param[out] mat - Matrix to store the assembled operator coefficients.
     * @param[in] op - Operator object that computes the coefficients to be assembled into `mat`.
     * @param[in] face_pair - Observation (first entry) and source (second entry) triangle index pair.
-    * @param[in] values - Operator values for each pair of observation and source degrees of freedom.
+    * @param[in] values - Operator values for each pair of observation and source degrees of
+    * freedom. An empty matrix means the operator declined this triangle pair, and nothing is filled.
     */
     void fill_matrix(
         MatrixBase<Complex>& mat,

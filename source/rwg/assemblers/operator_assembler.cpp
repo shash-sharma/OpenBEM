@@ -155,6 +155,9 @@ void OperatorAssembler::fill_matrix(
     )
 {
 
+    if (values.size() == 0)
+        return;
+
     if (op.obs_dof() == OperatorDof::EDGE && op.src_dof() == OperatorDof::EDGE)
     {
         for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
