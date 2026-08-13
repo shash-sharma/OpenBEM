@@ -183,7 +183,7 @@ public:
 
 
     /**
-    * @brief Returns a unique pointer to a newly constructed object of the derived type.
+    * @brief Returns a unique pointer to an empty object of the derived type.
     * @return Unique pointer to the new object.
     */
     virtual std::unique_ptr<MatrixBase<T>> clone() const

@@ -192,8 +192,8 @@ public:
 
 
     /**
-    * @brief Returns a unique pointer to a newly constructed object of the derived type.
-    * @return Unique pointer to the new object.
+    * @brief Returns a unique pointer to a copy of this object.
+    * @return Unique pointer to a copy of this object.
     */
     std::unique_ptr<ObsIntegratorBase> clone() const override
     {
