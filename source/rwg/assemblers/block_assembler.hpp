@@ -61,33 +61,33 @@ public:
     /**
     * @brief Constructs a `BlockAssembler` for a given mesh.
     * @param[in] mesh - Triangle mesh for which the operator matrix is to be assembled.
-    * @param[in] index_set - Block index definition.
+    * @param[in] index_set - Block index definition (optional).
     * @param[in] use_integration_cache - Whether to cache and reuse triangle-pair integrals (optional).
     * @details
-    * When `use_integration_cache` is `true`, cached values are reused whenever `op and `k` are 
-    * unchanged from the previous call. An operator that is otherwise reconfigured between calls 
-    * should clear the cache in between using `clear_cache()`.
+    * When `use_integration_cache` is `true`, cached values are reused whenever `op and `k` are
+    * unchanged from the previous call. An operator that is otherwise reconfigured between calls
+    * should clear the cache in between using `clear_cache()`. If no `index_set` is provided, 
+    * nothing is assembled until `set_indices()` is called with a valid block definition.
     */
     BlockAssembler(
         const TriangleMesh<3>& mesh,
-        const IndexSet& index_set,
+        const IndexSet& index_set = IndexSet(EigRowVec<Index>(), EigRowVec<Index>()),
         const bool use_integration_cache = true
         ):
         mesh_(mesh),
         index_set_(index_set),
         use_integration_cache_(use_integration_cache)
     {
-        for (Index ii = 0; ii < index_set_.num_rows(); ++ii)
-            row_map_.insert({ index_set_.rows()[ii], ii });
-
-        for (Index ii = 0; ii < index_set_.num_cols(); ++ii)
-            col_map_.insert({ index_set_.cols()[ii], ii });
-
-        row_faces_from_edges_ = IndexGenerator::faces_from_edges(mesh_, index_set_.rows());
-        col_faces_from_edges_ = IndexGenerator::faces_from_edges(mesh_, index_set_.cols());
-
+        set_indices(index_set_);
         return;
     };
+
+
+    /**
+    * @brief Rescopes this assembler to a new index set.
+    * @param[in] index_set - New block index definition.
+    */
+    void set_indices(const IndexSet& index_set) override;
 
 
     /**
@@ -185,7 +185,7 @@ protected:
 
 
     const TriangleMesh<3>& mesh_;
-    const IndexSet index_set_;
+    IndexSet index_set_;
     std::unordered_map<Index, Index> row_map_;
     std::unordered_map<Index, Index> col_map_;
 

@@ -100,8 +100,8 @@ public:
 
 protected:
 
-    const EigRowVec<Index> rows_;
-    const EigRowVec<Index> cols_;
+    EigRowVec<Index> rows_;
+    EigRowVec<Index> cols_;
 
 };
 

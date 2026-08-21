@@ -19,6 +19,28 @@
 namespace bem::rwg
 {
 
+void BlockAssembler::set_indices(const IndexSet& index_set)
+{
+
+    index_set_ = index_set;
+
+    row_map_.clear();
+    col_map_.clear();
+
+    for (Index ii = 0; ii < index_set_.num_rows(); ++ii)
+        row_map_.insert({ index_set_.rows()[ii], ii });
+
+    for (Index ii = 0; ii < index_set_.num_cols(); ++ii)
+        col_map_.insert({ index_set_.cols()[ii], ii });
+
+    row_faces_from_edges_ = IndexGenerator::faces_from_edges(mesh_, index_set_.rows());
+    col_faces_from_edges_ = IndexGenerator::faces_from_edges(mesh_, index_set_.cols());
+
+    return;
+
+};
+
+
 void BlockAssembler::assemble(
     MatrixBase<Complex>& mat,
     const OperatorBase& op,

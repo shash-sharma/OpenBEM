@@ -29,6 +29,7 @@
 #include "rwg/projectors/base.hpp"
 #include "rwg/integrators/obs/base.hpp"
 #include "rwg/integrators/obs/strategic.hpp"
+#include "rwg/assemblers/indexing.hpp"
 
 
 namespace bem::rwg
@@ -77,6 +78,13 @@ public:
         ObsIntegratorBase& obs_integrator
         )
     { throw std::runtime_error("OperatorAssemblerBase::assemble(): Not implemented."); };
+
+
+    /**
+    * @brief Rescopes this assembler to a new index set.
+    * @param[in] index_set - New block index definition.
+    */
+    virtual void set_indices(const IndexSet& index_set) {};
 
 
     /**
