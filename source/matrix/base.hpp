@@ -256,6 +256,45 @@ public:
 
 
     /**
+    * @brief Computes \f$ \mathbf{X} = \mathbf{L}\mathbf{M}\mathbf{R} \f$ where \f$ \mathbf{M} \f$ is
+    * this matrix, and \f$ \mathbf{L} \f$ and \f$ \mathbf{R} \f$ are given matrices.
+    * @param[out] x - Multiplication result.
+    * @param[in] left - Matrix with which to multiply on the left, or empty for the identity.
+    * @param[in] right - Matrix with which to multiply on the right, or empty for the identity.
+    */
+    virtual void matmul_triple(
+        MatrixBase<T>& x,
+        const MatrixBase<T>& left,
+        const MatrixBase<T>& right
+        ) const
+    {
+        const bool skip_left = (left.size() == 0);
+        const bool skip_right = (right.size() == 0);
+
+        if (skip_left && skip_right)
+            throw std::invalid_argument("MatrixBase::matmul_triple(): `left` and `right` cannot both be empty.");
+
+        if (skip_left)
+        {
+            matmul(x, right);
+            return;
+        }
+
+        if (skip_right)
+        {
+            left.matmul(x, *this);
+            return;
+        }
+
+        std::unique_ptr<MatrixBase<T>> temp = clone();
+        left.matmul(*temp, *this);
+        temp->matmul(x, right);
+
+        return;
+    };
+
+
+    /**
     * @brief Sets a block of this matrix to the values of a given matrix, starting at a given position.
     * @param[in] x - Matrix to insert.
     * @param[in] row_start - Starting row index for the block.
