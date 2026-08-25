@@ -72,7 +72,7 @@ public:
     BlockAssembler(
         const TriangleMesh<3>& mesh,
         const IndexSet& index_set = IndexSet(EigRowVec<Index>(), EigRowVec<Index>()),
-        const bool use_integration_cache = true
+        const bool use_integration_cache = false
         ):
         mesh_(mesh),
         index_set_(index_set),
