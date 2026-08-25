@@ -36,6 +36,18 @@ namespace bem::rwg
 */
 
 /**
+* @brief Integration terms that will be requested from the observation triangle integrator.
+*/
+struct ObsTerms
+{
+    bool g = true;
+    bool rs_g = true;
+    bool grad_g = true;
+    bool rot_grad_g = true;
+};
+
+
+/**
 * @brief Base class for RWG-based BEM operators.
 */
 class OperatorBase
@@ -54,6 +66,13 @@ public:
     * @return Source degrees of freedom.
     */
     virtual OperatorDof src_dof() const = 0;
+
+
+    /**
+    * @brief Returns the observation-triangle integrals this operator requires.
+    * @return Integrals required; all of them are computed by default.
+    */
+    virtual ObsTerms obs_terms() const { return {}; };
 
 
     /**

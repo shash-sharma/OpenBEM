@@ -37,8 +37,9 @@ EigMat<Complex> VectorSingleLayerOp::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
+    const auto [g, rs_g, grad_g, rot_grad_g] = obs_terms();
     const ObsResult obs_result = obs_integrator_->integrate(
-        k, obs_tri_local, src_tri_local, false, true, false, false
+        k, obs_tri_local, src_tri_local, g, rs_g, grad_g, rot_grad_g
         );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
@@ -93,8 +94,9 @@ EigMat<Complex> RotVectorSingleLayerOp::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
+    const auto [g, rs_g, grad_g, rot_grad_g] = obs_terms();
     const ObsResult obs_result = obs_integrator_->integrate(
-        k, obs_tri_local, src_tri_local, false, true, false, false
+        k, obs_tri_local, src_tri_local, g, rs_g, grad_g, rot_grad_g
         );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
@@ -157,8 +159,9 @@ EigMat<Complex> ScalarSingleLayerOp::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
+    const auto [g, rs_g, grad_g, rot_grad_g] = obs_terms();
     const ObsResult obs_result = obs_integrator_->integrate(
-        k, obs_tri_local, src_tri_local, true, false, false, false
+        k, obs_tri_local, src_tri_local, g, rs_g, grad_g, rot_grad_g
         );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
@@ -191,8 +194,9 @@ EigMat<Complex> ScalarSingleLayerDivOp::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
+    const auto [g, rs_g, grad_g, rot_grad_g] = obs_terms();
     const ObsResult obs_result = obs_integrator_->integrate(
-        k, obs_tri_local, src_tri_local, true, false, false, false
+        k, obs_tri_local, src_tri_local, g, rs_g, grad_g, rot_grad_g
         );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
@@ -222,8 +226,9 @@ EigMat<Complex> GradScalarSingleLayerOp::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
+    const auto [g, rs_g, grad_g, rot_grad_g] = obs_terms();
     const ObsResult obs_result = obs_integrator_->integrate(
-        k, obs_tri_local, src_tri_local, true, false, false, false
+        k, obs_tri_local, src_tri_local, g, rs_g, grad_g, rot_grad_g
         );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
@@ -253,8 +258,9 @@ EigMat<Complex> RotGradScalarSingleLayerOp::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
+    const auto [g, rs_g, grad_g, rot_grad_g] = obs_terms();
     const ObsResult obs_result = obs_integrator_->integrate(
-        k, obs_tri_local, src_tri_local, false, false, true, false
+        k, obs_tri_local, src_tri_local, g, rs_g, grad_g, rot_grad_g
         );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
@@ -315,8 +321,9 @@ EigMat<Complex> VectorHypersingularOp::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
+    const auto [g, rs_g, grad_g, rot_grad_g] = obs_terms();
     const ObsResult obs_result = obs_integrator_->integrate(
-        k, obs_tri_local, src_tri_local, true, true, false, false
+        k, obs_tri_local, src_tri_local, g, rs_g, grad_g, rot_grad_g
         );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);
@@ -347,8 +354,9 @@ EigMat<Complex> RotVectorHypersingularOp::compute(
     Triangle<2> src_tri_local;
     transform_coordinates(obs_tri_local, src_tri_local, obs_tri, src_tri);
 
+    const auto [g, rs_g, grad_g, rot_grad_g] = obs_terms();
     const ObsResult obs_result = obs_integrator_->integrate(
-        k, obs_tri_local, src_tri_local, false, true, true, false
+        k, obs_tri_local, src_tri_local, g, rs_g, grad_g, rot_grad_g
         );
 
     return assemble(k, obs_tri_local, src_tri_local.to_3d(), obs_result);

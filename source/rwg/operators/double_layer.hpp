@@ -78,6 +78,13 @@ public:
 
 
     /**
+    * @brief Returns the observation-triangle integrals required.
+    * @return Integrals required.
+    */
+    ObsTerms obs_terms() const override { return { false, false, true, false }; };
+
+
+    /**
     * @brief Computes operator values for the given observation and source triangles.
     * @param[in] k - Complex wavenumber.
     * @param[in] obs_tri - Observation triangle.
@@ -163,6 +170,13 @@ public:
     * @return Source degrees of freedom.
     */
     OperatorDof src_dof() const override { return OperatorDof::EDGE; };
+
+
+    /**
+    * @brief Returns the observation-triangle integrals required.
+    * @return Integrals required.
+    */
+    ObsTerms obs_terms() const override { return { false, false, true, true }; };
 
 
     /**

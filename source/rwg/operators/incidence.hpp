@@ -64,6 +64,13 @@ public:
 
 
     /**
+    * @brief Returns the observation-triangle integrals required.
+    * @return Integrals required, none of which this operator uses.
+    */
+    ObsTerms obs_terms() const override { return { false, false, false, false }; };
+
+
+    /**
     * @brief Computes an incidence matrix that can be used to take the divergence of RWG functions.
     * @param[in] k - Complex wavenumber.
     * @param[in] obs_tri - Observation triangle.
