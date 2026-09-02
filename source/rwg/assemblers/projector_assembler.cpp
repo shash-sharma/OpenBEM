@@ -34,7 +34,7 @@ void ProjectorAssembler<obs_dim>::assemble(
     )
 {
 
-    if (op.src_dof() == 3)
+    if (op.src_dof() == DofSpace::EDGE)
     {
 
         mat.resize(obs_cloud_.num_points() * obs_dim, mesh_.num_edges());
@@ -65,7 +65,7 @@ void ProjectorAssembler<obs_dim>::assemble(
 
     }
 
-    else if (op.src_dof() == 1)
+    else if (op.src_dof() == DofSpace::FACE)
     {
 
         mat.resize(obs_cloud_.num_points() * obs_dim, mesh_.num_faces());

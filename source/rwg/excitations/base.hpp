@@ -48,7 +48,7 @@ public:
     * @brief Returns the degrees of freedom for the testing function space.
     * @return Observation degrees of freedom.
     */
-    virtual OperatorDof obs_dof() const = 0;
+    virtual DofSpace obs_dof() const = 0;
 
 
     /**

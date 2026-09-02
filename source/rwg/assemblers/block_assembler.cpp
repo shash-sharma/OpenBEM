@@ -50,10 +50,10 @@ void BlockAssembler::assemble(
 
     clear_cache();
 
-    ConstEigRef<EigRowVec<Index>> obs_faces = (op.obs_dof() == OperatorDof::EDGE) ?
+    ConstEigRef<EigRowVec<Index>> obs_faces = (op.obs_dof() == DofSpace::EDGE) ?
         row_faces_from_edges_ : index_set_.rows();
 
-    ConstEigRef<EigRowVec<Index>> src_faces = (op.src_dof() == OperatorDof::EDGE) ?
+    ConstEigRef<EigRowVec<Index>> src_faces = (op.src_dof() == DofSpace::EDGE) ?
         col_faces_from_edges_ : index_set_.cols();
 
     assemble_from_faces(
@@ -84,7 +84,7 @@ void BlockAssembler::assemble(
     std::unordered_map<Index, Index> local_row_map;
 
     if (all_rows)
-        obs_faces = (op.obs_dof() == OperatorDof::EDGE) ?
+        obs_faces = (op.obs_dof() == DofSpace::EDGE) ?
             row_faces_from_edges_ : index_set_.rows();
     else
     {
@@ -101,7 +101,7 @@ void BlockAssembler::assemble(
         EigRowVec<Index> rows_global = Eigen::Map<const EigRowVec<Index>> (
             rows_global_vec.data(), rows_global_vec.size()
             );
-        obs_faces = (op.obs_dof() == OperatorDof::EDGE) ?
+        obs_faces = (op.obs_dof() == DofSpace::EDGE) ?
             IndexGenerator::faces_from_edges(mesh_, rows_global) : rows_global;
     }
 
@@ -109,7 +109,7 @@ void BlockAssembler::assemble(
     std::unordered_map<Index, Index> local_col_map;
 
     if (all_cols)
-        src_faces = (op.src_dof() == OperatorDof::EDGE) ?
+        src_faces = (op.src_dof() == DofSpace::EDGE) ?
             col_faces_from_edges_ : index_set_.cols();
     else
     {
@@ -126,7 +126,7 @@ void BlockAssembler::assemble(
         EigRowVec<Index> cols_global = Eigen::Map<const EigRowVec<Index>> (
             cols_global_vec.data(), cols_global_vec.size()
             );
-        src_faces = (op.src_dof() == OperatorDof::EDGE) ?
+        src_faces = (op.src_dof() == DofSpace::EDGE) ?
             IndexGenerator::faces_from_edges(mesh_, cols_global) : cols_global;
     }
 
@@ -234,7 +234,7 @@ void BlockAssembler::fill_matrix(
     if (values.size() == 0)
         return;
 
-    if (op.obs_dof() == OperatorDof::EDGE && op.src_dof() == OperatorDof::EDGE)
+    if (op.obs_dof() == DofSpace::EDGE && op.src_dof() == DofSpace::EDGE)
     {
         for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
         {
@@ -252,7 +252,7 @@ void BlockAssembler::fill_matrix(
         }
     }
 
-    else if (op.obs_dof() == OperatorDof::FACE && op.src_dof() == OperatorDof::EDGE)
+    else if (op.obs_dof() == DofSpace::FACE && op.src_dof() == DofSpace::EDGE)
     {
         Index row = active_row_map.at(face_pair[0]);
         for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
@@ -265,7 +265,7 @@ void BlockAssembler::fill_matrix(
         }
     }
 
-    else if (op.obs_dof() == OperatorDof::EDGE && op.src_dof() == OperatorDof::FACE)
+    else if (op.obs_dof() == DofSpace::EDGE && op.src_dof() == DofSpace::FACE)
     {
         Index col = active_col_map.at(face_pair[1]);
         for (uint8_t obs_edge = 0; obs_edge < 3; ++obs_edge)
@@ -278,7 +278,7 @@ void BlockAssembler::fill_matrix(
         }
     }
 
-    else if (op.obs_dof() == OperatorDof::FACE && op.src_dof() == OperatorDof::FACE)
+    else if (op.obs_dof() == DofSpace::FACE && op.src_dof() == DofSpace::FACE)
     {
         Index row = active_row_map.at(face_pair[0]);
         Index col = active_col_map.at(face_pair[1]);

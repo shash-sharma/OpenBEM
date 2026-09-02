@@ -151,8 +151,8 @@ public:
     static EigMatNX<Index, 2> face_pairs(
         const TriangleMesh<3>& mesh,
         const IndexSet& index_set,
-        const OperatorDof row_dof,
-        const OperatorDof col_dof
+        const DofSpace row_dof,
+        const DofSpace col_dof
         );
 
 

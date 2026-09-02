@@ -33,7 +33,7 @@ void ExcitationAssembler::assemble(
     )
 {
 
-    if (exc.obs_dof() == 3)
+    if (exc.obs_dof() == DofSpace::EDGE)
     {
 
         Index obs_num_edges = mesh_.num_edges();
@@ -60,7 +60,7 @@ void ExcitationAssembler::assemble(
 
     }
 
-    else if (exc.obs_dof() == 1)
+    else if (exc.obs_dof() == DofSpace::FACE)
     {
 
         Index obs_num_faces = mesh_.num_faces();

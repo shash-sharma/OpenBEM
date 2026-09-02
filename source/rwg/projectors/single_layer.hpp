@@ -57,7 +57,7 @@ public:
     * @brief Returns the degrees of freedom for the expansion function space.
     * @return Source degrees of freedom.
     */
-    OperatorDof src_dof() const override { return OperatorDof::EDGE; };
+    DofSpace src_dof() const override { return DofSpace::EDGE; };
 
 
     /**
@@ -114,7 +114,7 @@ public:
     * @brief Returns the degrees of freedom for the expansion function space.
     * @return Source degrees of freedom.
     */
-    OperatorDof src_dof() const override { return OperatorDof::FACE; };
+    DofSpace src_dof() const override { return DofSpace::FACE; };
 
 
     /**
@@ -167,7 +167,7 @@ public:
     * @brief Returns the degrees of freedom for the expansion function space.
     * @return Source degrees of freedom.
     */
-    OperatorDof src_dof() const override { return OperatorDof::FACE; };
+    DofSpace src_dof() const override { return DofSpace::FACE; };
 
 
     /**
@@ -224,7 +224,7 @@ public:
     * @brief Returns the degrees of freedom for the expansion function space.
     * @return Source degrees of freedom.
     */
-    OperatorDof src_dof() const override { return OperatorDof::EDGE; };
+    DofSpace src_dof() const override { return DofSpace::EDGE; };
 
 
     /**

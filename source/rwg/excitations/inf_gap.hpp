@@ -95,7 +95,7 @@ public:
     * @brief Returns the degrees of freedom for the testing function space.
     * @return Observation degrees of freedom.
     */
-    OperatorDof obs_dof() const override { return OperatorDof::EDGE; };
+    DofSpace obs_dof() const override { return DofSpace::EDGE; };
 
 
     /**

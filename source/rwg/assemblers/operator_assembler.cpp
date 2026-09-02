@@ -118,25 +118,25 @@ void OperatorAssembler::prep_matrix(
     )
 {
 
-    if (op.obs_dof() == OperatorDof::EDGE && op.src_dof() == OperatorDof::EDGE)
+    if (op.obs_dof() == DofSpace::EDGE && op.src_dof() == DofSpace::EDGE)
     {
         mat.resize(obs_mesh_.num_edges(), src_mesh_.num_edges());
         mat.preallocate(face_pairs_.cols() * EDGE_ELEM_RATIO * EDGE_ELEM_RATIO);
     }
 
-    else if (op.obs_dof() == OperatorDof::FACE && op.src_dof() == OperatorDof::EDGE)
+    else if (op.obs_dof() == DofSpace::FACE && op.src_dof() == DofSpace::EDGE)
     {
         mat.resize(obs_mesh_.num_faces(), src_mesh_.num_edges());
         mat.preallocate(face_pairs_.cols() * EDGE_ELEM_RATIO);
     }
 
-    else if (op.obs_dof() == OperatorDof::EDGE && op.src_dof() == OperatorDof::FACE)
+    else if (op.obs_dof() == DofSpace::EDGE && op.src_dof() == DofSpace::FACE)
     {
         mat.resize(obs_mesh_.num_edges(), src_mesh_.num_faces());
         mat.preallocate(face_pairs_.cols() * EDGE_ELEM_RATIO);
     }
 
-    else if (op.obs_dof() == OperatorDof::FACE && op.src_dof() == OperatorDof::FACE)
+    else if (op.obs_dof() == DofSpace::FACE && op.src_dof() == DofSpace::FACE)
     {
         mat.resize(obs_mesh_.num_faces(), src_mesh_.num_faces());
         mat.preallocate(face_pairs_.cols());
@@ -158,7 +158,7 @@ void OperatorAssembler::fill_matrix(
     if (values.size() == 0)
         return;
 
-    if (op.obs_dof() == OperatorDof::EDGE && op.src_dof() == OperatorDof::EDGE)
+    if (op.obs_dof() == DofSpace::EDGE && op.src_dof() == DofSpace::EDGE)
     {
         for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
         {
@@ -171,7 +171,7 @@ void OperatorAssembler::fill_matrix(
         }
     }
 
-    else if (op.obs_dof() == OperatorDof::FACE && op.src_dof() == OperatorDof::EDGE)
+    else if (op.obs_dof() == DofSpace::FACE && op.src_dof() == DofSpace::EDGE)
     {
         Index row = face_pair[0];
         for (uint8_t src_edge = 0; src_edge < 3; ++src_edge)
@@ -181,7 +181,7 @@ void OperatorAssembler::fill_matrix(
         }
     }
 
-    else if (op.obs_dof() == OperatorDof::EDGE && op.src_dof() == OperatorDof::FACE)
+    else if (op.obs_dof() == DofSpace::EDGE && op.src_dof() == DofSpace::FACE)
     {
         Index col = face_pair[1];
         for (uint8_t obs_edge = 0; obs_edge < 3; ++obs_edge)
@@ -191,7 +191,7 @@ void OperatorAssembler::fill_matrix(
         }
     }
 
-    else if (op.obs_dof() == OperatorDof::FACE && op.src_dof() == OperatorDof::FACE)
+    else if (op.obs_dof() == DofSpace::FACE && op.src_dof() == DofSpace::FACE)
     {
         mat.set_value(face_pair[0], face_pair[1], values(0, 0));
     }

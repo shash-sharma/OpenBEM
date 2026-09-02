@@ -50,6 +50,15 @@ enum class MatrixStructure
 
 
 /**
+* @brief Side of a matrix that an operation acts on.
+*/
+enum class MatrixSide
+{
+    LEFT, RIGHT
+};
+
+
+/**
 * @brief Base class for matrix algebra containers.
 * @tparam T - Data type to be stored in the matrix (e.g., float, double, std::complex).
 */

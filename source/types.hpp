@@ -106,6 +106,23 @@ using EigRef = Eigen::Ref<EigObj>;
 */
 
 /**
+* @name Enumerations.
+* @{
+*/
+
+/**
+* @brief Degree-of-freedom space.
+*/
+enum class DofSpace
+{
+    VERTEX, EDGE, FACE, PORT
+};
+
+/**
+* @}
+*/
+
+/**
 * @}
 */
 
