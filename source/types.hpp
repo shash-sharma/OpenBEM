@@ -115,7 +115,7 @@ using EigRef = Eigen::Ref<EigObj>;
 */
 enum class DofSpace
 {
-    VERTEX, EDGE, FACE, PORT
+    VERTEX, EDGE, FACE, PORT, MIXED
 };
 
 /**
