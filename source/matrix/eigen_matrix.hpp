@@ -108,6 +108,14 @@ class EigenMatrix: public MatrixBase<T>
         SparseMatrixType
         >::type;
 
+    using SparseSolverType = Eigen::SparseLU<SparseMatrixType>;
+
+    using DenseSolverType = Eigen::PartialPivLU<DenseMatrixType>;
+    // using DenseSolverType = Eigen::FullPivLU<MatrixType>;
+    // using DenseSolverType = Eigen::HouseholderQr<MatrixType>;
+    // using DenseSolverType = Eigen::ColPivHouseholderQr<MatrixType>;
+    // using DenseSolverType = Eigen::FullPivHouseholderQr<MatrixType>;
+
 public:
 
     /**
@@ -121,6 +129,14 @@ public:
         set_zero();
         return;
     };
+
+
+    /**
+    * @brief Constructs an `EigenMatrix` object by taking ownership of an existing raw Eigen
+    * matrix, without copying.
+    * @param[in] raw - Raw matrix to take ownership of.
+    */
+    EigenMatrix(MatrixType&& raw): matrix_(std::move(raw)) {};
 
 
     /**
@@ -145,6 +161,16 @@ public:
     const MatrixType& raw_matrix() const
     {
         return matrix_;
+    };
+
+
+    /**
+    * @brief Returns the dense direct solver computed by `factorize()`.
+    * @return Dense solver, or `nullptr` if `factorize()` has not been called.
+    */
+    const std::shared_ptr<DenseSolverType>& dense_solver() const
+    {
+        return dense_solver_;
     };
 
 
@@ -1117,6 +1143,99 @@ public:
 
 
     /**
+    * @brief Applies the inverse of `factorize()`'s lower-triangular factor, including its row
+    * permutation: \f$ \mathbf{X} = \mathbf{L}^{-1}\mathbf{P}_r\mathbf{B} \f$, or, if `transpose` is
+    * set, \f$ \mathbf{X} = \mathbf{L}^{-T}\mathbf{P}_r\mathbf{B} \f$.
+    * @param[out] x - Result.
+    * @param[in] b - Right-hand side matrix, must have the same number of rows as this matrix.
+    * @param[in] transpose - Whether to solve with the transpose of the lower-triangular factor
+    * (optional). Sparse matrices do not yet support this.
+    */
+    void mat_solve_lower(MatrixBase<T>& x, const MatrixBase<T>& b, const bool transpose = false) const
+    {
+        if (!factorized_)
+            throw std::runtime_error("EigenMatrix::mat_solve_lower(): Matrix must be factorized first.");
+
+        dispatch(x, b, [&](auto& xr, const auto& br)
+        {
+            DenseMatrixType rhs = as<DenseMatrixType> (br);
+            DenseMatrixType sol;
+
+            if constexpr (type == EigenMatrixType::EIGEN_DENSE)
+            {
+                DenseMatrixType permuted = dense_solver_->permutationP() * rhs;
+
+                if (!transpose)
+                    sol = dense_solver_->matrixLU().template triangularView<Eigen::UnitLower>().solve(permuted);
+                else
+                    sol = dense_solver_->matrixLU().template triangularView<Eigen::UnitLower>()
+                        .transpose().solve(permuted);
+            }
+            else
+            {
+                if (transpose)
+                    throw std::runtime_error(
+                        "EigenMatrix::mat_solve_lower(): `transpose` is not yet supported for sparse matrices."
+                        );
+
+                sol = sparse_solver_->rowsPermutation() * rhs;
+                sparse_solver_->matrixL().solveInPlace(sol);
+            }
+
+            xr = as<std::decay_t<decltype(xr)>> (sol);
+        });
+
+        return;
+    };
+
+
+    /**
+    * @brief Applies the inverse of `factorize()`'s upper-triangular factor, including its column
+    * permutation where applicable: \f$ \mathbf{X} = \mathbf{P}_c\mathbf{U}^{-1}\mathbf{B} \f$ for a
+    * sparse matrix, \f$ \mathbf{X} = \mathbf{U}^{-1}\mathbf{B} \f$ for a dense one (no column
+    * permutation); or, if `transpose` is set, the same with \f$ \mathbf{U}^{-T} \f$.
+    * @param[out] x - Result.
+    * @param[in] b - Right-hand side matrix, must have the same number of rows as this matrix.
+    * @param[in] transpose - Whether to solve with the transpose of the upper-triangular factor
+    * (optional). Sparse matrices do not yet support this.
+    */
+    void mat_solve_upper(MatrixBase<T>& x, const MatrixBase<T>& b, const bool transpose = false) const
+    {
+        if (!factorized_)
+            throw std::runtime_error("EigenMatrix::mat_solve_upper(): Matrix must be factorized first.");
+
+        dispatch(x, b, [&](auto& xr, const auto& br)
+        {
+            DenseMatrixType rhs = as<DenseMatrixType> (br);
+            DenseMatrixType sol;
+
+            if constexpr (type == EigenMatrixType::EIGEN_DENSE)
+            {
+                if (!transpose)
+                    sol = dense_solver_->matrixLU().template triangularView<Eigen::Upper>().solve(rhs);
+                else
+                    sol = dense_solver_->matrixLU().template triangularView<Eigen::Upper>().transpose().solve(rhs);
+            }
+            else
+            {
+                if (transpose)
+                    throw std::runtime_error(
+                        "EigenMatrix::mat_solve_upper(): `transpose` is not yet supported for sparse matrices."
+                        );
+
+                sol = rhs;
+                sparse_solver_->matrixU().solveInPlace(sol);
+                sol = sparse_solver_->colsPermutation().inverse() * sol;
+            }
+
+            xr = as<std::decay_t<decltype(xr)>> (sol);
+        });
+
+        return;
+    };
+
+
+    /**
     * @brief Factorizes this matrix via a Schur-complement decomposition, using an analytical
     * inverse for the top-left block if possible, depending on `pattern`.
     * @param[in] pivot - Size of the top-left block.
@@ -1590,18 +1709,9 @@ protected:
     bool insert_mode_on_ = true;
     bool assembled_ = false;
 
-    using SparseSolverType = Eigen::SparseLU<SparseMatrixType>;
-
-    using DenseSolverType = Eigen::PartialPivLU<DenseMatrixType>;
-    // using DenseSolverType = Eigen::FullPivLU<MatrixType>;
-    // using DenseSolverType = Eigen::HouseholderQr<MatrixType>;
-    // using DenseSolverType = Eigen::ColPivHouseholderQr<MatrixType>;
-    // using DenseSolverType = Eigen::FullPivHouseholderQr<MatrixType>;
-
+    bool factorized_ = false;
     std::shared_ptr<SparseSolverType> sparse_solver_ = nullptr;
     std::shared_ptr<DenseSolverType> dense_solver_ = nullptr;
-
-    bool factorized_ = false;
 
     bool schur_factorized_ = false;
     MatrixStructure schur_pattern_ = MatrixStructure::NONE;
