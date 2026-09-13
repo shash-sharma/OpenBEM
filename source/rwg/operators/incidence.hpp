@@ -88,7 +88,7 @@ public:
         if (GeometryOps<3>::common_vertices(obs_tri, src_tri) < 3)
             return result;
 
-        result = src_tri.edge_polarities();
+        result = two * Rwg::normalization(src_tri).array() / Pulse::normalization(src_tri)[0];
         return result;
     };
 

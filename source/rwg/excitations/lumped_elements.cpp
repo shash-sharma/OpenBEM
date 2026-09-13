@@ -31,6 +31,7 @@
 
 #include "matrix/base.hpp"
 #include "matrix/eigen_matrix.hpp"
+#include "rwg/function_space.hpp"
 
 
 namespace bem::rwg
@@ -92,72 +93,6 @@ void LumpedElement::get_exc_matrix(MatrixBase<Complex>& mat, const Float f) cons
 };
 
 
-void LumpedElement::get_current_mapping_matrix(MatrixBase<Complex>& mat) const
-{
-    mat.resize(num_port_faces(), num_ports());
-
-    Index row = 0;
-    for (Index ii = 0; ii < num_ports(); ++ii)
-    {
-        Float sign = one;
-        for (Index term: ports()[ii])
-        {
-            Float term_area = terminal_area(terminals()[term]);
-
-            for (Index jj = 0; jj < terminals()[term].face_inds().size(); ++jj)
-            {
-                Index face = terminals()[term].face_inds()[jj];
-                mat.set_value(row++, ii, sign * structure_.mesh().face_primitive(face).area() / term_area);
-            }
-
-            sign *= -one;
-        }
-    }
-
-    mat.assemble();
-
-    return;
-};
-
-
-void LumpedElement::get_voltage_mapping_matrix(MatrixBase<Complex>& mat) const
-{
-    mat.resize(num_ports(), num_port_faces());
-
-    Index col = 0;
-    for (Index ii = 0; ii < num_ports(); ++ii)
-    {
-        Float sign = one;
-        for (Index term: ports()[ii])
-        {
-            Float term_area = terminal_area(terminals()[term]);
-
-            for (Index jj = 0; jj < terminals()[term].face_inds().size(); ++jj)
-            {
-                Index face = terminals()[term].face_inds()[jj];
-                mat.set_value(ii, col++, sign * structure_.mesh().face_primitive(face).area() / term_area);
-            }
-
-            sign *= -one;
-        }
-    }
-
-    mat.assemble();
-
-    return;
-};
-
-
-void LumpedElement::get_impedance_mapping_matrix(MatrixBase<Complex>& mat) const
-{
-    mat.resize(num_ports(), num_ports());
-    for (Index ii = 0; ii < num_ports(); ++ii)
-        mat.set_value(ii, ii, impedances()[ii]);
-    mat.assemble();
-    return;
-};
-
-
 void LumpedElement::get_terminal_mapping_matrix(MatrixBase<Complex>& mat) const
 {
     TriangleMeshView<3> view = port_mesh_view();
@@ -172,19 +107,89 @@ void LumpedElement::get_terminal_mapping_matrix(MatrixBase<Complex>& mat) const
 };
 
 
-void LumpedElement::get_port_mapping_matrix(MatrixBase<Complex>& mat) const
+void LumpedElement::get_current_mapping_matrix(MatrixBase<Complex>& mat) const
 {
+
+    std::unique_ptr<MatrixBase<Complex>> temp = mat.clone();
+    temp->resize(num_port_faces(), num_ports());
+
+    Index row = 0;
+    for (Index ii = 0; ii < num_ports(); ++ii)
+    {
+        Float sign = one;
+        for (Index term: ports()[ii])
+        {
+            Float term_area = terminal_area(terminals()[term]);
+
+            for (Index jj = 0; jj < terminals()[term].face_inds().size(); ++jj)
+            {
+                Index face = terminals()[term].face_inds()[jj];
+                const Triangle<3> tri = structure_.mesh().face_primitive(face);
+                temp->set_value(row++, ii, sign / (term_area * Pulse::normalization(tri)[0]));
+            }
+
+            sign *= -one;
+        }
+    }
+
+    temp->assemble();
+
+    std::unique_ptr<MatrixBase<Complex>> Dt = mat.clone();
+    get_terminal_mapping_matrix(*Dt);
+
+    Dt->matmul(mat, *temp);
+
+    return;
+
+};
+
+
+void LumpedElement::get_voltage_mapping_matrix(MatrixBase<Complex>& mat) const
+{
+
+    std::unique_ptr<MatrixBase<Complex>> temp = mat.clone();
+    temp->resize(num_ports(), num_port_faces());
+
+    Index col = 0;
+    for (Index ii = 0; ii < num_ports(); ++ii)
+    {
+        Float sign = one;
+        for (Index term: ports()[ii])
+        {
+            Float term_area = terminal_area(terminals()[term]);
+
+            for (Index jj = 0; jj < terminals()[term].face_inds().size(); ++jj)
+            {
+                Index face = terminals()[term].face_inds()[jj];
+                const Triangle<3> tri = structure_.mesh().face_primitive(face);
+                temp->set_value(ii, col++, sign / (term_area * Pulse::normalization(tri)[0]));
+            }
+
+            sign *= -one;
+        }
+    }
+
+    temp->assemble();
+
     std::unique_ptr<MatrixBase<Complex>> Dt = mat.clone();
     get_terminal_mapping_matrix(*Dt);
 
     std::unique_ptr<MatrixBase<Complex>> DtT = mat.clone();
     DtT->set_transpose(*Dt);
 
-    std::unique_ptr<MatrixBase<Complex>> Dp = mat.clone();
-    get_voltage_mapping_matrix(*Dp);
+    temp->matmul(mat, *DtT);
 
-    Dp->matmul(mat, *DtT);
+    return;
 
+};
+
+
+void LumpedElement::get_impedance_mapping_matrix(MatrixBase<Complex>& mat) const
+{
+    mat.resize(num_ports(), num_ports());
+    for (Index ii = 0; ii < num_ports(); ++ii)
+        mat.set_value(ii, ii, impedances()[ii]);
+    mat.assemble();
     return;
 };
 

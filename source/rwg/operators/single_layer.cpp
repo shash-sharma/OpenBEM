@@ -211,7 +211,8 @@ EigMat<Complex> ScalarSingleLayerDivOp::assemble(
     ) const
 {
     const Complex g_term = op_g_.assemble(k, obs_tri, src_tri, obs_result)(0, 0);
-    EigMatMN<Complex, 1, 3> result = g_term * src_tri.edge_polarities();
+    EigMatMN<Complex, 1, 3> result = g_term * 
+        two * Rwg::normalization(src_tri) / Pulse::normalization(src_tri)[0];
     return result;
 };
 
@@ -243,7 +244,8 @@ EigMat<Complex> GradScalarSingleLayerOp::assemble(
     ) const
 {
     const Complex g_term = op_g_.assemble(k, obs_tri, src_tri, obs_result)(0, 0);
-    EigMatMN<Complex, 3, 1> result = g_term * obs_tri.edge_polarities().transpose();
+    EigMatMN<Complex, 3, 1> result = g_term * 
+        two * Rwg::normalization(obs_tri).transpose() / Pulse::normalization(obs_tri)[0];
     return result;
 };
 
@@ -339,7 +341,9 @@ EigMat<Complex> VectorHypersingularOp::assemble(
 {
     EigMatMN<Complex, 3, 3> result = op_g_.assemble(k, obs_tri, src_tri, obs_result);
     Complex hessg_term = op_hessg_.assemble(k, obs_tri, src_tri, obs_result)(0, 0) / k / k;
-    result -= hessg_term * obs_tri.edge_polarities().transpose() * src_tri.edge_polarities();
+    result -= hessg_term * 
+        (two * Rwg::normalization(obs_tri).transpose() / Pulse::normalization(obs_tri)[0]) *
+        (two * Rwg::normalization(src_tri) / Pulse::normalization(src_tri)[0]);
     return result;
 };
 
@@ -372,7 +376,8 @@ EigMat<Complex> RotVectorHypersingularOp::assemble(
 {
     EigMatMN<Complex, 3, 3> result = op_g_.assemble(k, obs_tri, src_tri, obs_result);
     EigMatMN<Complex, 3, 1> hessg_term = op_hessg_.assemble(k, obs_tri, src_tri, obs_result) / k / k;
-    result += hessg_term * src_tri.edge_polarities();
+    result += hessg_term * 
+        (two * Rwg::normalization(src_tri) / Pulse::normalization(src_tri)[0]);
     return result;
 };
 

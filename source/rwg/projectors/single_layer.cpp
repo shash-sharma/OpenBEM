@@ -116,7 +116,8 @@ EigMat<Complex> VectorHypersingularProj::compute(
 {
     EigMatXN<Complex, 3> result = proj_g_.compute(k, obs_points, src_tri);
     EigMatXN<Complex, 1> hessg_term = proj_gradg_.compute(k, obs_points, src_tri) / k / k;
-    result += hessg_term * src_tri.edge_polarities();
+    result += hessg_term * 
+        (two * Rwg::normalization(src_tri) / Pulse::normalization(src_tri)[0]);
     return result;
 };
 

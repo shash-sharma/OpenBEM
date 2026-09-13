@@ -22,14 +22,15 @@
 
 #include "types.hpp"
 #include "geometry/primitives/triangle.hpp"
+#include "geometry/mesh/triangle_mesh.hpp"
 #include "quadrature/triangle/base.hpp"
+#include "matrix/base.hpp"
 
 
 namespace bem
 {
-// Forward declarations
-template <typename T> class MatrixBase;
-template <uint8_t dim> class TriangleMesh;
+
+const bool NORMALIZED_BASIS = true;
 
 /**
 * \defgroup basis Basis Functions
@@ -129,7 +130,14 @@ public:
     * @return Normalization factor for each degree of freedom.
     */
     static EigRowVecN<Float, 3> normalization(const Triangle<3>& tri)
-    { return tri.edge_polarities() / tri.area() / two; };
+    { 
+        if (NORMALIZED_BASIS)
+            return tri.edge_polarities() / tri.area() / two;
+        else            
+            return (
+                tri.edge_polarities().array() * tri.edge_lengths().transpose().array()
+                ).matrix() / tri.area() / two;
+    }
 
 
     /**
@@ -201,7 +209,14 @@ public:
     * @return Normalization factor for each degree of freedom.
     */
     static EigRowVecN<Float, 3> normalization(const Triangle<3>& tri)
-    { return tri.edge_polarities() / tri.area() / two; };
+    {
+        if (NORMALIZED_BASIS)
+            return tri.edge_polarities() / tri.area() / two;
+        else
+            return (
+                tri.edge_polarities().array() * tri.edge_lengths().transpose().array()
+                ).matrix() / tri.area() / two;
+    };
 
 
     /**
@@ -274,7 +289,12 @@ public:
     * @return Normalization factor for each degree of freedom.
     */
     static EigRowVecN<Float, 1> normalization(const Triangle<3>& tri)
-    { return EigRowVecN<Float, 1>::Constant(1, 1, one / tri.area()); };
+    {
+        if (NORMALIZED_BASIS)
+            return EigRowVecN<Float, 1>::Constant(1, 1, one / tri.area());
+        else
+            return EigRowVecN<Float, 1>::Constant(1, 1, one);
+    };
 
 
     /**
