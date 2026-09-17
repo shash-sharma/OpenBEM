@@ -84,8 +84,12 @@ void BlockAssembler::assemble(
     std::unordered_map<Index, Index> local_row_map;
 
     if (all_rows)
-        obs_faces = (op.obs_dof() == DofSpace::EDGE) ?
-            row_faces_from_edges_ : index_set_.rows();
+    {
+        if (op.obs_dof() == DofSpace::EDGE)
+            obs_faces = row_faces_from_edges_;
+        else if (op.obs_dof() == DofSpace::FACE)
+            obs_faces = index_set_.rows();
+    }
     else
     {
         std::vector<Index> rows_global_vec;
@@ -101,16 +105,22 @@ void BlockAssembler::assemble(
         EigRowVec<Index> rows_global = Eigen::Map<const EigRowVec<Index>> (
             rows_global_vec.data(), rows_global_vec.size()
             );
-        obs_faces = (op.obs_dof() == DofSpace::EDGE) ?
-            IndexGenerator::faces_from_edges(mesh_, rows_global) : rows_global;
+        if (op.obs_dof() == DofSpace::EDGE)
+            obs_faces = IndexGenerator::faces_from_edges(mesh_, rows_global);
+        else if (op.obs_dof() == DofSpace::FACE)
+            obs_faces = rows_global;
     }
 
     EigRowVec<Index> src_faces;
     std::unordered_map<Index, Index> local_col_map;
 
     if (all_cols)
-        src_faces = (op.src_dof() == DofSpace::EDGE) ?
-            col_faces_from_edges_ : index_set_.cols();
+    {
+        if (op.src_dof() == DofSpace::EDGE)
+            src_faces = col_faces_from_edges_;
+        else if (op.src_dof() == DofSpace::FACE)
+            src_faces = index_set_.cols();
+    }
     else
     {
         std::vector<Index> cols_global_vec;
@@ -126,8 +136,10 @@ void BlockAssembler::assemble(
         EigRowVec<Index> cols_global = Eigen::Map<const EigRowVec<Index>> (
             cols_global_vec.data(), cols_global_vec.size()
             );
-        src_faces = (op.src_dof() == DofSpace::EDGE) ?
-            IndexGenerator::faces_from_edges(mesh_, cols_global) : cols_global;
+        if (op.src_dof() == DofSpace::EDGE)
+            src_faces = IndexGenerator::faces_from_edges(mesh_, cols_global);
+        else if (op.src_dof() == DofSpace::FACE)
+            src_faces = cols_global;
     }
 
     assemble_from_faces(
@@ -157,6 +169,35 @@ void BlockAssembler::assemble_from_faces(
 {
 
     EigMatNX<Index, 2> face_pairs = IndexGenerator::face_pairs(obs_faces, src_faces);
+
+    if (self_terms_only_)
+    {
+        Index kept = 0;
+
+        for (Index ii = 0; ii < face_pairs.cols(); ++ii)
+        {
+            bool keep = false;
+
+            if (op.obs_dof() == DofSpace::EDGE && op.src_dof() == DofSpace::EDGE)
+            {
+                for (uint8_t ee = 0; ee < 3; ++ee)
+                    for (uint8_t ff = 0; ff < 3; ++ff)
+                        if (mesh_.face_edges()(ee, face_pairs(0, ii)) ==
+                            mesh_.face_edges()(ff, face_pairs(1, ii)))
+                            keep = true;
+            }
+            else
+                keep = (face_pairs(0, ii) == face_pairs(1, ii));
+
+            if (keep)
+            {
+                face_pairs.col(kept) = face_pairs.col(ii);
+                kept += 1;
+            }
+        }
+
+        face_pairs.conservativeResize(2, kept);
+    }
 
     mat.resize(out_rows, out_cols);
 
@@ -244,6 +285,10 @@ void BlockAssembler::fill_matrix(
                 for (uint8_t obs_edge = 0; obs_edge < 3; ++obs_edge)
                 {
                     Index row = mesh_.face_edges()(obs_edge, face_pair[0]);
+
+                    if (self_terms_only_ && row != col)
+                        continue;
+
                     auto irow = active_row_map.find(row);
                     if (irow != active_row_map.end())
 // #pragma omp critical

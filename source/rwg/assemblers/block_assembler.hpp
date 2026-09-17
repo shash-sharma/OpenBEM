@@ -63,20 +63,26 @@ public:
     * @param[in] mesh - Triangle mesh for which the operator matrix is to be assembled.
     * @param[in] index_set - Block index definition (optional).
     * @param[in] use_integration_cache - Whether to cache and reuse triangle-pair integrals (optional).
+    * @param[in] self_terms_only - Whether to assemble only each degree of freedom's self term,
+    * leaving every other entry at zero (optional).
     * @details
     * When `use_integration_cache` is `true`, cached values are reused whenever `op and `k` are
     * unchanged from the previous call. An operator that is otherwise reconfigured between calls
-    * should clear the cache in between using `clear_cache()`. If no `index_set` is provided, 
+    * should clear the cache in between using `clear_cache()`. If no `index_set` is provided,
     * nothing is assembled until `set_indices()` is called with a valid block definition.
+    * `self_terms_only` keeps the entries where the observation and source degrees of freedom
+    * coincide.
     */
     BlockAssembler(
         const TriangleMesh<3>& mesh,
         const IndexSet& index_set = IndexSet(EigRowVec<Index>(), EigRowVec<Index>()),
-        const bool use_integration_cache = false
+        const bool use_integration_cache = false,
+        const bool self_terms_only = false
         ):
         mesh_(mesh),
         index_set_(index_set),
-        use_integration_cache_(use_integration_cache)
+        use_integration_cache_(use_integration_cache),
+        self_terms_only_(self_terms_only)
     {
         set_indices(index_set_);
         return;
@@ -197,6 +203,8 @@ protected:
     const OperatorBase* integration_cache_op_ = nullptr;
     Complex integration_cache_k_ = 0;
     std::mutex integration_cache_mutex_;
+
+    const bool self_terms_only_ = false;
 
 };
 
