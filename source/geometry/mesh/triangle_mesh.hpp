@@ -281,6 +281,19 @@ public:
 
 
     /**
+    * @brief Computes and returns the mean length of the edges in the mesh.
+    * @return Mean edge length.
+    */
+    Float mean_edge_length() const
+    {
+        Float total = 0;
+        for (Index ee = 0; ee < edges_.cols(); ++ee)
+            total += (vertices_.col(edges_(0, ee)) - vertices_.col(edges_(1, ee))).norm();
+        return total / ((Float) edges_.cols());
+    };
+
+
+    /**
     * @brief Returns a `Triangle` primitive object representing a specific face of the mesh.
     * @param[in] face - Index of the face.
     * @return `Triangle` object representing the specified face.
