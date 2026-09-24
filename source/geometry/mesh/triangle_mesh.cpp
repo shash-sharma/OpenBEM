@@ -52,7 +52,7 @@ void TriangleMesh<dim>::set_data(
     vertices_ = vertices;
     faces_.resize(3, faces.cols());
     face_tags_.resize(1, face_tags.size());
-    for (Index new_pos = 0; new_pos < order.size(); ++new_pos)
+    for (Index new_pos = 0; new_pos < (Index) order.size(); ++new_pos)
     {
         faces_.col(new_pos) = faces.col(order[new_pos]);
         face_tags_[new_pos] = face_tags[order[new_pos]];

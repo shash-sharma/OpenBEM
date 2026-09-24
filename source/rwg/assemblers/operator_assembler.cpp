@@ -76,7 +76,7 @@ void OperatorAssembler::assemble(
                 std::string("`mats` must have been initialized before assembly.")
                 );
 
-    for (Index ii = 0; ii < ops.size(); ++ii)
+    for (Index ii = 0; ii < (Index) ops.size(); ++ii)
         prep_matrix(*mats[ii], *ops[ii]);
 
 #pragma omp parallel for
@@ -93,7 +93,7 @@ void OperatorAssembler::assemble(
             k, obs_tri_local, src_tri_local, true, true, true, true
             );
 
-        for (Index jj = 0; jj < ops.size(); ++jj)
+        for (Index jj = 0; jj < (Index) ops.size(); ++jj)
         {
             EigMat<Complex> values = ops[jj]->assemble(
                 k, obs_tri_local, src_tri_local.to_3d(), obs_result

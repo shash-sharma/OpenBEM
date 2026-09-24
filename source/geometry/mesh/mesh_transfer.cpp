@@ -233,7 +233,7 @@ void MeshTransfer::read_gmsh_v2(
         [&] (Index a, Index b) { return face_tags[a] < face_tags[b]; });
 
     std::vector<Index> new_pos_of_old(order.size());
-    for (Index new_pos = 0; new_pos < order.size(); ++new_pos)
+    for (Index new_pos = 0; new_pos < (Index) order.size(); ++new_pos)
         new_pos_of_old[order[new_pos]] = new_pos;
 
     structure.mesh().set_data(vertices, faces, face_tags, decoupled_edges);
@@ -284,7 +284,7 @@ void MeshTransfer::write_gmsh_v2(
     // Write physical names
     file << "$PhysicalNames\n";
     file << structure.components().size() << "\n";
-    for (Index ii = 0; ii < structure.components().size(); ++ii)
+    for (Index ii = 0; ii < (Index) structure.components().size(); ++ii)
         file << "2 " << ii + 1 << " \"" << structure.components()[ii].name() << "\"\n";
     file << "$EndPhysicalNames\n";
 
@@ -300,13 +300,13 @@ void MeshTransfer::write_gmsh_v2(
 
     // Elements
     Index num_faces = 0;
-    for (Index jj = 0; jj < structure.components().size(); ++jj)
+    for (Index jj = 0; jj < (Index) structure.components().size(); ++jj)
         num_faces += structure.components()[jj].mesh_view().face_inds().size();
 
     file << "$Elements\n";
     file << num_faces << "\n";
     Index face_idx = 1;
-    for (Index jj = 0; jj < structure.components().size(); ++jj)
+    for (Index jj = 0; jj < (Index) structure.components().size(); ++jj)
     {
         for (Index ii = 0; ii < structure.components()[jj].mesh_view().face_inds().size(); ++ii)
         {

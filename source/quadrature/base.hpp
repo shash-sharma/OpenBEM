@@ -135,7 +135,7 @@ std::vector<QuadratureData<dim>> QuadratureBase<dim>::load_rules(
         std::vector<std::vector<Float>> nodes = order_data["nodes"];
 
         rule.points.resize(dim, num_nodes);
-        for (Index ii = 0; ii < nodes.size(); ++ii)
+        for (Index ii = 0; ii < (Index) nodes.size(); ++ii)
             for (uint8_t jj = 0; jj < dim; ++jj)
                 rule.points(jj, ii) = nodes[ii][jj];
 

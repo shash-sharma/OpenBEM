@@ -143,7 +143,7 @@ EigMatNX<Float, 3> make_obs_pts_corner_cases(Float start, Float stop, uint32_t n
     // rs.insert(rs.begin(), 0);
 
     EigMatNX<Float, 3> rs_obs = EigMatNX<Float, 3>::Zero(3, rs.size() * 7);
-    for (int ii = 0; ii < rs.size(); ++ii)
+    for (Index ii = 0; ii < (Index) rs.size(); ++ii)
     {
         Float r = rs[ii];
         rs_obs.col(ii * 7 + 0) = EigColVecN<Float, 3> ({ 0.02, 0.03, r * LAMBDA });

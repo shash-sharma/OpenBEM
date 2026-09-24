@@ -124,7 +124,7 @@ endif ()
 
 add_compile_options(
     -Wall
-    # -Wno-sign-compare
+    -Wsign-compare
     # -ffast-math
 )
 

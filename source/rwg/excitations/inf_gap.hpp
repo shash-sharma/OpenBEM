@@ -81,7 +81,7 @@ public:
             amp_(amp),
             tol_(tol)
     {
-        if (segments_.size() != amp_.cols())
+        if ((Index) segments_.size() != amp_.cols())
         {
             throw std::invalid_argument(
                 "InfinitesimalGap: `segments` and `amp` must have the same number of columns."

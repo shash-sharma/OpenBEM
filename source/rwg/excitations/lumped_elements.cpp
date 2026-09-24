@@ -228,11 +228,11 @@ void LumpedElement::set_terminals_from_polygons(
     terminal_components_.resize(terminal_polygons.size());
 
     // Find all mesh triangles whose centroid lies within the terminal polygon
-    for (Index ii = 0; ii < terminal_polygons.size(); ++ii)
+    for (Index ii = 0; ii < (Index) terminal_polygons.size(); ++ii)
     {
         std::vector<Index> term_faces;
 
-        for (Index jj = 0; jj < structure_.components().size(); ++jj)
+        for (Index jj = 0; jj < (Index) structure_.components().size(); ++jj)
         {
             // TODO: for efficiency, first check if the polygon is in the component's bounding box
 
@@ -271,7 +271,7 @@ void LumpedElement::set_terminals_from_polygons(
             EigColVecN<Float, 3> term_centroid =
                 terminal_polygons[ii].rowwise().sum() / terminal_polygons[ii].cols();
 
-            for (Index jj = 0; jj < term_faces.size(); ++jj)
+            for (Index jj = 0; jj < (Index) term_faces.size(); ++jj)
             {
                 Float dist = (
                     structure_.mesh().face_primitive(term_faces[jj]).centroid() - term_centroid
