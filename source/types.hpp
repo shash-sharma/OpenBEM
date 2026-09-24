@@ -50,11 +50,8 @@ namespace bem
 /** @brief Complex floating point number. */
 using Complex = std::complex<Float>;
 
-/** @brief Unsigned integer type for indices and container sizes. */
-using Index = std::size_t;
-
-/** @brief Signed integer type. */
-using Int = int;
+/** @brief Integer type for indices and container sizes. */
+using Index = std::int64_t;
 
 /**@}*/
 

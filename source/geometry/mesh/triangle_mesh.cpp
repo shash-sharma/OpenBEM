@@ -287,7 +287,7 @@ template <uint8_t dim>
 EigMatNX<Index, 2> TriangleMesh<dim>::compute_edge_faces() const
 {
 
-    EigMatNX<Index, 2> result (2, num_edges());
+    EigMatNX<Index, 2> result = EigMatNX<Index, 2>::Constant(2, num_edges(), Index(-1));
     for (Index face = 0; face < faces_.cols(); ++face)
     {
         for (uint8_t edge = 0; edge < 3; ++edge)

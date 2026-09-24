@@ -63,8 +63,8 @@ void MeshTransfer::read_gmsh_v2(
     std::getline(file, line); // $EndMeshFormat
 
     // First pass: count vertices, elements, surfaces, and physical names
-    std::size_t num_vertices = 0;
-    std::size_t num_faces = 0;
+    Index num_vertices = 0;
+    Index num_faces = 0;
 
     bool in_elements = false;
     bool in_physical_names = false;
@@ -80,7 +80,7 @@ void MeshTransfer::read_gmsh_v2(
         if (line == "$Nodes")
         {
             std::getline(file, line); // Read number of vertices
-            num_vertices = std::stoull(line);
+            num_vertices = std::stoll(line);
             continue;
         }
         if (line == "$EndNodes")
@@ -113,7 +113,7 @@ void MeshTransfer::read_gmsh_v2(
         if (in_physical_names)
         {
             std::istringstream iss(line);
-            Int n1, n2;
+            Index n1, n2;
             std::string name;
             iss >> n1 >> n2 >> name;
             name.erase(std::remove(name.begin(), name.end(), '\"' ), name.end());
@@ -124,7 +124,7 @@ void MeshTransfer::read_gmsh_v2(
         if (in_elements)
         {
             std::istringstream iss(line);
-            std::size_t elm_id, elm_type, num_tags, phys_tag, surf_tag;
+            Index elm_id, elm_type, num_tags, phys_tag, surf_tag;
             iss >> elm_id >> elm_type >> num_tags >> phys_tag >> surf_tag;
             phys_tag -= 1;
             surf_tag -= 1;
@@ -174,11 +174,11 @@ void MeshTransfer::read_gmsh_v2(
     std::getline(file, line); // Skip number of vertices line
 
     // Read vertex coordinates
-    std::size_t vertex_idx = 0;
+    Index vertex_idx = 0;
     while (std::getline(file, line) && line != "$EndNodes")
     {
         std::istringstream iss(line);
-        std::size_t vertex_id;
+        Index vertex_id;
         Float x, y, z;
         iss >> vertex_id >> x >> y >> z;
         vertices.col(vertex_idx++) << x, y, z;
@@ -189,11 +189,11 @@ void MeshTransfer::read_gmsh_v2(
     std::getline(file, line); // Skip number of elements line
 
     // Read faces
-    std::size_t face_idx = 0;
+    Index face_idx = 0;
     while (std::getline(file, line) && line != "$EndElements")
     {
         std::istringstream iss(line);
-        std::size_t elm_id, elm_type, num_tags;
+        Index elm_id, elm_type, num_tags;
         iss >> elm_id >> elm_type >> num_tags;
 
         if (num_tags != 2)
@@ -201,12 +201,12 @@ void MeshTransfer::read_gmsh_v2(
                 "Unexpected number of tags in file " + msh_filename + " for element " + std::to_string(elm_id)
             );
 
-        std::vector<std::size_t> tags (num_tags);
-        for (std::size_t ii = 0; ii < num_tags; ++ii)
+        std::vector<Index> tags (num_tags);
+        for (Index ii = 0; ii < num_tags; ++ii)
             iss >> tags[ii];
 
-        std::size_t ptag = tags[0] - 1;
-        std::size_t stag = tags[1] - 1;
+        Index ptag = tags[0] - 1;
+        Index stag = tags[1] - 1;
 
         // Only process faces of the given type
         if (elm_type == elm_map)
@@ -214,9 +214,9 @@ void MeshTransfer::read_gmsh_v2(
             physical_faces[ptag][physical_face_counters[ptag]++] = face_idx;
             surface_faces[stag][surface_face_counters[stag]++] = face_idx;
 
-            for (std::size_t ii = 0; ii < 3; ++ii)
+            for (Index ii = 0; ii < 3; ++ii)
             {
-                std::size_t v;
+                Index v;
                 iss >> v;
                 // Convert from 1-based to 0-based indexing
                 faces(ii, face_idx) = v - 1;

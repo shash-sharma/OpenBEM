@@ -55,7 +55,7 @@ SrcResult SrcQuadrature::integrate(
         result.g.setZero(1, r_obs.cols());
         result.rs_g.setZero(2, r_obs.cols());
 
-        for (std::size_t ro = 0; ro < r_obs.cols(); ++ro)
+        for (Index ro = 0; ro < r_obs.cols(); ++ro)
         {
             EigRowVec<Complex> gw = kernel_->compute(
                 r_obs.col(ro), points_3d, k
@@ -69,7 +69,7 @@ SrcResult SrcQuadrature::integrate(
     {
         result.grad_g.setZero(3, r_obs.cols());
 
-        for (std::size_t ro = 0; ro < r_obs.cols(); ++ro)
+        for (Index ro = 0; ro < r_obs.cols(); ++ro)
         {
             result.grad_g.col(ro) = kernel_->compute_grad(
                 r_obs.col(ro), points_3d, k

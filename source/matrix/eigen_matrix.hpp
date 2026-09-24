@@ -520,7 +520,7 @@ public:
     {
         dispatch(x, [&](auto& xr)
         {
-            matrix_ = as<MatrixType> (xr.transpose());
+            matrix_ = EigenMatrix::template as<MatrixType> (xr.transpose());
         });
 
         return;
@@ -560,7 +560,7 @@ public:
 
         dispatch(x, [&](const auto& xr)
         {
-            matrix_ += as<MatrixType> (a * xr);
+            matrix_ += EigenMatrix::template as<MatrixType> (a * xr);
         });
         
         return;
@@ -615,9 +615,13 @@ public:
         dispatch(x, y, [&](auto& xr, const auto& yr)
         {
             if (accumulate)
-                xr += as<std::decay_t<decltype(xr)>> ((matrix_ * yr * a).eval());
+                xr += EigenMatrix::template as<std::decay_t<decltype(xr)>> (
+                    (matrix_ * yr * a).eval()
+                    );
             else
-                xr = as<std::decay_t<decltype(xr)>> ((matrix_ * yr * a).eval());
+                xr = EigenMatrix::template as<std::decay_t<decltype(xr)>> (
+                    (matrix_ * yr * a).eval()
+                    );
         });
 
         return;
@@ -672,9 +676,9 @@ public:
             if constexpr (std::is_same_v<std::decay_t<decltype(xr)>, SparseMatrixType>)
             {
                 EigenMatrix<T, EigenMatrixType::EIGEN_SPARSE, storage_order> temp;
-                temp.raw_matrix() = as<std::decay_t<decltype(xr)>> ((matrix_ * yr.block(
-                    y_row_start, 0, num_cols(), y.num_cols()
-                    ) * a).eval());
+                temp.raw_matrix() = EigenMatrix::template as<std::decay_t<decltype(xr)>> (
+                    (matrix_ * yr.block(y_row_start, 0, num_cols(), y.num_cols()) * a).eval()
+                    );
 
                 if (accumulate)
                     x.add_block(temp, x_row_start, 0);
@@ -686,15 +690,15 @@ public:
                 if (accumulate)
                     xr.block(
                         x_row_start, 0, num_rows(), y.num_cols()
-                        ) += as<std::decay_t<decltype(xr)>> ((matrix_ * yr.block(
-                            y_row_start, 0, num_cols(), y.num_cols()
-                            ) * a).eval());
+                        ) += EigenMatrix::template as<std::decay_t<decltype(xr)>> (
+                            (matrix_ * yr.block(y_row_start, 0, num_cols(), y.num_cols()) * a).eval()
+                            );
                 else
                     xr.block(
                         x_row_start, 0, num_rows(), y.num_cols()
-                        ) = as<std::decay_t<decltype(xr)>> ((matrix_ * yr.block(
-                            y_row_start, 0, num_cols(), y.num_cols()
-                            ) * a).eval());
+                        ) = EigenMatrix::template as<std::decay_t<decltype(xr)>> (
+                            (matrix_ * yr.block(y_row_start, 0, num_cols(), y.num_cols()) * a).eval()
+                            );
             }
         });
 
@@ -760,7 +764,8 @@ public:
         {
             dispatch(x, [&](const auto& xr)
             {
-                matrix_.block(row_start, col_start, xr.rows(), xr.cols()) = as<MatrixType> (xr * a);
+                matrix_.block(row_start, col_start, xr.rows(), xr.cols()) = 
+                    EigenMatrix::template as<MatrixType> (xr * a);
             });
         }
 
@@ -828,7 +833,8 @@ public:
         {
             dispatch(x, [&](const auto& xr)
             {
-                matrix_.block(row_start, col_start, xr.rows(), xr.cols()) += as<MatrixType> (xr * a);
+                matrix_.block(row_start, col_start, xr.rows(), xr.cols()) += 
+                    EigenMatrix::template as<MatrixType> (xr * a);
             });
         }
 
@@ -917,7 +923,7 @@ public:
                     dst_col_start,
                     b_rows,
                     b_cols
-                    ) = as<MatrixType> (xr.block(
+                    ) = EigenMatrix::template as<MatrixType> (xr.block(
                         src_row_start,
                         src_col_start,
                         b_rows,
@@ -1010,7 +1016,7 @@ public:
                     dst_col_start,
                     b_rows,
                     b_cols
-                    ) += as<MatrixType> (xr.block(
+                    ) += EigenMatrix::template as<MatrixType> (xr.block(
                         src_row_start,
                         src_col_start,
                         b_rows,
@@ -1071,7 +1077,9 @@ public:
     {
         dispatch(x, [&](auto& xr)
         {
-            xr = as<std::decay_t<decltype(xr)>> (matrix_.block(row_start, col_start, b_rows, b_cols));
+            xr = EigenMatrix::template as<std::decay_t<decltype(xr)>> (
+                matrix_.block(row_start, col_start, b_rows, b_cols)
+                );
         });
 
         return;
@@ -1119,7 +1127,7 @@ public:
 
         dispatch(x, b, [&](auto& xr, const auto& br)
         {
-            DenseMatrixType rhs = as<DenseMatrixType> (br);
+            DenseMatrixType rhs = EigenMatrix::template as<DenseMatrixType> (br);
             DenseMatrixType sol;
 
             if constexpr (type == EigenMatrixType::EIGEN_DENSE)
@@ -1135,7 +1143,7 @@ public:
                     throw std::runtime_error("EigenMatrix::mat_solve(): Sparse solver failed.");
             }
 
-            xr = as<std::decay_t<decltype(xr)>> (sol);
+            xr = EigenMatrix::template as<std::decay_t<decltype(xr)>> (sol);
         });
 
         return;
@@ -1158,7 +1166,7 @@ public:
 
         dispatch(x, b, [&](auto& xr, const auto& br)
         {
-            DenseMatrixType rhs = as<DenseMatrixType> (br);
+            DenseMatrixType rhs = EigenMatrix::template as<DenseMatrixType> (br);
             DenseMatrixType sol;
 
             if constexpr (type == EigenMatrixType::EIGEN_DENSE)
@@ -1182,7 +1190,7 @@ public:
                 sparse_solver_->matrixL().solveInPlace(sol);
             }
 
-            xr = as<std::decay_t<decltype(xr)>> (sol);
+            xr = EigenMatrix::template as<std::decay_t<decltype(xr)>> (sol);
         });
 
         return;
@@ -1206,7 +1214,7 @@ public:
 
         dispatch(x, b, [&](auto& xr, const auto& br)
         {
-            DenseMatrixType rhs = as<DenseMatrixType> (br);
+            DenseMatrixType rhs = EigenMatrix::template as<DenseMatrixType> (br);
             DenseMatrixType sol;
 
             if constexpr (type == EigenMatrixType::EIGEN_DENSE)
@@ -1228,7 +1236,7 @@ public:
                 sol = sparse_solver_->colsPermutation().inverse() * sol;
             }
 
-            xr = as<std::decay_t<decltype(xr)>> (sol);
+            xr = EigenMatrix::template as<std::decay_t<decltype(xr)>> (sol);
         });
 
         return;
@@ -1626,9 +1634,9 @@ protected:
                 return;
             }
 
-            DenseMatrixType rhs = as<DenseMatrixType> (br);
+            DenseMatrixType rhs = EigenMatrix::template as<DenseMatrixType> (br);
             DenseMatrixType sol = solver.solve(rhs);
-            xr = as<std::decay_t<decltype(xr)>> (sol);
+            xr = EigenMatrix::template as<std::decay_t<decltype(xr)>> (sol);
 
             info.iterations = solver.iterations();
             info.status = solver.info();
@@ -1761,7 +1769,7 @@ public:
 
     typedef Complex Scalar;
     typedef Float RealScalar;
-    typedef Int StorageIndex;
+    typedef Index StorageIndex;
     enum
     {
         ColsAtCompileTime = Eigen::Dynamic,

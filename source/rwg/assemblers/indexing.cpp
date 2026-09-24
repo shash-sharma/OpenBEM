@@ -142,7 +142,11 @@ EigRowVec<Index> IndexGenerator::faces_from_edges(
 
     for (Index ii = 0; ii < edges.size(); ++ii)
         for (uint8_t iip = 0; iip < 2; ++iip)
-            unique_faces.push_back(mesh.edge_faces()(iip, edges[ii]));
+        {
+            const Index face = mesh.edge_faces()(iip, edges[ii]);
+            if (face != -1)
+                unique_faces.push_back(face);
+        }
 
     std::sort(unique_faces.begin(), unique_faces.end());
     unique_faces.erase(std::unique(unique_faces.begin(), unique_faces.end()), unique_faces.end());

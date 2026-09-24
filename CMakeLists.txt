@@ -124,7 +124,7 @@ endif ()
 
 add_compile_options(
     -Wall
-    -Wno-sign-compare # not ideal to disable this; done because Eigen reports sizes as signed ints
+    # -Wno-sign-compare
     # -ffast-math
 )
 
