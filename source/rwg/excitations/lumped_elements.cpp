@@ -21,6 +21,7 @@
 #include <array>
 #include <stdexcept>
 #include <algorithm>
+#include <iostream>
 
 #include "types.hpp"
 #include "geometry/operations.hpp"
@@ -255,9 +256,12 @@ void LumpedElement::set_terminals_from_polygons(
         }
 
         if (term_faces.size() == 0)
+        {
+            std::cout << terminal_polygons[ii] << std::endl;
             throw std::runtime_error(
                 "LumpedElement::set_terminals_from_polygons(): No mesh triangles found for terminal " + std::to_string(ii)
                 );
+        }
 
         // Keep only the mesh triangle closest to the terminal polygon centroid
         if (single_face)
