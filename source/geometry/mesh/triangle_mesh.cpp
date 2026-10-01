@@ -66,7 +66,8 @@ void TriangleMesh<dim>::set_data(
 
 template <uint8_t dim>
 TriangleMesh<dim> TriangleMesh<dim>::partition_by_faces(
-    ConstEigRef<EigRowVec<Index>> face_inds
+    ConstEigRef<EigRowVec<Index>> face_inds,
+    const bool reset_tags
     ) const
 {
 
@@ -101,7 +102,10 @@ TriangleMesh<dim> TriangleMesh<dim>::partition_by_faces(
                 faces_(kk, face_inds[jj])
                 ];
         }
-        new_face_tags[jj] = face_tags_[face_inds[jj]];
+        if (reset_tags)
+            new_face_tags[jj] = 0;
+        else
+            new_face_tags[jj] = face_tags_[face_inds[jj]];
     }
 
     EigRowVec<Index> kept_edges = compute_face_edges(face_inds);

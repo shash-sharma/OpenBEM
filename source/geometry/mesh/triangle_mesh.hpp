@@ -243,10 +243,12 @@ public:
     /**
     * @brief Returns a sub-mesh that contains only specified faces of this mesh.
     * @param[in] face_inds - Indices of faces to keep in the sub-mesh.
+    * @param[in] reset_tags - If true, every face of the sub-mesh is tagged 0 (optional).
     * @return Partitioned mesh containing the specified faces.
     */
     TriangleMesh<dim> partition_by_faces(
-        ConstEigRef<EigRowVec<Index>> face_inds
+        ConstEigRef<EigRowVec<Index>> face_inds,
+        const bool reset_tags = false
         ) const;
 
 

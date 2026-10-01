@@ -45,14 +45,14 @@ public:
     /**
     * @brief Constructs a `Component` with a mesh view and associated material.
     * @param[in] mesh_view - The mesh view associated with the component.
-    * @param[in] material - Material associated with the component.
+    * @param[in] material - Material associated with the component (optional).
     * @param[in] name - Name of the component (optional).
     * @param[in] cache_mesh - Whether to cache the mesh data for faster access (optional).
     */
-    template <typename MaterialType>
+    template <typename MaterialType = PerfectDielectricMaterial>
     Component(
         const TriangleMeshView<dim>& mesh_view,
-        const MaterialType& material,
+        const MaterialType& material = PerfectDielectricMaterial(1, 1),
         const std::string name = "component",
         const bool cache_mesh = false
         ):
@@ -68,16 +68,26 @@ public:
 
 
     /**
-    * @brief Constructs a `Component` with a mesh view.
+    * @brief Constructs a `Component` with a mesh view, using the material and name of another
+    * component.
     * @param[in] mesh_view - The mesh view associated with the component.
-    * @param[in] name - Name of the component (optional).
+    * @param[in] other - Component whose material and name are used.
     * @param[in] cache_mesh - Whether to cache the mesh data for faster access (optional).
     */
     Component(
         const TriangleMeshView<dim>& mesh_view,
-        const std::string name = "component",
+        const Component<dim>& other,
         const bool cache_mesh = false
-        ): Component(mesh_view, PerfectDielectricMaterial(1, 1), name, cache_mesh) {};
+        ):
+            mesh_view_(mesh_view),
+            material_(other.material_),
+            name_(other.name_),
+            cache_mesh_(cache_mesh)
+        {
+            if (cache_mesh_)
+                mesh_ = mesh_view_.mesh();
+            return;
+        };
 
 
     /**

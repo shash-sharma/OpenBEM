@@ -21,8 +21,11 @@
 #include <string>
 #include <vector>
 
+#include "types.hpp"
 #include "materials.hpp"
 #include "geometry/component.hpp"
+#include "geometry/mesh/triangle_mesh.hpp"
+#include "geometry/mesh/triangle_mesh_view.hpp"
 
 
 namespace bem
@@ -60,6 +63,27 @@ public:
         const TriangleMesh<dim>& mesh,
         const Material background_material = PerfectDielectricMaterial(1, 1)
         ): mesh_(mesh), background_material_(background_material) {};
+
+
+    /**
+    * @brief Constructs a `Structure` from a single component of another structure.
+    * @param[in] parent - Structure that holds the component.
+    * @param[in] idx - Index of the component in `parent`.
+    */
+    Structure(
+        const Structure<dim>& parent,
+        const Index idx
+        ):
+            mesh_(parent.components_.at(idx).mesh_view().parent_mesh().partition_by_faces(
+                parent.components_.at(idx).mesh_view().face_inds(), true
+                )),
+            background_material_(parent.background_material_)
+        {
+            components_.push_back(
+                Component<dim> (TriangleMeshView<dim> (mesh_), parent.components_[idx])
+                );
+            return;
+        };
 
 
     /**
