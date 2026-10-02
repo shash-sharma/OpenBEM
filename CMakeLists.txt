@@ -175,6 +175,10 @@ set(SRC_FILES
     ${SRC_DIR}/quadrature/line/trapz.cpp
     ${SRC_DIR}/quadrature/line/iterative_trapz.cpp
     ${SRC_DIR}/kernels/hgf.cpp
+    ${SRC_DIR}/compression/matrix/low_rank_matrix.cpp
+    ${SRC_DIR}/compression/aca/basic.cpp
+    ${SRC_DIR}/compression/aca/plus.cpp
+    ${SRC_DIR}/compression/assemblers/aca_assembler.cpp
     ${SRC_DIR}/rwg/function_space.cpp
     ${SRC_DIR}/rwg/integrators/src/quadrature.cpp
     ${SRC_DIR}/rwg/integrators/src/singularity.cpp
@@ -229,6 +233,10 @@ if (BUILD_EXAMPLES STREQUAL "yes")
     add_executable(ex02 ${EXAMPLE_DIR}/ex02_assemblers.cpp)
     target_include_directories(ex02 PRIVATE ${INC_DIR})
     target_link_libraries(ex02 ${LINK_LIBS})
+
+    add_executable(ex03 ${EXAMPLE_DIR}/ex03_integrators.cpp)
+    target_include_directories(ex03 PRIVATE ${INC_DIR})
+    target_link_libraries(ex03 ${LINK_LIBS})
 
 endif ()
 

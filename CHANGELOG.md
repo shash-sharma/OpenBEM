@@ -5,11 +5,19 @@
 ### Added
 
 - Ability to compute and cache a component sub-mesh inside a `Component` object.
+- `LowRankMatrix` class for low-rank compressed matrices.
+- `AcaBase` interface for adaptive cross approximation, with `AcaBasic` and `AcaPlus` variants.
+- `AcaAssembler` for assembling ACA-compressed operator matrix blocks.
+- Example 3 demonstrating integrators.
+- Option to change basis function normalization.
+- `DofSpace` generalization to `OperatorDof`.
+- Single layer operators that incorporate gradient and divergence operations.
 
 ### Changed
 
 - Refactored `EigenMatrix` to replace variants with a dispatch pattern that improves sparse / dense iteroperability.
 - Moved lumped elements into excitations and de-templated it.
+- `Index` type alias is now `std::int64_t` rather than unsigned `std::size_t`.
 
 ### Fixed
 

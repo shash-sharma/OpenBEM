@@ -48,6 +48,14 @@
 #include "kernels/base.hpp"
 #include "kernels/hgf.hpp"
 
+#include "compression/matrix/low_rank_matrix.hpp"
+
+#include "compression/aca/base.hpp"
+#include "compression/aca/basic.hpp"
+#include "compression/aca/plus.hpp"
+
+#include "compression/assemblers/aca_assembler.hpp"
+
 #include "rwg/function_space.hpp"
 
 #include "rwg/integrators/src/base.hpp"

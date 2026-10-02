@@ -1,339 +1,301 @@
+// OpenBEM - Copyright (C) 2026 Shashwat Sharma
+
+// This file is part of OpenBEM.
+
+// OpenBEM is free software: you can redistribute it and/or modify it under the terms of the
+// GNU General Public License as published by the Free Software Foundation, either version 3
+// of the License, or (at your option) any later version.
+
+// You should have received a copy of the GNU General Public License along with OpenBEM.
+// If not, see <https://www.gnu.org/licenses/>.
+
+
 /**
-* @file
-* Example 1: TEFIE and NMFIE solvers for closed PEC objects.
+* @file Example 3: Setting the source and observation triangle integrators explicitly. Demonstrates
+* how to create custom integrators. Assumes knowledge from Examples 1 and 2.
 */
 
 #include <iostream>
 #include <string>
 
 // The following are OpenBEM-specific headers that we need to include for this example to run. The
-// specific functionality associated with each header included will be indicated in the main code.
+// specific functionality associated with each header will be indicated in the main code.
 
 #include "types.hpp"
 #include "constants.hpp"
 
-#include "matrix/eigen_dense.hpp"
+#include "matrix/eigen_matrix.hpp"
 
 #include "geometry/structure.hpp"
-#include "geometry/mesh/io.hpp"
+#include "geometry/mesh/mesh_transfer.hpp"
 #include "geometry/mesh/triangle_mesh.hpp"
+#include "geometry/primitives/triangle.hpp"
 #include "geometry/point_cloud.hpp"
 
-#include "rwg/integral_equations/tefie.hpp"
-#include "rwg/integral_equations/nmfie.hpp"
+#include "quadrature/triangle/gauss.hpp"
+
+#include "rwg/integrators/src/base.hpp"
+#include "rwg/integrators/src/quadrature.hpp"
+#include "rwg/integrators/src/singularity.hpp"
+#include "rwg/integrators/obs/quadrature.hpp"
+
+#include "rwg/operators/single_layer.hpp"
+#include "rwg/operators/double_layer.hpp"
+#include "rwg/operators/gram.hpp"
 
 #include "rwg/excitations/plane_wave.hpp"
 
+#include "rwg/projectors/single_layer.hpp"
 
-// All classes, variables, and types of OpenBEM are contained within the `bem` namespace and its
-// sub-namespaces. Functionality of OpenBEM that is specific to RWG-based discretization are housed
-// in the `bem::rwg` namespace. Discretizations other than those based on RWG functions may be
-// added to OpenBEM in the future. One could uncomment the following lines to code to avoid having
-// to type `bem::` or `bem::rwg::` repeatedly, but in this example, we do type those out explicitly
-// just to remind ourselves which quantities are OpenBEM-specific.
+#include "rwg/assemblers/operator_assembler.hpp"
+#include "rwg/assemblers/excitation_assembler.hpp"
+#include "rwg/assemblers/projector_assembler.hpp"
 
-// using namespace bem;
-// using namespace bem::rwg;
 
-// The BEM operators are discretized and tested to obtain a matrix representation of the
-// electromagnetic problem. So, we need a way to assemble, store, and manipulate complex-valued
-// matrices, which is usually accomplished in C++ using third-party open-source linear algebra
-// libraries. OpenBEM allows you to use any such library, but it takes a little work (see other
-// examples). However, it also provides a default interface to the Eigen library, for both dense and
-// sparse matrices. In this example, we'll use dense complex-valued Eigen matrices. Let's create an
-// alias for this matrix type to make the code a little easier to read and manage. This matrix type
-// requires the `matrix/eigen_dense.hpp` header.
+// Define the matrix data type, as in Examples 1 and 2.
 
-using MatrixType = bem::EigenDenseMatrix<ComplexFloat>;
-
-// OpenBEM defines various types in the `types.hpp` header, which are just wrappers around the usual
-// C++ types. This allows easily switching types throughout the codebase, if ever needed. It also
-// allows easily switching between single, double, and extended double precision at compile
-// time. For the default double precision case, `Float` is the same as `double`, and `ComplexFloat`
-// is `std::complex<double>`. In single precision, `Float` is the same as `float`, and
-// `ComplexFloat` would be `std::complex<float>`. See `source/types.hpp`.
+using MatrixType = bem::EigenMatrix<bem::Complex>;
 
 
 int main(int argc, char** argv)
 {
 
     std::cout << "\n====================================================" << std::endl;
-    std::cout << "OpenBEM example 1" << std::endl;
+    std::cout << "OpenBEM example 3" << std::endl;
     std::cout << "====================================================\n" << std::endl;
 
-    // A Gmsh-generated mesh file is used in this example. OpenBEM has built-in functionality to
-    // read and write Gmsh files.
+    // Read in the mesh file as in Example 1.
 
-    std::string msh_filename = "./msh/sphere.msh";
+    std::size_t path_pos = std::string(__FILE__).find_last_of("/");
+    std::string path = std::string(__FILE__).substr(0, path_pos) + "/";
 
-    // A `Structure` object stores the mesh and material properties for each object in the structure
-    // being modeled.
+    std::string msh_filename = path + "msh/sphere.msh";
 
-    // The template parameter of a `Structure` specifies the type of mesh that will be stored, and
-    // its dimensionality. In this example, we're considered a 3D problem with a triangular mesh,
-    // so we invoke the `TriangleMesh<3>` class.
-
-    // We'll create a `Structure`, and then use the built-in Gmsh reader to parse mesh data into the
-    // `Structure`. This requires the `geometry/structure.hpp`, `geometry/mesh/triangle_mesh.hpp`
-    // and `geometry/mesh/io.hpp` headers.
-
-    bem::Structure<bem::TriangleMesh<3>> structure;
-    bem::read_gmsh2(structure, msh_filename);
-
-    // Now `structure` has been populated with all the mesh data. Mesh edges are automatically
-    // identified from triangle connectivity when the `TriangleMesh<3>` object stored in `structure`
-    // is initialized in `read_gmsh2`.
-
-    // Let's print out some of the mesh info.
+    bem::Structure<3> structure;
+    bem::MeshTransfer::read_gmsh_v2(structure, msh_filename);
 
     std::cout << "Number of vertices: " << structure.mesh().num_vertices() << std::endl;
     std::cout << "Number of triangles: " << structure.mesh().num_faces() << std::endl;
     std::cout << "Number of edges: " << structure.mesh().num_edges() << std::endl;
 
-    // The `Structure` has a `background_material()` object of type `Material`, which is set to
-    // vacuum by default. If the sphere were not PEC, we could set its `Material` via the
-    // `Component` objects; see other examples.
-
-    // Set the simulation frequency in Hz.
+    // Set the simulation frequency, wave number, and permeability, as in Example 2.
 
     bem::Float f = 250e6;
+    bem::Complex k = structure.background_material().k(f);
+    bem::Complex mu = structure.background_material().mu();
 
-    // The classical tangentially-tested EFIE, or TEFIE as it is often called in the literature, is
-    // implemented in the (surprise) `Tefie` class. Let's make a `Tefie` object, which takes a
-    // `TriangleMesh<3>` object as a constructor argument, so that the `Tefie` knows what mesh to
-    // use. This requires the `rwg/integral_equations/tefie.hpp` header. The `Tefie` class lives in
-    // the `bem::rwg` namespace, so that in the future, we can define other discretizations of the
-    // TEFIE without naming conflicts with this one.
+    // Each entry of an RWG operator matrix involves a double integral: an outer integral over an
+    // observation triangle, and an inner integral over a source triangle. OpenBEM splits these
+    // into two separate objects, called integrators.
 
-    bem::rwg::Tefie<MatrixType> tefie (structure.mesh());
+    // The observation integrator computes the outer integral. At each of its quadrature points, it
+    // asks a source integrator to compute the inner integral. The source integrator is responsible
+    // for handling any singularities in the kernel, such as those in standard Green's functions.
 
-    // Notice that `Tefie` takes an optional template parameter defining the matrix data type to
-    // use. To use the default (which is a dense, complex-valued Eigen matrix) we still need to
-    // remember to use the syntax `Tefie<> tefie;`, so that the compiler knows to use the default
-    // built-in matrix type. In general, it can be useful to supply a matrix type explicitly, in
-    // case one wants to switch to a different linear algebra library in the future. So here, we
-    // specify the matrix type explicitly.
+    // In Examples 1 and 2, we never had to think about this, because the operators default to
+    // `ObsStrategic` and `SrcStrategic` integrators, which look at the distance between the
+    // triangles, the frequency, and the material, and pick a suitable method automatically. In
+    // this example, we'll create our own source integrator, and set the integrators explicitly.
 
-    // Now, we compute the hypersingular TEFIE matrix operator. Internally, the associated integrals
-    // are computed using a default strategy for singularity subtraction, which is automatically
-    // invoked for source and observation triangles that are sufficiently close to each other. These
-    // settings can all be set manually and completely customized - see other examples.
+    // OpenBEM ships with several source integrators. The two we'll use here are:
 
-    MatrixType L = tefie.j_matrix(f, structure.background_material());
+    // - `SrcQuadrature`, which applies plain Gaussian quadrature to the Green's function. This is
+    //    accurate when the observation points are well separated from the source triangle. It 
+    //    requires the `rwg/integrators/src/quadrature.hpp` header.
 
-    // A few things to notice: First, we need to pass in the frequency and the material to compute
-    // the matrix operator. In this case, the material is just the background material in which the
-    // sphere is immersed. Second, we are calling the function `Tefie::j_matrix()`, where the `j`
-    // implies that we are computing the matrix that operators upon the (unknown) electric surface
-    // current density, since it is a PEC sphere. If this were a PMC sphere, we would want to use
-    // `Tefie::m_matrix()` to compute the vector double-layer operator instead (although in that
-    // case, we may want to use the `TMFIE` class instead). If it were a dielectric, we'd probably
-    // need to compute both matrices, and also use additional equations for the region interior to
-    // the sphere - see other examples for more details. Third, if the OpenMP library is available
-    // and the number of threads has been set to more than 1, these computations will be
-    // parallelized.
+    // - `SrcSingularity`, which subtracts the singular part of the Green's function, integrates
+    //   that part analytically, and applies quadrature only to the smooth remainder. This is more
+    //   expensive, but stays accurate when the observation points are close to, or even on, the
+    //   source triangle. It requires the `rwg/integrators/src/singularity.hpp` header.
 
-    // Just for fun, let's also solve the same problem using the NMFIE, for which we can use the
-    // `Nmfie` class. In this case, the relevant matrix operator associated with the electric
-    // surface current density is the rotationally tested vector double-layer operator, requiring
-    // the `rwg/integral_equations/nmfie.hpp` header.
+    // To decide between the two, we'll write our own source integrator. Any class that inherits
+    // from `SrcIntegratorBase` (defined in `rwg/integrators/src/base.hpp`) and implements its
+    // `integrate()` method can be used as a source integrator anywhere in OpenBEM.
 
-    bem::rwg::Nmfie<MatrixType> nmfie (structure.mesh());
-    MatrixType K = nmfie.j_matrix(f, structure.background_material());
+    // Our rule is simple: if any observation point lies within two longest-edge-lengths of the
+    // source triangle's centroid, use `SrcSingularity`; otherwise, use `SrcQuadrature`.
 
-    // Note that both the TEFIE's L operator and the NMFIE's K operator require computing Green's
-    // function values for the same set of source and observation triangles. This means that a lot
-    // of the same computations are repeated. OpenBEM is written first and foremost for usability,
-    // readability, and maintainability, and the above way of computing operators separately does
-    // seem more user-friendly. However, if performance is an important consideration, OpenBEM also
-    // offers a way to batch-compute several operators without redundant computations, but this is
-    // saved for later and more advanced examples.
+    // Since we only need this class here, we can define it right inside `main()`.
 
-    // Now let's create the right-hand side vectors that represent a plane wave excitation. For
-    // this, we need to set the direction, polarization, and phase reference. For arrays, matrices,
-    // and vector algebra, the Eigen library's data structures are used, which provide a simple
-    // Matlab-like interface and save us from have to write our own loops every time we want to do
-    // element-wise operations on an array of numbers, etc. In `types.hpp`, there are several
-    // simple aliases that have been created for commonly used Eigen types, just to shorten the type
-    // names and make the code a little more readable.
+    class CustomSrcIntegrator: public bem::rwg::SrcIntegratorBase
+    {
+    public:
 
-    // First, set the direction of the plane wave to be a three-element vector pointing along +z.
+        bem::rwg::SrcResult integrate(
+            const bem::Complex k,
+            const bem::Triangle<2>& src_tri,
+            bem::ConstEigRef<bem::EigMatNX<bem::Float, 3>> r_obs,
+            const bool g_terms = true,
+            const bool grad_g_terms = true
+            ) override
+        {
 
-    bem::EigVecN<3> dir = { 0, 0, 1 };
+            // Create the two integrators that we'll choose between. Each takes a triangle
+            // quadrature object, for where we set the quadrature order explicitly. A higher order
+            // is used for the near interactions, and a lower one for the far interactions. These
+            // happen to be the same orders that `SrcStrategic` uses by default.
 
-    // Next, let the incident plane wave have an E-field polarization along +x.
+            bem::rwg::SrcSingularity singularity_ { bem::GaussTriangleQuadrature<2>(8) };
+            bem::rwg::SrcQuadrature quadrature_ { bem::GaussTriangleQuadrature<2>(4) };
 
-    bem::EigVecN<3> pol_e = { 1, 0, 0 };
+            // Normally, it might be advisable to create the integrator objects as members of the
+            // class rather than here, because this method might be called millions of times in a 
+            // loop to compute the integrals, which may lead to a lot of unnecessary initialization
+            // which we're choosing to ignore for the purposes of this example.
 
-    // Finally, set the "position" from which the plane wave originates. This defines the phase
-    // reference, and can also be used as the sensor distance for RCS calculations, as will be shown
-    // later in this example. Let's assume the plane wave originates from a point 100 free space
-    // wavelengths along `-dir`, i.e., the plane wave travels from `pos` along `dir` for a distance
-    // of 100 free space wavelengths from the origin.
+            // Note that `GaussTriangleQuadrature<2>` is a Gaussian quadrature rule over a triangle
+            // in 2D, which is what we want because the source triangle lives in its own local
+            // xy-plane. It requires the `quadrature/triangle/gauss.hpp` header.
+
+            // The source integrator works in the local coordinate system of the source triangle,
+            // which lies in the xy-plane. So `src_tri` is a 2D triangle, and `r_obs` holds the
+            // observation points (one per column) expressed in that same local coordinate system.
+
+            // Get the centroid of the source triangle as a 3D point lying in the xy-plane, so that
+            // we can compute its distance to the observation points.
+
+            bem::EigColVecN<bem::Float, 3> centroid = bem::EigColVecN<bem::Float, 3>::Zero();
+            centroid.topRows(2) = src_tri.centroid();
+
+            // Find the distance from the centroid to the closest observation point.
+
+            bem::Float min_dist = (r_obs.colwise() - centroid).colwise().norm().minCoeff();
+
+            // Now hand the work to whichever integrator our rule picks.
+
+            if (min_dist <= 2 * src_tri.longest_edge_length())
+                return singularity_.integrate(k, src_tri, r_obs, g_terms, grad_g_terms);
+            else
+                return quadrature_.integrate(k, src_tri, r_obs, g_terms, grad_g_terms);
+
+        };
+
+    };
+
+    // Now let's create our source integrator.
+
+    CustomSrcIntegrator src_integrator;
+
+    // Next, we need an observation integrator to compute the outer integral, and we need to tell it
+    // to use our source integrator for the inner integral. We'll use `ObsQuadrature`, which applies
+    // plain Gaussian quadrature over the observation triangle. It requires the
+    // `rwg/integrators/obs/quadrature.hpp` header. Of course, we could create another custom
+    // integrator for observation triangles too, but we'll skip that here.
+
+    bem::rwg::ObsQuadrature obs_integrator (bem::GaussTriangleQuadrature<3>(4), src_integrator);
+
+    // The first argument is the quadrature rule over the observation triangle. This time it is a
+    // `GaussTriangleQuadrature<3>`, because the observation triangle lives in 3D space. Unlike
+    // `ObsStrategic`, `ObsQuadrature` uses a single quadrature order for every pair of triangles.
+
+    // Now we set up the operators manually as in Example 2, but this time, we pass in our
+    // observation integrator as a constructor argument. That's all it takes; every integral
+    // computed for these operators will now go through `obs_integrator`, and in turn, through
+    // `src_integrator`.
+
+    bem::rwg::VectorHypersingularOp L_operator (obs_integrator);
+    bem::rwg::RotVectorDoubleLayerPvOp Kpv_operator (obs_integrator);
+
+    // The identity operator doesn't involve a Green's function, and it doesn't need an integrator.
+
+    bem::rwg::VectorIdentityOp I_operator;
+
+    // Assemble the operator matrices as in Example 2.
+
+    bem::rwg::OperatorAssembler assembler (structure.mesh());
+
+    MatrixType L, K, I;
+    assembler.assemble(L, L_operator, k);
+    assembler.assemble(K, Kpv_operator, k);
+    assembler.assemble(I, I_operator, k);
+
+    // Scale the L operator to get the TEFIE operator, and combine the K and identity operators to
+    // get the NMFIE operator, as in Example 2.
+
+    L.scale(-bem::J * bem::two_pi * f * mu);
+    K.add_ax(I, 0.5);
+
+    // Set up the plane wave excitations as in Examples 1 and 2.
+
+    bem::EigColVecN<bem::Float, 3> dir = { 0, 0, 1 };
+    bem::EigColVecN<bem::Float, 3> pol_e = { 1, 0, 0 };
+    bem::EigColVecN<bem::Float, 3> pol_h = { 0, 1, 0 };
 
     bem::Float dist = 100 * (bem::c0 / f);
-    bem::EigVecN<3> pos = -dir * dist;
+    bem::EigColVecN<bem::Float, 3> pos = -dir * dist;
 
-    // Two things to note here: first, notice how easy Eigen makes it to multiply scalars with an
-    // array. Second, OpenBEM defines several common constants such as `pi`, `eps0`, `mu0`, and
-    // `c0` in `constants.hpp`.
-
-    // Finally, define the E-field amplitude of the plane wave.
-
-    bem::ComplexEigVecN<1> amp_e = { 1 };
-
-    // Note that the amplitude is set as a single-element vector rather than just a scalar, because
-    // we can have more than one excitation with different amplitudes; here we are considering the
-    // special case of just one.
-
-    // Now, from our knowledge of the RWG-discretized TEFIE, we know that the analytical expression
-    // for the plane wave must be tangentially tested with RWG functions. So, we define an
-    // `RwgPlaneWave` class. This requires the `rwg/excitations/plane_wave.hpp` header.
+    bem::EigColVecN<bem::Complex, 1> amp_e { 1 };
+    bem::EigColVecN<bem::Complex, 1> amp_h { 1 / bem::eta0 };
 
     bem::rwg::RwgPlaneWave pw_e (dir, pol_e, pos, amp_e);
-
-    // We can use the `Tefie` class to now generate the excitation vector(s) by passing in
-    // `pw_e`. In this case, we have only a single excitation, but in general, we can have as many
-    // as we'd like. The excitation matrix would have as many columns as the number of excitations.
-
-    MatrixType inc_e = tefie.exc_matrix(f, structure.background_material(), pw_e);
-
-    // For solving the NMFIE, the excitation is not a tangentially tested incident E-field, but
-    // rather a rotationally tested H-field. In order to be consistent with `pol_e` and the
-    // direction of propagation, the H-field must be polarized along +y, and its amplitude must be
-    // appropriately scaled by the wave impedance in free space, as below.
-
-    bem::EigVecN<3> pol_h = { 0, 1, 0 };
-    bem::ComplexEigVecN<1> amp_h = { 1 / std::sqrt(bem::eta0) };
-
     bem::rwg::NxRwgPlaneWave pw_h (dir, pol_h, pos, amp_h);
-    MatrixType inc_h = nmfie.exc_matrix(f, structure.background_material(), pw_h);
 
-    // Notice that we use the `NxRwgPlaneWave` class because we are testing the incident field with
-    // nxRWG functions. Notice also that `RwgPlaneWave` and `NxRwgPlaneWave` do not care whether we
-    // are referring to an E or H field; it's up to us to supply the correct amplitude and
-    // polarization depending on our use case.
+    bem::rwg::ExcitationAssembler exc_assembler (structure.mesh());
 
-    // Finally, we solve the system of equations to obtain the electric surface current density.
-    // The wrapper classes for matrix algebra have a `.mat_solve()` method which solve a matrix
-    // system with a given right-hand side matrix, which we'll use here.
+    MatrixType inc_e;
+    exc_assembler.assemble(inc_e, pw_e, k);
+
+    MatrixType inc_h;
+    exc_assembler.assemble(inc_h, pw_h, k);
+
+    // Now solve the TEFIE and the NMFIE separately, as in Example 1.
 
     MatrixType j_tefie;
     L.factorize();
     L.mat_solve(j_tefie, inc_e);
 
-    // The solution matrix will have as many columns as the number of excitation vectors, which in
-    // this case is just one.  Now let's do the same for the NMFIE case.
-
     MatrixType j_nmfie;
     K.factorize();
     K.mat_solve(j_nmfie, inc_h);
 
-    // Having computed the electric surface current density using both approaches, we can now
-    // compute far-field quantities like RCS by using OpenBEM's projectors. First, let's define the
-    // points at which to compute far fields - these are the points to which fields will be
-    // projected. We can use OpenBEM's `PointCloud` class (in three dimensions) to create the set of
-    // projection points. Let's initialize an empty object of this class, and then we'll populate
-    // it below. This requires the `rwg/geometry/point_cloud.hpp` header.
+    // Define the far-field points on which to compute the RCS, as in Examples 1 and 2.
 
     bem::PointCloud<3> projection_points;
 
-    // We can define these points directly in spherical coordinates. Let's project the
-    // fields to a circular arc containing 100 points, that passes through the plane wave's `pos`,
-    // lies along phi (azimuth) = 0, and spans theta (elevation) = 0 to pi. The following 3-element
-    // vectors contain (r, phi, theta) coordinates.
+    bem::EigColVecN<bem::Float, 3> arc_begin = { dist, 0, 0 };
+    bem::EigColVecN<bem::Float, 3> arc_end = { dist, 0, bem::pi };
 
-    bem::EigVecN<3> arc_begin = { dist, 0, 0 };
-    bem::EigVecN<3> arc_end = { dist, 0, bem::pi };
+    bem::EigColVecN<bem::Index, 3> num_pts = { 1, 1, 100 };
+    bem::EigColVecN<bem::Float, 3> center = { 0, 0, 0 };
 
-    // Based on the above discussionm, our point cloud will contain one point along the r direction,
-    // one point along the phi direction, and 100 points along theta.
+    projection_points.set_polar_data(arc_begin, arc_end, center, num_pts);
 
-    bem::IndexEigVecN<3> num_pts = { 1, 1, 100 };
+    // Projectors can be given an integrator too. The difference is that for a projector, the
+    // "observation triangle" is replaced by a set of discrete points, so there's no outer integral
+    // to compute. That's why a projector takes a source integrator directly, rather than an
+    // observation integrator. Let's give it the same custom source integrator.
 
-    // The `PointCloud` also needs to know what to use as the origin, which is the arc's center.
+    bem::rwg::VectorHypersingularProj L_projector (src_integrator);
 
-    bem::EigVecN<3> center = { 0, 0, 0 };
+    // Our projection points are 100 wavelengths away from the sphere, so our custom rule will pick
+    // `SrcQuadrature` for every triangle. But if we were projecting fields close to the mesh, the
+    // same rule would automatically switch to `SrcSingularity` where needed.
 
-    // Now populate the point cloud in spherical coordinates.
+    // Assemble the E-field projector matrix, with the appropriate scaling, as in Example 2.
 
-    cloud.set_polar_data(arc_begin, arc_end, center, num_pts);
+    bem::rwg::ProjectorAssembler<3> proj_assembler (projection_points, structure.mesh());
 
-    // The concept of projection still involves integrating over all source triangles in the mesh;
-    // basically, we are evaluating the integral equation for a given set of observation points. If
-    // the observation points lie very close to the mesh, for example, if we'd like to compute
-    // fields near or on the mesh itself, the appropriate singularity extraction treatment will
-    // automatically be applied. The projector matrix, when applied to a given set of electric
-    // surface currents (which were computed above by solving the system of equations), would give
-    // the E-field generated by those currents. Note that the projector matrix is not obtained by
-    // "testing" an integral operator in the usual sense, we're just evalulating an integral
-    // equation at a given set of observation points. So we would get exactly the same projector
-    // matrix if we had used the NEFIE here instead.
+    MatrixType Lproj;
+    proj_assembler.assemble(Lproj, L_projector, k);
+    Lproj.scale(-bem::J * bem::two_pi * f * mu);
 
-    MatrixType e_proj = tefie.j_projector(f, structure.background_material(), cloud);
+    // Project the E-field from both solutions onto the point cloud, and reshape the results as in
+    // Example 1.
 
-    // If we would like to compute the projected H-field, we would need to use the projector from
-    // the NMFIE. As in the TEFIE and NEFIE case, the projector is independent of how the equation
-    // is tested, so the NMFIE or TMFIE would give the same projector matrix.
+    MatrixType e_tefie, e_nmfie;
+    Lproj.matmul(e_tefie, j_tefie);
+    Lproj.matmul(e_nmfie, j_nmfie);
 
-    MatrixType h_proj = nmfie.j_projector(f, structure.background_material(), cloud);
+    e_tefie.raw_matrix() = e_tefie.raw_matrix().reshaped(3, 100);
+    e_nmfie.raw_matrix() = e_nmfie.raw_matrix().reshaped(3, 100);
 
-    // Of course, if we had a penetrable object instead of a perfect electric conductor, we would
-    // have both electric and magnetic surface current densities, so we would also need to compute
-    // the associated `m_projector()`, and the projected E and H fields would be a superposition of
-    // the fields generated by the electric and magentic surface current densities; see other
-    // examples.
-
-    // Now let's put these projectors into action by computing the electric and magnetic fields on
-    // our point cloud - this just requires applying the projector matrix to the computed currents.
-    // First, let's get the far fields that result from the currents computed by solving the TEFIE.
-
-    MatrixType e_tefie, h_tefie;
-    e_tefie.set_matmul(e_proj, j_tefie);
-    h_tefie.set_matmul(h_proj, j_tefie);
-
-    // Note: do not confuse the projectors for the matrix operators. In the above, we are using the
-    // TEFIE to solve for the currents, and then we are using the EFIE to get the E-field generated
-    // by those TEFIE-solved currents, and we are using the MFIE to get the H-field generated by the
-    // same TEFIE-solved currents.
-
-    // Next, for the sake of comparison, let's compute the far fields that result from our NMFIE
-    // solution, using the same projectors, but this time applying them to the electric surface
-    // currents computing using the NMFIE.
-
-    MatrixType e_nmfie, h_nmfie;
-    e_nmfie.set_matmul(e_proj, j_nmfie);
-    h_nmfie.set_matmul(h_proj, j_nmfie);
-
-    // Note that since the projected fields are vectorial, we have three field components at each
-    // observation point in our point cloud. The components are stored contiguously along matrix
-    // rows. For example, the projected E-field in `e_tefie` is stored as Ex1, Ey1, Ez1, Ex2, Ey2,
-    // Ez2, ... Each column corresponds to a different column of the source currents, `j_tefie` in
-    // this case. Here, there's only one column because we had only one excitation vector.
-
-    // Next, we'll compute the RCS from the projected E-fields. For convenience, let's reshape the
-    // projected field vectors into a 3 x N matrix where the first row contains the x-component, the
-    // second contains the y-component, and the third the z-component. The N columns correspond to
-    // the N observation points. OpenBEM's matrix class wrappers don't directly provide this
-    // reshaping functionality, but since we're using Eigen's matrix datastructures underneath, we
-    // can directly use Eigen's API by accessing the underlying raw matrix as shown below.
-
-    MatrixType e_tefie_reshaped;
-    e_tefie_reshaped.raw_matrix() = e_tefie.raw_matrix().reshaped(3, 100);
-
-    MatrixType e_nmfie_reshaped;
-    e_nmfie_reshaped.raw_matrix() = e_nmfie.raw_matrix().reshaped(3, 100);
-
-    // To compute the RCS, we'll continue to take advantage of Eigen's underlying matrix API, which
-    // makes it a lot easier to do element-wise mathematical and geometric operations. First, let's
-    // compute the E-field magnitudes. Then, we'll use this to compute the RCS. We'll do this for
-    // both the TEFIE and NMFIE solutions, to compare the results.
+    // Compute the RCS from both solutions.
 
     MatrixType e_tefie_mag;
-    e_tefie_mag.raw_matrix() = e_tefie_reshaped.raw_matrix().colwise().norm();
+    e_tefie_mag.raw_matrix() = e_tefie.raw_matrix().colwise().norm();
 
     MatrixType e_nmfie_mag;
-    e_nmfie_mag.raw_matrix() = e_nmfie_reshaped.raw_matrix().colwise().norm();
+    e_nmfie_mag.raw_matrix() = e_nmfie.raw_matrix().colwise().norm();
 
     MatrixType rcs_tefie;
     rcs_tefie.raw_matrix() = Eigen::pow(e_tefie_mag.raw_matrix().array(), 2) * bem::four_pi * std::pow(dist, 2);
@@ -341,42 +303,28 @@ int main(int argc, char** argv)
     MatrixType rcs_nmfie;
     rcs_nmfie.raw_matrix() = Eigen::pow(e_nmfie_mag.raw_matrix().array(), 2) * bem::four_pi * std::pow(dist, 2);
 
-    // Note that applying elementwise mathematical operations to Eigen matrices requires calling the
-    // `.array()` method on the Eigen matrix, which has no overhead but just informs Eigen to treat
-    // the operations as elementwise rather than in a matrix sense. This is similar to Matlab, where
-    // we use, for example, `.*` for elementwise multiplication, while just `*` implies matrix
-    // multiplication.
-
-    // Finally, let's compute and display the worst-case relative error between the TEFIE and NMFIE
-    // solutions, where the errors are computed relative to the maximum value of the RCS.
+    // Finally, compute and display the worst-case point-wise relative error in RCS between the
+    // TEFIE and NMFIE solutions, as in Example 1.
 
     MatrixType rcs_error;
-    rcs_error.raw_matrix() = (rcs_tefie.raw_matrix() - rcs_tefie.raw_matrix()).array().abs();
+    rcs_error.raw_matrix() = (rcs_tefie.raw_matrix() - rcs_nmfie.raw_matrix()).array().abs();
 
     MatrixType rcs_relative_error;
-    rcs_error.raw_matrix() / rcs_tefie.raw_matrix().array().abs().maxCoeff();
+    rcs_relative_error.raw_matrix() = rcs_error.raw_matrix().array() / rcs_tefie.raw_matrix().array().abs();
 
-    Float rcs_max_relative_error = rcs_relative_error.raw_matrix().array().maxCoeff();
-    std::cout << "TEFIE vs. NMFIE RCS maximum relative error: " << rcs_max_relative_error << std::endl;
+    bem::Float rcs_max_relative_error = rcs_relative_error.raw_matrix().array().abs().maxCoeff();
+    std::cout << "TEFIE vs. NMFIE RCS maximum relative error: "
+              << rcs_max_relative_error * 100
+              << " %" << std::endl;
 
+    // We see a larger error than in Example 1, around 6%, because we've used much looser
+    // quadrature and singularity settings than the default `SrcStrategic` and `ObsStrategic`
+    // classes.
 
-
-    // When the mesh contains different objects, one can classify them in Gmsh as separate "physical surfaces".
-    // When a Gmsh .msh file contains separate physical surfaces, each one is parsed into a separate
-    // OpenBEM `Component` object. A `Structure` contains a list of `Component` objects, and each `Component`
-    // can be composed of a different `Material`.
-
-    // We can access the mesh of the entire structure using `Structure::mesh()`, or we can access the sub-mesh
-    // of individual `Component` objects using `Structure::components()[i].mesh()` where `i` is an index into
-    // the `Component` objects.
-
-    // Note that the `Component` objects do not actually store the sub-meshes explicitly. Rather than storing
-    // duplicates of the vertices and triangles, `Component` objects store a `TriangleMeshView` object which simply
-    // contains a list of indices into the global list of mesh faces in `Structure::mesh()`.
-    // When we call `Structure::component()[i].mesh()`, a sub-mesh is explicitly generated in real time.
-    // If we don't need an explicit sub-mesh to be generated, but we just need the indices into the global
-    // mesh, we could instead use `Structure::component()[i].mesh_view()` which returns a `TriangleMeshView` object.
-
+    // The same approach works for any rule you'd like. For example, you could switch integrators
+    // based on the frequency or the material, or add a third option such as `SrcLineIntegrator`
+    // for electrically large triangles. As long as your class inherits from `SrcIntegratorBase`,
+    // OpenBEM will use it wherever a source integrator is expected. Enjoy!
 
     return 0;
 
