@@ -20,6 +20,7 @@
 
 #include <vector>
 #include <memory>
+#include <algorithm>
 #include <type_traits>
 #include <variant>
 #include <functional>
@@ -874,7 +875,7 @@ public:
 
                 if constexpr (std::is_same_v<std::decay_t<decltype(xr)>, SparseMatrixType>)
                 {
-                    x_triplets.reserve(b_rows * b_cols);
+                    x_triplets.reserve(std::min<Index>(b_rows * b_cols, xr.nonZeros()));
 
                     for (Index kk = src_col_start; kk < src_col_start + b_cols; ++kk)
                         for (typename SparseMatrixType::InnerIterator it (xr, kk); it; ++it)
@@ -906,7 +907,7 @@ public:
                                     )
                                 );
                 }
-    
+
                 matrix_.insertFromTriplets(
                     x_triplets.begin(),
                     x_triplets.end(),
@@ -968,7 +969,7 @@ public:
 
                 if constexpr (std::is_same_v<std::decay_t<decltype(xr)>, SparseMatrixType>)
                 {
-                    x_triplets.reserve(b_rows * b_cols);
+                    x_triplets.reserve(std::min<Index>(b_rows * b_cols, xr.nonZeros()));
 
                     for (Index kk = src_col_start; kk < src_col_start + b_cols; ++kk)
                         for (typename SparseMatrixType::InnerIterator it (xr, kk); it; ++it)
@@ -1000,7 +1001,7 @@ public:
                                     )
                                 );
                 }
-    
+
                 matrix_.insertFromTriplets(
                     x_triplets.begin(),
                     x_triplets.end()
